@@ -1,0 +1,24 @@
+{
+  "mcpServers": {
+    "google": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp-servers/google/dist/index.js"]
+    },
+    "yandex": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp-servers/yandex/dist/index.js"]
+    },
+    "bing": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp-servers/bing/dist/index.js"]
+    },
+    "performance": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp-servers/performance/dist/index.js"]
+    },
+    "crawl": {
+      "command": "uv",
+      "args": ["run", "--directory", "${CLAUDE_PLUGIN_ROOT}/mcp-servers/crawl", "crawl-server"]
+    }
+  }
+}

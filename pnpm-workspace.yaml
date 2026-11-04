@@ -1,0 +1,6 @@
+packages:
+  - packages/*
+  - mcp-servers/*
+
+onlyBuiltDependencies:
+  - esbuild

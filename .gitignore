@@ -1,0 +1,23 @@
+# Build / dependencies
+node_modules/
+dist/
+*.tsbuildinfo
+.venv/
+__pycache__/
+.pytest_cache/
+
+# Local data (SQLite, JSONL snapshots, reports)
+data/
+*.sqlite
+*.sqlite3
+*.db
+
+# Secrets: .env is dev-only and must never be committed (docs/SECURITY-AND-APPROVAL.md)
+.env
+.env.*
+!.env.example
+service-account*.json
+*credentials*.json
+secrets/
+*.key
+*.pem
