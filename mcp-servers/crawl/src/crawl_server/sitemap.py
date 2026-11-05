@@ -59,7 +59,7 @@ class Fetcher:
         # origin -> parser, or None when robots.txt could not be read (fail closed).
         self._robots: dict[str, RobotFileParser | None] = {}
 
-    def get(self, url: str) -> httpx.Response:
+    def get(self, url: str, follow_redirects: bool = True) -> httpx.Response:
         host = urlsplit(url).netloc
         last = self._last_request.get(host)
         if last is not None:
@@ -71,15 +71,19 @@ class Fetcher:
             url,
             headers={"User-Agent": user_agent()},
             timeout=REQUEST_TIMEOUT_SECONDS,
-            follow_redirects=True,
+            follow_redirects=follow_redirects,
         )
+
+    def robots(self, origin: str) -> RobotFileParser | None:
+        """Parsed robots.txt for an origin, or None when it could not be read (cached per run)."""
+        if origin not in self._robots:
+            self._robots[origin] = self._load_robots(origin)
+        return self._robots[origin]
 
     def allowed(self, url: str) -> SitemapError | None:
         parts = urlsplit(url)
         origin = f"{parts.scheme}://{parts.netloc}"
-        if origin not in self._robots:
-            self._robots[origin] = self._load_robots(origin)
-        parser = self._robots[origin]
+        parser = self.robots(origin)
         if parser is None:
             return SitemapError("ROBOTS_UNAVAILABLE", f"robots.txt unavailable for {origin}", True)
         if not parser.can_fetch(user_agent(), url):

@@ -1,0 +1,3 @@
+# Example Site
+
+> Short summary of the site.

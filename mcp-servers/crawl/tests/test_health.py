@@ -11,5 +11,12 @@ def test_health_reports_ok_without_secrets():
 def test_capabilities_lists_all_read_only_tools():
     payload = capabilities_payload()
     names = [tool["name"] for tool in payload["tools"]]
-    assert names == ["crawl_health", "crawl_capabilities", "crawl_discover_sitemap"]
+    assert names == [
+        "crawl_health",
+        "crawl_capabilities",
+        "crawl_discover_sitemap",
+        "crawl_fetch_pages",
+        "crawl_extract_structured_data",
+        "crawl_check_access",
+    ]
     assert all(tool["access"] == "read" for tool in payload["tools"])
