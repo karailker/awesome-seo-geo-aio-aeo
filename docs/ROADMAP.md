@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: **Current phase: P3** (P0 complete 2026-11-04; P1 complete 2026-11-05; P2 complete 2026-11-05: sitemap discovery fixtures green, ingest idempotent, `/sitemap-sync` verified on fixtures)
+Status: **Current phase: P4** (P0 complete 2026-11-04; P1 complete 2026-11-05; P2 complete 2026-11-05; P3 complete 2026-11-05: `/seo-audit` run live on the bulmacalig.com domain property, every finding cites observations)
 
 Update the status line when a phase is complete. Phases are sequential unless noted.
 
@@ -46,7 +46,9 @@ Done when:
 - Fixture-based tests cover: plain sitemap, sitemap index, gzip sitemap, malformed XML, unreachable child sitemap
 - `/sitemap-sync` on fixtures updates `pages` correctly and is idempotent
 
-## P3: Search Console vertical slice
+## P3: Search Console vertical slice ✅
+
+Verification notes (2026-11-05): fixtures cover auth, client, tools, ingest, reconciliation, report, and the evidence gate. Live: `sites.list`, `sitemaps`, and `searchAnalytics` (page and query dimensions) run against `sc-domain:bulmacalig.com` with read-only scope. Not verified: URL Inspection (not called live). VERIFY: URL Inspection quota is 2000 requests per property per day and 600 per minute; the searchAnalytics row limit is 25000 per request; the data delay is typically 2-3 days. All three come from the public docs and need re-checking before reliance.
 
 Deliverables:
 - `google` MCP: `google_gsc_list_properties`, `google_gsc_search_analytics`, `google_gsc_inspect_url`, `google_gsc_list_sitemaps`

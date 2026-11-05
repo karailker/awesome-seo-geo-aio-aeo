@@ -4,10 +4,10 @@ A local Claude Code plugin that audits one website across SEO, GEO (generative e
 visibility), AIO (AI discoverability), and AEO (answer readiness). Local-first,
 sitemap-driven, evidence-backed reports in English.
 
-Status: **P2 sitemap discovery** - SQLite store, site seed, sitemap discovery in the crawl
-MCP (`crawl_discover_sitemap`), and `/sitemap-sync` are in place. The Google, Yandex,
-Bing, and performance servers are still stubs exposing only `<prefix>_health` and
-`<prefix>_capabilities`. See `docs/ROADMAP.md` for phases.
+Status: **P3 Search Console** - SQLite store, sitemap discovery, Search Console tools in the
+google MCP, and `/seo-audit` (search-only) are in place. The Yandex, Bing, and performance
+servers are still stubs exposing only `<prefix>_health` and `<prefix>_capabilities`. See
+`docs/ROADMAP.md` for phases.
 
 Design docs: `docs/ARCHITECTURE.md`, `docs/DATA-MODEL.md`, `docs/MCP.md`,
 `docs/AGENTS-AND-SKILLS.md`, `docs/SECURITY-AND-APPROVAL.md`, `docs/ROADMAP.md`.
@@ -33,8 +33,17 @@ describes the crawler; it goes into the User-Agent. The scripts run `.ts` files
 directly, which needs Node 22.18+ or 24 (type stripping).
 
 Credentials: copy `.env.example` to `.env` (git-ignored, dev-only) or use the OS
-keychain. Key files must live outside the repo. Stub servers run without any
-credentials; P1+ phases add site configuration.
+keychain. Key files must live outside the repo. Health tools run without credentials.
+
+### Search Console setup (P3)
+
+1. Create a service account in a Google Cloud project and enable the Search Console API.
+2. Download its JSON key and store it outside the repo, for example `~/.config/awesome-seo/gsc-service-account.json` with mode 600.
+3. In Search Console, open the property and add the service account email under Users and permissions. Full access is used for now.
+4. Export `GOOGLE_SERVICE_ACCOUNT_KEY_FILE` to that path before starting Claude Code.
+5. Run `/seo-audit <origin> <start> <end>` in Claude Code, or `pnpm seo:audit` with JSONL files from `google_gsc_search_analytics`.
+
+The OAuth client JSON (`installed` or `web`) does not work for this flow. Use a service account key.
 
 ## Load the plugin
 
