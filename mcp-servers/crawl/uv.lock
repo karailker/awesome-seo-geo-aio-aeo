@@ -154,6 +154,7 @@ name = "crawl-server"
 version = "0.0.1"
 source = { editable = "." }
 dependencies = [
+    { name = "httpx" },
     { name = "mcp" },
 ]
 
@@ -163,7 +164,10 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "mcp", specifier = ">=1.2.0,<2" }]
+requires-dist = [
+    { name = "httpx", specifier = ">=0.27" },
+    { name = "mcp", specifier = ">=1.2.0,<2" },
+]
 
 [package.metadata.requires-dev]
 dev = [{ name = "pytest", specifier = ">=8.0" }]

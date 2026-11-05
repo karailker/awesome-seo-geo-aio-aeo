@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<!DOCTYPE urlset [
+  <!ENTITY a "aaaaaaaaaa">
+  <!ENTITY b "&a;&a;&a;&a;&a;&a;&a;&a;&a;&a;">
+]>
+<urlset><url><loc>https://example.com/&b;</loc></url></urlset>
