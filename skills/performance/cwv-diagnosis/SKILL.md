@@ -29,7 +29,7 @@ Thresholds (project-defined, from the public Core Web Vitals guidance; not Googl
 ## Evidence rules
 - Each diagnosis cites the `performance_psi_run` or `performance_crux_query` result, with its URL, strategy, and date.
 - Field values need the CrUX period from the response. State it.
-- A diagnosis from lab data alone is labeled "lab only".
+- A diagnosis from lab data alone is labeled "lab only". This includes every result tagged `lighthouse-local` (the fallback run), which has no field data at all.
 
 ## Output schema
 Per URL: lab row, field row (or "no field data"), driving metric, evidence type, top opportunities.

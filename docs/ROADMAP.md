@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: **Current phase: P5, in progress** (P0 complete 2026-11-04; P1 complete 2026-11-05; P2 complete 2026-11-05; P3 complete 2026-11-05; P4 complete 2026-11-05; P5 partial: PSI works live, CrUX blocked by API permission, local Lighthouse waiting on dependency approval)
+Status: **Current phase: P6** (P0 complete 2026-11-04; P1 complete 2026-11-05; P2 complete 2026-11-05; P3 complete 2026-11-05; P4 complete 2026-11-05; P5 complete 2026-11-05 with CrUX live check still open: API permission needed)
 
 Update the status line when a phase is complete. Phases are sequential unless noted.
 
@@ -81,9 +81,9 @@ Done when:
 - Crawler never exceeds the per-host rate limit in tests
 - Two runs of the same fixture produce identical content hashes
 
-## P5: Performance (in progress)
+## P5: Performance ✅ (CrUX live check still open)
 
-Status (2026-11-05): `performance_psi_run` and `performance_crux_query` are implemented with fixture tests (12). Live PSI works on `www.bulmacalig.com` (lab values returned, field values null because the URL has no CrUX data). Live CrUX returns 403 (PERMISSION_DENIED): the Chrome UX Report API is not enabled for the key's project, or the key is restricted. `performance_lighthouse_local_run` is not started: it needs the `lighthouse` npm package, which requires user approval first. The `/perf-audit` command and agent and the `cwv-diagnosis` skill are written but have not been run end to end.
+Verification notes (2026-11-05): `performance_psi_run` works live (lab values returned). Its fallback to the local Lighthouse run is verified live: an invalid key forced `source: lighthouse-local` with the PSI error reported. `performance_lighthouse_local_run` is verified live on `www.bulmacalig.com` (mobile score 100, field null). Tests: 19 in the performance package, using a recorded PSI response and a hand-written CrUX fixture. Not verified live: CrUX. The Chrome UX Report API returns 403 for the supplied key, so enabling that API in the key's project is needed before the CrUX path can be checked. The `/perf-audit` command is written but not run end to end.
 
 Deliverables:
 - `performance_psi_run`: PageSpeed Insights API, returns lab and field data separately

@@ -4,9 +4,9 @@ A local Claude Code plugin that audits one website across SEO, GEO (generative e
 visibility), AIO (AI discoverability), and AEO (answer readiness). Local-first,
 sitemap-driven, evidence-backed reports in English.
 
-Status: **P4 full crawler** - SQLite store, sitemap discovery, Search Console tools,
+Status: **P5 performance** - SQLite store, sitemap discovery, Search Console tools,
 `/seo-audit` (search-only), and the crawler (`/crawl-run`: fetch, extraction, AI access check)
-are in place. The Yandex, Bing, and performance servers are still stubs exposing only
+are in place. The performance server (PSI, CrUX, local Lighthouse fallback) is in place. The Yandex and Bing servers are still stubs exposing only
 `<prefix>_health` and `<prefix>_capabilities`. See `docs/ROADMAP.md` for phases.
 
 Design docs: `docs/ARCHITECTURE.md`, `docs/DATA-MODEL.md`, `docs/MCP.md`,
@@ -50,7 +50,7 @@ keychain. Key files must live outside the repo. Health tools run without credent
 
 ### Performance setup (P5)
 
-Keys are read from the environment. Store them outside the repo, for example in `~/.config/awesome-seo/performance.env` with mode 600, with the names `PAGESPEED_API_KEY` and `CRUX_API_KEY`. Load them before starting Claude Code: `set -a; . ~/.config/awesome-seo/performance.env; set +a`. The PageSpeed Insights API and the Chrome UX Report API must both be enabled in the key's Google Cloud project, and the key's restrictions must allow them.
+Keys are read from the environment. Store them outside the repo, for example in `~/.config/awesome-seo/performance.env` with mode 600, with the names `PAGESPEED_API_KEY` and `CRUX_API_KEY`. Load them before starting Claude Code: `set -a; . ~/.config/awesome-seo/performance.env; set +a`. The PageSpeed Insights API and the Chrome UX Report API must both be enabled in the key's Google Cloud project, and the key's restrictions must allow them. If PSI fails, the performance server falls back to a local Lighthouse run using the system Chrome; set `CHROME_PATH` if Chrome is not found automatically.
 
 The OAuth client JSON (`installed` or `web`) does not work for this flow. Use a service account key.
 
