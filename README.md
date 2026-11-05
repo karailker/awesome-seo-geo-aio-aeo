@@ -6,7 +6,7 @@ Local-first: data stays in a SQLite file on your machine. Write actions to searc
 
 ## Status
 
-Phases P0 to P8 and P10 are done (P9, Merchant Center, is deferred because the site sells no products). The current phase is P11, evaluation. See `STATUS.md` for live checks, known gaps, and open decisions, and `docs/ROADMAP.md` for the plan.
+Phases P0 to P8 and P10 are done. P9 (Merchant Center) is deferred because the site sells no products. The current phase is P11 (evaluation). All four TypeScript MCP servers and the shared core are live on npm at 0.1.0. See `STATUS.md` for live checks, known gaps, and open decisions, and `docs/ROADMAP.md` for the plan.
 
 ## What you get
 
@@ -42,15 +42,19 @@ Run the tests with `corepack pnpm -r test` and `cd mcp-servers/crawl && uv run p
 
 ## MCP servers on npm
 
-The TypeScript MCP servers are published under the `@karailker` scope and run with `npx`:
+All five packages are published under the `@karailker` scope at version 0.1.0 (MIT):
 
-- `@karailker/awesome-seo-mcp-google` (Search Console, GA4)
-- `@karailker/awesome-seo-mcp-yandex` (Metrica, Webmaster)
-- `@karailker/awesome-seo-mcp-bing` (Bing Webmaster)
-- `@karailker/awesome-seo-mcp-performance` (PageSpeed, CrUX, local Lighthouse)
-- `@karailker/awesome-seo-core` (shared library, a dependency of the servers)
+| Package | Tools | What it wraps |
+|---|---|---|
+| `@karailker/awesome-seo-mcp-google` | 11 | Search Console, GA4 (Merchant Center code is present, deferred) |
+| `@karailker/awesome-seo-mcp-yandex` | 9 | Yandex Metrica, Yandex Webmaster |
+| `@karailker/awesome-seo-mcp-bing` | 6 | Bing Webmaster |
+| `@karailker/awesome-seo-mcp-performance` | 5 | PageSpeed Insights, CrUX, local Lighthouse |
+| `@karailker/awesome-seo-core` | library | shared store, ingest, reports, approval engine |
 
-`.mcp.json` starts them with `npx -y <package>`, so no local build is needed for those servers. The crawler (Python) still runs from the repo with `uv`, and the commands, hooks, and scripts still need the repo checkout.
+`.mcp.json` starts the four TypeScript servers with `npx -y <package>`, so they need no local build. If a fresh install reports "No matching version found" right after publishing, retry with `npx -y --prefer-online <package>@0.1.0`.
+
+Still from the repo checkout: the Python crawler (`mcp-servers/crawl`, run with `uv`), the commands, the hooks, and the `scripts/` CLIs.
 
 ## Load the plugin in Claude Code
 
