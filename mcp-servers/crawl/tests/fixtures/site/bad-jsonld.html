@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <title>Broken structured data</title>
+  <link rel="canonical" href="/bad-jsonld.html">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "Article", "headline": "Oops",}</script>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "Article", "headline": "Valid but thin", "author": {"@type": "Person", "name": "A"}, "datePublished": "2026-10-01"}</script>
+</head>
+<body><h1>One</h1><h3>Skipped level</h3><p>Short page.</p></body>
+</html>
