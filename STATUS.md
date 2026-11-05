@@ -65,15 +65,13 @@ The site sells no products, so Merchant Center is out of scope for now. Code and
 - Live: the Merchant API is enabled in `bulmacalig-b70a8`, but returns 401 "project not registered with the merchant account". Needed from the user: (1) the numeric Merchant Center account ID; (2) in Merchant Center, link the Google Cloud project `bulmacalig-b70a8`; (3) add `awesome-seo-gsc@bulmacalig-b70a8.iam.gserviceaccount.com` as a user.
 - Not done: core ingest of Merchant issues, the ecommerce report section, live verification, P10 write tools.
 
-## P10 (2026-11-05): in progress
+## P10 (2026-11-05): complete
 
-- Core: approval tables (migration `0003`), engine (canonical JSON hash, propose, approve, reject, exact-payload check, expiry, execution record). 9 engine tests.
-- Gate: `hooks/hooks.json` PreToolUse matcher on the three write tools; `hooks/scripts/validate-approval.sh` runs `scripts/approval.ts check-hook`, which fails closed. Hook tests run the real script (6 cases): no proposal, pending, approved, payload changed, expired, unknown tool and bad input. The live run was also checked by hand.
-- Write tools: `google_gsc_submit_sitemap` (webmasters scope), `yandex_webmaster_add_sitemap`, `bing_submit_url`. Tests use fake fetch. Not sent to the live sites: no proposal has been approved by the user.
-- Command `/approve-action`; CLI `pnpm approval propose|approve|reject|record|list`.
-- Not done: live execution with a user-approved proposal and the verification step (needs the user's approval first); `merchant_update_product` (P9 is deferred).
+- Engine, gate, CLI, write tools, and `/approve-action` as described in the code and docs. Tests: core 62 (engine 9, hook 6 run against the real script), bing 9, google 22, yandex 18.
+- Live run (user approved): proposal `5c772bcc-...` to re-submit the existing sitemap `https://www.bulmacalig.com/sitemap.xml` on `sc-domain:bulmacalig.com`. Gate passed for the exact payload. The write went through the google MCP write tool over stdio. Search Console afterwards: `lastSubmitted` moved from 2026-11-01T09:53 to 2026-11-05T09:37, errors 0, not pending. The proposal is `executed`, with an approval row (payload hash) and an execution log row with the verification JSON. The gate blocks the same payload again.
+- Limits: the write was called from a script over stdio, not from a Claude Code session, so the PreToolUse hook did not run inside Claude; its decision was checked with the same payload before the call. The execution log stores start and finish as the record time, not the call time. Yandex and Bing writes are implemented and tested with fakes only.
 
-## Next: finish P10 with a user-approved live submission, then P11 (evaluation)
+## Next: P11 (evaluation)
 
 ## Toolchain
 
