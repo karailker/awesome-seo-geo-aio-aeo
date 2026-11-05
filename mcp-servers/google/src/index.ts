@@ -6,6 +6,8 @@ import { GscError } from "./gsc/errors.js";
 import { inspectUrl, listProperties, listSitemaps, searchAnalytics, type ClientProvider } from "./gsc/tools.js";
 import { GA4_SCOPE, Ga4Client } from "./ga4/api.js";
 import { ga4Metadata, ga4RunReport, type Ga4ClientProvider } from "./ga4/tools.js";
+import { MERCHANT_SCOPE, MerchantClient } from "./merchant/api.js";
+import { listProductIssues, listProducts, type MerchantClientProvider } from "./merchant/tools.js";
 
 const KEY_VAR = "GOOGLE_SERVICE_ACCOUNT_KEY_FILE";
 
@@ -23,6 +25,8 @@ const CONFIG: StubServerConfig = {
     { name: "google_gsc_list_sitemaps", access: "read", credentials: [KEY_VAR] },
     { name: "google_ga4_get_metadata", access: "read", credentials: [KEY_VAR] },
     { name: "google_ga4_run_report", access: "read", credentials: [KEY_VAR] },
+    { name: "google_merchant_list_products", access: "read", credentials: [KEY_VAR] },
+    { name: "google_merchant_list_product_issues", access: "read", credentials: [KEY_VAR] },
   ],
 };
 
@@ -50,6 +54,13 @@ const getGa4Client: Ga4ClientProvider = async () => {
   if (ga4) return ga4;
   ga4 = new Ga4Client(new TokenProvider(account(), GA4_SCOPE, fetch), fetch);
   return ga4;
+};
+
+let merchant: MerchantClient | null = null;
+const getMerchantClient: MerchantClientProvider = async () => {
+  if (merchant) return merchant;
+  merchant = new MerchantClient(new TokenProvider(account(), MERCHANT_SCOPE, fetch), fetch);
+  return merchant;
 };
 
 const asText = (value: unknown) => ({ content: [{ type: "text" as const, text: JSON.stringify(value) }] });
@@ -124,6 +135,22 @@ serveMcp(CONFIG.name, CONFIG.version, (server) => {
       },
     },
     async (args) => asText(await ga4RunReport(getGa4Client, args)),
+  );
+  server.registerTool(
+    "google_merchant_list_products",
+    {
+      description: "Merchant Center products for an account (numeric ID, or GOOGLE_MERCHANT_ACCOUNT_ID). Read-only.",
+      inputSchema: { account: z.string().regex(/^\d+$/).optional(), page_size: z.number().int().min(1).max(250).default(100) },
+    },
+    async (args) => asText(await listProducts(getMerchantClient, args)),
+  );
+  server.registerTool(
+    "google_merchant_list_product_issues",
+    {
+      description: "Merchant Center product issues grouped by code, each listing the affected products and URLs. Read-only.",
+      inputSchema: { account: z.string().regex(/^\d+$/).optional(), page_size: z.number().int().min(1).max(250).default(250) },
+    },
+    async (args) => asText(await listProductIssues(getMerchantClient, args)),
   );
 }).catch((err) => {
   console.error(err);

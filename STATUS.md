@@ -55,9 +55,13 @@ Not verified:
 - Reconciliation across Search Console (29 pages, 25 in both), Bing (3 pages, all in both), and Yandex (30 snapshot URLs, 29 in both). Live report at `seo:audit --gsc --bing --yandex`.
 - Quotas and endpoint versions are VERIFY-marked in code (Bing quota, Yandex Webmaster endpoints).
 
-## Next: P9 (Merchant Center)
+## P9 (2026-11-05): in progress, blocked
 
-Scope from ROADMAP: `google_ga4_run_report`, `google_ga4_get_metadata` (google MCP), `yandex_metrica_report` (yandex MCP, which is still a stub), `traffic-analyst` agent, skills `analytics/organic-attribution` and `analytics/ai-referral-traffic` (AI referral source list in `knowledge/`), and inclusion in `/seo-audit` when connections exist. Needs a GA4 property ID and service account access to the property, and a Metrica counter and OAuth token. Confirm both before starting.
+- Code: `google_merchant_list_products` and `google_merchant_list_product_issues` (Merchant API products v1, scope `content`, account from `GOOGLE_MERCHANT_ACCOUNT_ID`). Issues grouped by code with affected product IDs and URLs. Tests use hand-written fixtures, marked as such. Skill `ecommerce/merchant-feed-health`, command `/ecommerce-audit`.
+- Live: the Merchant API is enabled in `bulmacalig-b70a8`, but returns 401 "project not registered with the merchant account". Needed from the user: (1) the numeric Merchant Center account ID; (2) in Merchant Center, link the Google Cloud project `bulmacalig-b70a8`; (3) add `awesome-seo-gsc@bulmacalig-b70a8.iam.gserviceaccount.com` as a user.
+- Not done: core ingest of Merchant issues, the ecommerce report section, live verification, P10 write tools.
+
+## Next: P9 completion once the account is linked, then P10 (approval engine and write tools)
 
 ## Toolchain
 
