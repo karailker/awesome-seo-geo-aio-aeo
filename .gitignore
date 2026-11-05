@@ -6,6 +6,9 @@ dist/
 __pycache__/
 .pytest_cache/
 
+# Local tool config (Serena)
+.serena/
+
 # Local data (SQLite, JSONL snapshots, reports)
 data/
 *.sqlite

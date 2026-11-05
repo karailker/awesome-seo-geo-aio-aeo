@@ -2,6 +2,7 @@
   "name": "awesome-seo",
   "description": "Local SEO / GEO / AIO / AEO auditor for a single site: sitemap-driven crawl, search console and analytics APIs, performance measurements, evidence-backed reports.",
   "version": "0.0.1",
+  "license": "MIT",
   "author": {
     "name": "Ilker Kara"
   }
