@@ -1,0 +1,16 @@
+{
+  "name": "awesome-seo-marketplace",
+  "description": "Claude Code marketplace for awesome-seo: SEO, GEO, AIO, and AEO audits with Search Console, GA4, Bing, Yandex, PageSpeed, and a write-approval gate.",
+  "owner": {
+    "name": "İlker Kara"
+  },
+  "plugins": [
+    {
+      "name": "awesome-seo",
+      "source": "./",
+      "description": "SEO, GEO, AIO, and AEO audits: sitemap discovery, crawl, Search Console, GA4, Bing and Yandex Webmaster, PageSpeed and CrUX, evidence-backed reports, and an approval gate for write actions.",
+      "version": "0.2.0",
+      "license": "MIT"
+    }
+  ]
+}
