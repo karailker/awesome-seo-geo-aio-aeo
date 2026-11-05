@@ -1,0 +1,1 @@
+ALTER TABLE `crawl_results` ADD `jsonld_syntax_errors` integer;

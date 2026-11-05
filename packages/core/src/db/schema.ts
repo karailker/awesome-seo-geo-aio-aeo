@@ -123,6 +123,7 @@ export const crawlResults = sqliteTable(
     structuredDataJson: text("structured_data_json"),
     rawHtmlPath: text("raw_html_path"),
     errorsJson: text("errors_json"),
+    jsonldSyntaxErrors: integer("jsonld_syntax_errors"), // P6: invalid JSON-LD blocks; null when not extracted
   },
   (t) => [index("idx_crawl_results_run").on(t.runId)],
 );

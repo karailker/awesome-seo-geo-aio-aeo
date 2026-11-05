@@ -10,6 +10,8 @@ export type Finding = {
   description: string;
   affectedCount: number;
   evidenceIds: string[];
+  // measured: a direct presence or count. inferred: uses a project threshold.
+  basis?: "measured" | "inferred";
 };
 
 export function validateFindings(

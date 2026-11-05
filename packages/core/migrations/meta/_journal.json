@@ -15,6 +15,13 @@
       "when": 1793864367064,
       "tag": "0001_kind_raza",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1793866009390,
+      "tag": "0002_flawless_pandemic",
+      "breakpoints": true
     }
   ]
 }
