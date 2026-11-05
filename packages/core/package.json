@@ -1,6 +1,6 @@
 {
   "name": "@karailker/awesome-seo-core",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": false,
   "type": "module",
   "main": "dist/index.js",
@@ -26,7 +26,7 @@
   },
   "license": "MIT",
   "description": "Shared core for the awesome-seo plugin: SQLite store, ingest, reports, approval engine, MCP helpers.",
-  "author": "İlker Kara",
+  "author": "\u0130lker Kara",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/karailker/awesome-seo-geo-aio-aeo.git"
@@ -42,5 +42,8 @@
     "dist",
     "migrations",
     "README.md"
-  ]
+  ],
+  "bin": {
+    "awesome-seo": "dist/cli.js"
+  }
 }

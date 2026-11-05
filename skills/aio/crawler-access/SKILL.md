@@ -15,7 +15,7 @@ Show which AI crawlers robots.txt blocks, for which sampled URLs, and whether ll
 
 ## Tools
 - `crawl_check_access` (site_root, sample_urls). Save the result under `data/access/`.
-- `pnpm geo:audit --access <file>` ingests the result as observations.
+- `npx -y -p @karailker/awesome-seo-core@0.2 awesome-seo geo-audit --access <file>` ingests the result as observations.
 
 ## Method
 1. robots.txt is read once. If it cannot be read (5xx or network error), access is unknown for every agent. Never treat unknown as allowed.

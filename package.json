@@ -10,12 +10,12 @@
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck",
-    "db:migrate": "node scripts/migrate.ts",
-    "db:seed": "node scripts/seed.ts",
-    "sitemap:ingest": "node scripts/sitemap-ingest.ts",
-    "seo:audit": "node scripts/seo-audit.ts",
-    "crawl:ingest": "node scripts/crawl-ingest.ts",
-    "geo:audit": "node scripts/geo-audit.ts",
-    "approval": "node scripts/approval.ts"
+    "db:migrate": "node packages/core/dist/cli.js migrate",
+    "db:seed": "node packages/core/dist/cli.js seed",
+    "sitemap:ingest": "node packages/core/dist/cli.js sitemap-ingest",
+    "crawl:ingest": "node packages/core/dist/cli.js crawl-ingest",
+    "seo:audit": "node packages/core/dist/cli.js seo-audit",
+    "geo:audit": "node packages/core/dist/cli.js geo-audit",
+    "approval": "node packages/core/dist/cli.js approval"
   }
 }

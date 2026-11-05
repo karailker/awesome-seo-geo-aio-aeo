@@ -16,7 +16,7 @@ Show which sitemap URLs have no page data in the period from each search source 
 - Search Console page rows for the period.
 
 ## Tools
-- `pnpm sitemap:ingest` (sitemap) and `pnpm seo:audit` (Search Console plus the report).
+- `npx -y -p @karailker/awesome-seo-core@0.2 awesome-seo sitemap-ingest` (sitemap) and `npx -y -p @karailker/awesome-seo-core@0.2 awesome-seo seo-audit` (Search Console plus the report).
 
 ## Method
 - Both sides are normalized with `normalizeUrl` (fragment removed, absolute http(s) only).

@@ -16,7 +16,7 @@ Find queries where the site ranks at positions 8 to 20 with at least 100 impress
 
 ## Tools
 1. `google_gsc_search_analytics` with `dimensions: ["query"]`, `row_limit: 25000`.
-2. `pnpm seo:audit --gsc <file>`: ingests the rows and applies the rule in `packages/core/src/report/seo-audit.ts`.
+2. `npx -y -p @karailker/awesome-seo-core@0.2 awesome-seo seo-audit --gsc <file>`: ingests the rows and applies the rule in `packages/core/src/report/seo-audit.ts`.
 
 ## Method
 - Average position is taken from Search Console. Do not recompute it.

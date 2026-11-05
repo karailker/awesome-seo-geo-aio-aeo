@@ -14,7 +14,7 @@ Show whether pages declare an author and a date in structured data. Those are th
 - The crawl run's derived observations (`has_author`, `has_date`).
 
 ## Tools
-- `pnpm geo:audit --origin <origin>`.
+- `npx -y -p @karailker/awesome-seo-core@0.2 awesome-seo geo-audit --origin <origin>`.
 
 ## Method
 1. `has_author`: a JSON-LD item has an `author` property (measured).

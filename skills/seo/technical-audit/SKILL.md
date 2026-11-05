@@ -14,7 +14,7 @@ Report technical facts about the crawled URLs: status, redirects, robots access,
 - `origin`, and the latest crawl run stored in `crawl_runs`.
 
 ## Tools
-- `pnpm crawl:ingest` (stores the run).
+- `npx -y -p @karailker/awesome-seo-core@0.2 awesome-seo crawl-ingest` (stores the run).
 - `crawl_check_access` (AI crawler rules; separate skill).
 - `crawl_extract_structured_data` for a single URL to inspect.
 

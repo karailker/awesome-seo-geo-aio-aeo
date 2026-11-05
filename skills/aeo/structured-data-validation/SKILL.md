@@ -14,7 +14,7 @@ Separate two kinds of problem: markup that does not parse (syntax errors) and va
 - Crawl records: `jsonld_syntax_errors` per page and the structured data items.
 
 ## Tools
-- `pnpm geo:audit --origin <origin>`.
+- `npx -y -p @karailker/awesome-seo-core@0.2 awesome-seo geo-audit --origin <origin>`.
 - `crawl_extract_structured_data` for one URL.
 
 ## Method

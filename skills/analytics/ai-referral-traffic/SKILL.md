@@ -16,7 +16,7 @@ Count how many sessions arrive from AI assistants, and from which hosts, for one
 
 ## Tools
 - `google_ga4_run_report` with `dimensions: ["sessionSource"]`, `metrics: ["sessions", "totalUsers"]`.
-- `pnpm seo:audit --ga4 <file>`.
+- `npx -y -p @karailker/awesome-seo-core@0.2 awesome-seo seo-audit --ga4 <file>`.
 
 ## Method
 1. A source counts as AI referral if it equals a listed host or is a subdomain of one (core: `isAiReferrer`).

@@ -1,4 +1,4 @@
-// Runs the real PreToolUse hook script against a temp database. Requires a built core (pnpm -r build).
+// Runs the real PreToolUse hook script against a temp database, using the built CLI. Requires a built core.
 import { spawnSync } from "node:child_process";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -8,7 +8,7 @@ import { openStore, upsertSite, type Store } from "../db/store.js";
 import { approveProposal, createProposal } from "./engine.js";
 
 const HOOK = resolve(__dirname, "../../../../hooks/scripts/validate-approval.sh");
-const ROOT = resolve(__dirname, "../../../..");
+const CLI = `node ${resolve(__dirname, "../../dist/cli.js")}`; // the built CLI, instead of the npm package
 const SITE = "sc-domain:bulmacalig.com";
 const PAYLOAD = { site: SITE, feedpath: "https://www.bulmacalig.com/sitemap.xml" };
 const event = (input: Record<string, unknown>) =>
@@ -30,7 +30,7 @@ afterEach(() => {
 });
 
 function runHook(input: string) {
-  return spawnSync("bash", [HOOK], { input, env: { ...process.env, CLAUDE_PLUGIN_ROOT: ROOT, AWESOME_SEO_DB: dbPath }, encoding: "utf8" });
+  return spawnSync("bash", [HOOK], { input, env: { ...process.env, AWESOME_SEO_CLI: CLI, AWESOME_SEO_DB: dbPath }, encoding: "utf8" });
 }
 
 describe("PreToolUse approval gate", () => {
@@ -50,7 +50,7 @@ describe("PreToolUse approval gate", () => {
     approveProposal(store, id);
     const r = runHook(event(PAYLOAD));
     expect(r.status).toBe(0);
-    expect(r.stdout).toContain(id);
+    expect(r.stdout).toBe(""); // the hook keeps stdout clean
   });
 
   it("blocks when the payload changed after approval", () => {
@@ -71,5 +71,11 @@ describe("PreToolUse approval gate", () => {
   it("blocks an unknown write tool and malformed input (fail closed)", () => {
     expect(runHook(JSON.stringify({ tool_name: "mcp__x__unknown", tool_input: {} })).status).toBe(2);
     expect(runHook("not json").status).toBe(2);
+  });
+
+  it("turns a check that cannot run into a block, not a pass-through", () => {
+    const r = spawnSync("bash", [HOOK], { input: event(PAYLOAD), env: { ...process.env, AWESOME_SEO_CLI: "node /nonexistent/cli.js", AWESOME_SEO_DB: dbPath }, encoding: "utf8" });
+    expect(r.status).toBe(2);
+    expect(r.stderr).toContain("could not run");
   });
 });

@@ -6,7 +6,7 @@ argument-hint: "<origin> <start YYYY-MM-DD> <end YYYY-MM-DD>"
 Run the search-only SEO audit for `$ARGUMENTS`. Read-only: no approval needed. Source of truth for the rules: `docs/AGENTS-AND-SKILLS.md` and `docs/SECURITY-AND-APPROVAL.md`.
 
 1. Parse `origin`, `start`, `end`. Stop if any is missing or a date is not `YYYY-MM-DD`.
-2. Make sure the database is current (`pnpm db:migrate`) and the site is seeded (`pnpm db:seed --origin <origin>`). If not, stop and say so.
+2. Make sure the database is current (`npx -y -p @karailker/awesome-seo-core@0.2 awesome-seo migrate`) and the site is seeded (`npx -y -p @karailker/awesome-seo-core@0.2 awesome-seo seed --origin <origin>`). If not, stop and say so.
 3. Pull Search Console data for the period. Use the domain property `sc-domain:<host>` unless the user names another property. Make two calls to `mcp__plugin_awesome-seo_google__google_gsc_search_analytics`:
    - `dimensions: ["page"]`, `output_path: "gsc/<host>-pages-<start>-<end>.jsonl"`
    - `dimensions: ["query"]`, `output_path: "gsc/<host>-queries-<start>-<end>.jsonl"`
@@ -14,5 +14,5 @@ Run the search-only SEO audit for `$ARGUMENTS`. Read-only: no approval needed. S
    If a call returns `AUTH_MISSING`, `PERMISSION_DENIED`, or `NOT_FOUND`, do not stop. Record the error as missing Search Console data and continue. Never fill in values.
 4. If GA4 is connected (`GA4_PROPERTY_ID` given by the user), call `mcp__plugin_awesome-seo_google__google_ga4_run_report` twice for the period: `dimensions: ["sessionSource"]` and `dimensions: ["pagePath"]`, both with `metrics: ["sessions", "totalUsers"]`, and output paths `ga4/<host>-sources-<start>-<end>.jsonl` and `ga4/<host>-pages-<start>-<end>.jsonl`. If the call fails, record it as missing data. Traffic is not included when GA4 is not connected.
 5. Make sure sitemap URLs are ingested. If the report later says no sitemap URLs exist, tell the user to run `/sitemap-sync`.
-6. Build the report: `mkdir -p data/reports` and then `pnpm seo:audit --origin <origin> --start <start> --end <end> --gsc data/gsc/<file1> --gsc data/gsc/<file2> --ga4 data/ga4/<file3> > data/reports/seo-audit-<host>-<start>-<end>.md`. Pass only the files that were written.
+6. Build the report: `mkdir -p data/reports` and then `npx -y -p @karailker/awesome-seo-core@0.2 awesome-seo seo-audit --origin <origin> --start <start> --end <end> --gsc data/gsc/<file1> --gsc data/gsc/<file2> --ga4 data/ga4/<file3> > data/reports/seo-audit-<host>-<start>-<end>.md`. Pass only the files that were written.
 7. Show the user the report path and a short summary: the findings with their counts, the missing data, and the reconciliation counts. Quote the report's own wording. Do not add conclusions the report does not state. Do not claim sitemap or GA4 results that were not collected.

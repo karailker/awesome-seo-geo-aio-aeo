@@ -14,7 +14,7 @@ Show whether pages expose clear structure: structured data, a single H1, and no 
 - The crawl run's derived observations.
 
 ## Tools
-- `pnpm geo:audit --origin <origin>`.
+- `npx -y -p @karailker/awesome-seo-core@0.2 awesome-seo geo-audit --origin <origin>`.
 
 ## Method
 1. Count of JSON-LD items per page (measured).

@@ -11,10 +11,10 @@ Show which pages have the structural signals that make facts easy to cite: depth
 - Not for: prompt-based citation tests (out of scope for v1), or pages that were not crawled.
 
 ## Inputs
-- A crawl run ingested into `crawl_runs` and `crawl_results`, and the derived observations (`pnpm geo:audit`).
+- A crawl run ingested into `crawl_runs` and `crawl_results`, and the derived observations (`npx -y -p @karailker/awesome-seo-core@0.2 awesome-seo geo-audit`).
 
 ## Tools
-- `pnpm geo:audit --origin <origin>`.
+- `npx -y -p @karailker/awesome-seo-core@0.2 awesome-seo geo-audit --origin <origin>`.
 - `crawl_extract_structured_data` for one URL to inspect what was read.
 
 ## Method

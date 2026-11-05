@@ -15,7 +15,7 @@ Show how many pages have FAQPage markup and how many question-form queries appea
 - Search Console query observations already ingested (optional).
 
 ## Tools
-- `pnpm geo:audit --origin <origin>`.
+- `npx -y -p @karailker/awesome-seo-core@0.2 awesome-seo geo-audit --origin <origin>`.
 
 ## Method
 1. Count pages with FAQPage markup (measured).

@@ -16,7 +16,7 @@ Show how much traffic arrives from search and which pages receive it, from GA4 a
 ## Tools
 - `google_ga4_get_metadata` to confirm dimension and metric names.
 - `google_ga4_run_report` with `dimensions: ["sessionDefaultChannelGroup"]` or `["pagePath"]`, and `metrics: ["sessions", "totalUsers"]`.
-- `pnpm seo:audit --ga4 <file>` ingests the JSONL.
+- `npx -y -p @karailker/awesome-seo-core@0.2 awesome-seo seo-audit --ga4 <file>` ingests the JSONL.
 
 ## Method
 1. Sessions by session default channel group, for the period (measured).
