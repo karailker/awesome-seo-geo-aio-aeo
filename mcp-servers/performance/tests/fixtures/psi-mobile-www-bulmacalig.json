@@ -1,0 +1,65 @@
+{
+  "id": "https://www.bulmacalig.com/",
+  "loadingExperience": {
+    "metrics": {}
+  },
+  "lighthouseResult": {
+    "finalUrl": "https://www.bulmacalig.com/",
+    "categories": {
+      "performance": {
+        "score": 0.83
+      }
+    },
+    "audits": {
+      "largest-contentful-paint": {
+        "id": "largest-contentful-paint",
+        "title": "Largest Contentful Paint",
+        "score": 0.67,
+        "numericValue": 3384.3402585825065,
+        "displayValue": "3.4 s"
+      },
+      "cumulative-layout-shift": {
+        "id": "cumulative-layout-shift",
+        "title": "Cumulative Layout Shift",
+        "score": 1,
+        "numericValue": 0,
+        "displayValue": "0",
+        "details": {
+          "type": "debugdata"
+        }
+      },
+      "total-blocking-time": {
+        "id": "total-blocking-time",
+        "title": "Total Blocking Time",
+        "score": 0.98,
+        "numericValue": 102.49999999999955,
+        "displayValue": "100 ms"
+      },
+      "first-contentful-paint": {
+        "id": "first-contentful-paint",
+        "title": "First Contentful Paint",
+        "score": 0.38,
+        "numericValue": 3384.3402585825065,
+        "displayValue": "3.4 s"
+      },
+      "speed-index": {
+        "id": "speed-index",
+        "title": "Speed Index",
+        "score": 0.84,
+        "numericValue": 3799.015935238609,
+        "displayValue": "3.8 s"
+      },
+      "unused-javascript": {
+        "id": "unused-javascript",
+        "title": "Reduce unused JavaScript",
+        "score": 0,
+        "numericValue": 750,
+        "displayValue": "Est savings of 204 KiB",
+        "details": {
+          "type": "opportunity",
+          "overallSavingsMs": 750
+        }
+      }
+    }
+  }
+}
