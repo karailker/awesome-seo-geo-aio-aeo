@@ -52,10 +52,10 @@ Scope `@karailker`, MIT, public, version 0.1.0.
 | `@karailker/awesome-seo-core` | 0.1.0 live |
 | `@karailker/awesome-seo-mcp-performance` | 0.1.0 live |
 | `@karailker/awesome-seo-mcp-google` | 0.1.0 live; run via `npx` from a clean directory: 11 tools |
-| `@karailker/awesome-seo-mcp-bing` | 0.1.0 staged, not promoted (`0.0.0-stage` shown as latest) |
+| `@karailker/awesome-seo-mcp-bing` | 0.1.0 live; run via `npx` (`--prefer-online`): 6 tools |
 | `@karailker/awesome-seo-mcp-yandex` | not on the registry; publish reports 0.1.0 as already published or staged |
 
-Open: Bing and Yandex need their staged 0.1.0 approved on npmjs.com (package page, staged or pending publications), or a new version (0.1.1) published. Staged versions block re-publishing the same version. `.mcp.json` uses `npx -y` for all four TypeScript servers, so the Bing and Yandex servers do not start from npm until these are live.
+Open: Yandex is not on the registry. Its publish reported 0.1.0 as already published or staged. Approve the staged version on npmjs.com or publish 0.1.1. `.mcp.json` uses `npx -y` for all four TypeScript servers, so the Yandex server does not start from npm until it is live. A fresh `npx` may hit a cached "no matching version" error; use `--prefer-online`.
 
 ## Known gaps
 
