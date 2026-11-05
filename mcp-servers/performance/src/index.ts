@@ -1,6 +1,6 @@
-// performance MCP server (P5): PageSpeed Insights and CrUX. Lighthouse local fallback comes later.
+// performance MCP server (P5): PageSpeed Insights, CrUX, and a local Lighthouse run used as fallback.
 import { capabilitiesPayload, healthPayload, serveMcp, z, type StubServerConfig } from "@awesome-seo/core";
-import { CRUX_KEY_VAR, cruxQuery, PSI_KEY_VAR, psiRun } from "./tools.js";
+import { CRUX_KEY_VAR, cruxQuery, lighthouseLocalRun, PSI_KEY_VAR, psiRun } from "./tools.js";
 
 const CONFIG: StubServerConfig = {
   prefix: "performance",
@@ -12,6 +12,7 @@ const CONFIG: StubServerConfig = {
     { name: "performance_capabilities", access: "read", credentials: [] },
     { name: "performance_psi_run", access: "read", credentials: [PSI_KEY_VAR] },
     { name: "performance_crux_query", access: "read", credentials: [CRUX_KEY_VAR] },
+    { name: "performance_lighthouse_local_run", access: "read", credentials: [] },
   ],
 };
 
@@ -36,9 +37,21 @@ serveMcp(CONFIG.name, CONFIG.version, (server) => {
       inputSchema: {
         url: z.string().url(),
         strategy: z.enum(["mobile", "desktop"]).default("mobile"),
+        fallback_local: z.boolean().default(true).describe("Run local Lighthouse when PSI fails"),
       },
     },
     async (args) => asText(await psiRun(args)),
+  );
+  server.registerTool(
+    "performance_lighthouse_local_run",
+    {
+      description: "Local Lighthouse run on this machine (system Chrome; CHROME_PATH optional). Lab values only, tagged lighthouse-local.",
+      inputSchema: {
+        url: z.string().url(),
+        strategy: z.enum(["mobile", "desktop"]).default("mobile"),
+      },
+    },
+    async (args) => asText(await lighthouseLocalRun(args)),
   );
   server.registerTool(
     "performance_crux_query",

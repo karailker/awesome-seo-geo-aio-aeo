@@ -9,11 +9,13 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@awesome-seo/core": "workspace:*"
+    "@awesome-seo/core": "workspace:*",
+    "chrome-launcher": "^1.2.2",
+    "lighthouse": "^13.6.0"
   },
   "devDependencies": {
+    "@types/node": "^22.0.0",
     "typescript": "^5.6.0",
-    "vitest": "^3.0.0",
-    "@types/node": "^22.0.0"
+    "vitest": "^3.0.0"
   }
 }

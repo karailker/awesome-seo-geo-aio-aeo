@@ -3,7 +3,8 @@
 import type { ToolResult } from "@awesome-seo/core";
 import { mapCrux, queryCrux, type FormFactor } from "./crux.js";
 import { PerfError } from "./errors.js";
-import { mapPsi, runPsi, type Strategy } from "./psi.js";
+import { runLighthouseLocal } from "./lighthouse.js";
+import { mapLab, mapPsi, runPsi, type Strategy } from "./psi.js";
 
 export const PSI_KEY_VAR = "PAGESPEED_API_KEY";
 export const CRUX_KEY_VAR = "CRUX_API_KEY";
@@ -49,10 +50,34 @@ function isHttpUrl(value: string): boolean {
   }
 }
 
-export async function psiRun(
+export type LocalRunner = (url: string, strategy: Strategy) => Promise<unknown>;
+
+// Local Lighthouse: lab only. Tagged source "lighthouse-local"; field values are not produced at all.
+export async function lighthouseLocalRun(
   input: { url: string; strategy: Strategy },
+  runner: LocalRunner = runLighthouseLocal,
+): Promise<ToolResult<unknown>> {
+  try {
+    if (!isHttpUrl(input.url)) throw new PerfError("INVALID_INPUT", "url must be an http(s) URL", false);
+    const lhr = await runner(input.url, input.strategy);
+    const { lab, opportunities } = mapLab(lhr as Record<string, any>);
+    return ok(
+      "lighthouse-local",
+      { url: input.url, strategy: input.strategy, lab, field: null, fieldAvailable: false, opportunities },
+      ["Local Lighthouse run: lab values only, from this machine and network. No field data."],
+    );
+  } catch (err) {
+    return fail("lighthouse-local", err);
+  }
+}
+
+// PSI first. When PSI fails for any reason except bad input, the local run is used and the PSI
+// error code is reported in the warnings. fallback_local: false turns this off.
+export async function psiRun(
+  input: { url: string; strategy: Strategy; fallback_local?: boolean },
   env: Env = process.env,
   fetchImpl: Fetch = fetch,
+  runner: LocalRunner = runLighthouseLocal,
 ): Promise<ToolResult<unknown>> {
   try {
     if (!isHttpUrl(input.url)) throw new PerfError("INVALID_INPUT", "url must be an http(s) URL", false);
@@ -79,7 +104,24 @@ export async function psiRun(
       warnings,
     );
   } catch (err) {
-    return fail("psi", err);
+    const psiError = err instanceof PerfError ? err : new PerfError("UPSTREAM_ERROR", "Unexpected error", false);
+    // Only a bad URL skips the fallback. A bad key also returns 400 from PSI, and that must fall back.
+    if (!isHttpUrl(input.url) || input.fallback_local === false) return fail("psi", psiError);
+
+    const local = await lighthouseLocalRun({ url: input.url, strategy: input.strategy }, runner);
+    if (!local.ok) {
+      return {
+        ...local,
+        errors: [
+          ...local.errors,
+          { code: psiError.code, message: `PageSpeed Insights failed first: ${psiError.message}`, retryable: psiError.retryable },
+        ],
+      };
+    }
+    return {
+      ...local,
+      warnings: [`PageSpeed Insights failed (${psiError.code}); this result is from the local Lighthouse fallback.`, ...local.warnings],
+    };
   }
 }
 

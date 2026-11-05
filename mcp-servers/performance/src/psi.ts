@@ -57,9 +57,10 @@ export async function runPsi(
 
 type Json = Record<string, any>;
 
-export function mapPsi(raw: Json): PsiMapped {
-  const audits: Json = raw?.lighthouseResult?.audits ?? {};
-  const score = raw?.lighthouseResult?.categories?.performance?.score;
+// Lab values and opportunities from a Lighthouse result (`lhr`). Shared by PSI and the local run.
+export function mapLab(lhr: Json): { lab: PsiMapped["lab"]; opportunities: Opportunity[] } {
+  const audits: Json = lhr?.audits ?? {};
+  const score = lhr?.categories?.performance?.score;
 
   const lab: PsiMapped["lab"] = {
     lab_performance_score: typeof score === "number" ? Math.round(score * 100) : null,
@@ -67,15 +68,6 @@ export function mapPsi(raw: Json): PsiMapped {
   for (const [name, auditId] of LAB_AUDITS) {
     const value = audits[auditId]?.numericValue;
     lab[name] = typeof value === "number" ? value : null;
-  }
-
-  const metrics: Json = raw?.loadingExperience?.metrics ?? {};
-  const field: PsiMapped["field"] = {
-    field_category: raw?.loadingExperience?.overall_category ?? null,
-  } as PsiMapped["field"];
-  for (const m of FIELD_METRICS) {
-    const p75 = metrics[m.key]?.percentile;
-    field[m.name] = typeof p75 === "number" ? p75 * m.scale : null;
   }
 
   const opportunities: Opportunity[] = Object.values(audits)
@@ -87,6 +79,21 @@ export function mapPsi(raw: Json): PsiMapped {
     }))
     .sort((x, y) => (y.savingsMs ?? 0) - (x.savingsMs ?? 0))
     .slice(0, 10);
+
+  return { lab, opportunities };
+}
+
+export function mapPsi(raw: Json): PsiMapped {
+  const { lab, opportunities } = mapLab(raw?.lighthouseResult ?? {});
+
+  const metrics: Json = raw?.loadingExperience?.metrics ?? {};
+  const field: PsiMapped["field"] = {
+    field_category: raw?.loadingExperience?.overall_category ?? null,
+  } as PsiMapped["field"];
+  for (const m of FIELD_METRICS) {
+    const p75 = metrics[m.key]?.percentile;
+    field[m.name] = typeof p75 === "number" ? p75 * m.scale : null;
+  }
 
   return {
     lab,
