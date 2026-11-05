@@ -9,6 +9,8 @@ export * from "./ingest/sitemap.js";
 export * from "./ingest/gsc.js";
 export * from "./ingest/crawl.js";
 export * from "./ingest/geo.js";
+export * from "./ingest/ga4.js";
+export * from "./analysis/ai-referrers.js";
 export * from "./report/geo-audit.js";
 export * from "./ingest/jsonl.js";
 export * from "./analysis/evidence.js";

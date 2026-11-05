@@ -2,6 +2,7 @@
 // Every finding cites observation ids; findings that fail the evidence gate are dropped and listed.
 import { validateFindings, type Finding } from "../analysis/evidence.js";
 import { reconcileSitemapWithGsc } from "../analysis/reconcile.js";
+import { isAiReferrer } from "../analysis/ai-referrers.js";
 import type { Store } from "../db/store.js";
 
 // Project-defined thresholds, not official ranking factors (CLAUDE.md rule 10). Move to docs/SCORING.md when written.
@@ -109,7 +110,8 @@ export function buildSeoAuditReport(store: Store, input: ReportInput): string {
     .prepare("SELECT COUNT(*) AS n, MAX(last_seen_at) AS seen FROM pages WHERE site_id = ? AND source = 'sitemap'")
     .get(input.siteId) as { n: number; seen: string | null };
 
-  const candidates = gscAvailable ? findingsFrom(pages, queries) : [];
+  const traffic = ga4TrafficSection(store, input);
+  const candidates = [...(gscAvailable ? findingsFrom(pages, queries) : []), ...(traffic.aiFinding ? [traffic.aiFinding] : [])];
   const { valid, problems } = validateFindings(store, input.siteId, candidates);
   const recon = reconcileSitemapWithGsc(store, input.siteId, input.periodStart, input.periodEnd);
 
@@ -158,6 +160,8 @@ export function buildSeoAuditReport(store: Store, input: ReportInput): string {
   }
 
   sections.push(
+    ...traffic.lines,
+    "",
     "## Sitemap and Search Console reconciliation",
     gscAvailable && recon.gscPageCount > 0
       ? [
@@ -182,4 +186,40 @@ export function buildSeoAuditReport(store: Store, input: ReportInput): string {
     "",
   );
   return sections.join("\n");
+}
+
+// GA4 traffic for the period: total sessions by source and AI referral sessions. Measured.
+export function ga4TrafficSection(store: Store, input: ReportInput): { lines: string[]; aiFinding: Finding | null } {
+  const rows = store.sqlite
+    .prepare(
+      `SELECT id, value, json_extract(dimensions_json, '$.sessionSource') AS source FROM observations
+       WHERE site_id = ? AND source = 'ga4' AND metric = 'sessions' AND period_start = ? AND period_end = ?
+         AND json_extract(dimensions_json, '$.sessionSource') IS NOT NULL`,
+    )
+    .all(input.siteId, input.periodStart, input.periodEnd) as { id: string; value: number; source: string }[];
+  if (rows.length === 0) {
+    return { lines: ["## Traffic (GA4)", "Not available: no GA4 session-source data for this period."], aiFinding: null };
+  }
+  const total = rows.reduce((sum, r) => sum + r.value, 0);
+  const ai = rows.filter((r) => isAiReferrer(r.source));
+  const aiTotal = ai.reduce((sum, r) => sum + r.value, 0);
+  const lines = [
+    "## Traffic (GA4)",
+    `- Sessions in ${rows.length} source group(s) for ${input.periodStart} to ${input.periodEnd}: ${total}.`,
+    `- AI referral sessions: ${aiTotal} from ${ai.length} source(s): ${ai.map((r) => `${r.source} (${r.value})`).join(", ") || "none"}.`,
+  ];
+  const aiFinding: Finding | null =
+    ai.length > 0
+      ? {
+          id: "ga4-ai-referral-sessions",
+          title: `${aiTotal} AI referral session(s) in the period`,
+          severity: "info",
+          confidence: "high",
+          description: "Sessions whose source is an AI assistant host (knowledge/ai-referrers.md). Direct GA4 data; the host list is project-defined.",
+          affectedCount: ai.length,
+          evidenceIds: ai.map((r) => r.id),
+          basis: "measured",
+        }
+      : null;
+  return { lines, aiFinding };
 }

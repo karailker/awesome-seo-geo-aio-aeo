@@ -5,10 +5,12 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { validateFindings, type Finding } from "../analysis/evidence.js";
 import { reconcileSitemapWithGsc } from "../analysis/reconcile.js";
 import { ingestGscJsonl } from "../ingest/gsc.js";
+import { ingestGa4Jsonl } from "../ingest/ga4.js";
 import { openStore, upsertPage, upsertSite, type Store } from "../db/store.js";
 import { buildSeoAuditReport } from "./seo-audit.js";
 
 const GSC = readFileSync(new URL("../../tests/fixtures/gsc/period-run.jsonl", import.meta.url), "utf8");
+const GA4_SOURCES = readFileSync(new URL("../../tests/fixtures/ga4/sources-2026-10.jsonl", import.meta.url), "utf8");
 const SITE_ID = "site-1";
 const PERIOD = { periodStart: "2026-10-01", periodEnd: "2026-10-31" };
 const INPUT = { siteId: SITE_ID, origin: "https://example.com", ...PERIOD };
@@ -102,6 +104,22 @@ describe("buildSeoAuditReport", () => {
     const report = buildSeoAuditReport(store, INPUT);
 
     expect(report).toContain("3 URLs equals the URL cap (3). The sitemap may be truncated");
+  });
+
+  it("reports GA4 AI referral sessions as a measured finding with evidence", () => {
+    ingestGa4Jsonl(store, SITE_ID, "https://example.com", GA4_SOURCES);
+
+    const report = buildSeoAuditReport(store, INPUT);
+
+    expect(report).toContain("- AI referral sessions: 14 from 1 source(s): chatgpt.com (14).");
+    expect(report).toContain("### 14 AI referral session(s) in the period");
+    expect(report).toContain("Candidate findings: 1. Kept: 1. Dropped: 0.");
+  });
+
+  it("states GA4 traffic is not available without session-source data", () => {
+    const report = buildSeoAuditReport(store, INPUT);
+
+    expect(report).toContain("Not available: no GA4 session-source data for this period.");
   });
 
   it("states Search Console is not available and reports no findings without rows", () => {
