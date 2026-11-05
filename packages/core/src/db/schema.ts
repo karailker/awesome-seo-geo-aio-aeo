@@ -82,3 +82,47 @@ export const apiCache = sqliteTable("api_cache", {
   createdAt: text("created_at").notNull(),
   expiresAt: text("expires_at").notNull(),
 });
+
+// P4: one row per crawl_fetch_pages JSONL file.
+export const crawlRuns = sqliteTable("crawl_runs", {
+  id: text("id").primaryKey(), // run_id from the crawler
+  siteId: text("site_id")
+    .notNull()
+    .references(() => sites.id),
+  startedAt: text("started_at").notNull(),
+  finishedAt: text("finished_at").notNull(),
+  urlCount: integer("url_count").notNull(),
+  status: text("status").notNull(), // completed | partial
+  jsonlPath: text("jsonl_path"),
+});
+
+// P4: one row per URL in a run. Extra columns beyond docs/DATA-MODEL.md keep hreflang and headings.
+export const crawlResults = sqliteTable(
+  "crawl_results",
+  {
+    id: text("id").primaryKey(),
+    runId: text("run_id")
+      .notNull()
+      .references(() => crawlRuns.id),
+    pageId: text("page_id")
+      .notNull()
+      .references(() => pages.id),
+    fetchedAt: text("fetched_at").notNull(),
+    status: integer("status"),
+    finalUrl: text("final_url"),
+    redirectChainJson: text("redirect_chain_json"),
+    title: text("title"),
+    metaDescription: text("meta_description"),
+    canonical: text("canonical"),
+    lang: text("lang"),
+    hreflangJson: text("hreflang_json"),
+    headingsJson: text("headings_json"),
+    wordCount: integer("word_count"),
+    contentHash: text("content_hash"),
+    robotsAllowed: integer("robots_allowed"), // 1 allowed, 0 disallowed, null unknown
+    structuredDataJson: text("structured_data_json"),
+    rawHtmlPath: text("raw_html_path"),
+    errorsJson: text("errors_json"),
+  },
+  (t) => [index("idx_crawl_results_run").on(t.runId)],
+);

@@ -44,7 +44,7 @@ describe("migrations", () => {
     store = openStore(dbPath);
 
     expect(appliedAgain).toEqual([]);
-    expect(versions).toEqual([0]);
+    expect(versions).toEqual([0, 1]);
   });
 });
 
