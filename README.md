@@ -40,6 +40,18 @@ cd mcp-servers/crawl && uv sync && cd ../..
 
 Run the tests with `corepack pnpm -r test` and `cd mcp-servers/crawl && uv run pytest`.
 
+## MCP servers on npm
+
+The TypeScript MCP servers are published under the `@karailker` scope and run with `npx`:
+
+- `@karailker/awesome-seo-mcp-google` (Search Console, GA4)
+- `@karailker/awesome-seo-mcp-yandex` (Metrica, Webmaster)
+- `@karailker/awesome-seo-mcp-bing` (Bing Webmaster)
+- `@karailker/awesome-seo-mcp-performance` (PageSpeed, CrUX, local Lighthouse)
+- `@karailker/awesome-seo-core` (shared library, a dependency of the servers)
+
+`.mcp.json` starts them with `npx -y <package>`, so no local build is needed for those servers. The crawler (Python) still runs from the repo with `uv`, and the commands, hooks, and scripts still need the repo checkout.
+
 ## Load the plugin in Claude Code
 
 **Development (from the repo):**
@@ -63,7 +75,7 @@ claude plugin marketplace add <source>      # a path, URL, or GitHub owner/repo 
 claude plugin install awesome-seo@<marketplace-name>
 ```
 
-No marketplace manifest is published yet, and built servers are not committed to git. See "Open decisions" in `STATUS.md`. Until that is settled, use `--plugin-dir`.
+No marketplace manifest is published yet. Until it is, use `--plugin-dir`.
 
 ## Credentials
 
