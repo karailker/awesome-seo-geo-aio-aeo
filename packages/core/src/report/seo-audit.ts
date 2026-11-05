@@ -197,8 +197,9 @@ export function ga4TrafficSection(store: Store, input: ReportInput): { lines: st
          AND json_extract(dimensions_json, '$.sessionSource') IS NOT NULL`,
     )
     .all(input.siteId, input.periodStart, input.periodEnd) as { id: string; value: number; source: string }[];
+  const metrica = metricaLines(store, input);
   if (rows.length === 0) {
-    return { lines: ["## Traffic (GA4)", "Not available: no GA4 session-source data for this period."], aiFinding: null };
+    return { lines: ["## Traffic (GA4)", "Not available: no GA4 session-source data for this period.", ...metrica], aiFinding: null };
   }
   const total = rows.reduce((sum, r) => sum + r.value, 0);
   const ai = rows.filter((r) => isAiReferrer(r.source));
@@ -208,6 +209,7 @@ export function ga4TrafficSection(store: Store, input: ReportInput): { lines: st
     `- Sessions in ${rows.length} source group(s) for ${input.periodStart} to ${input.periodEnd}: ${total}.`,
     `- AI referral sessions: ${aiTotal} from ${ai.length} source(s): ${ai.map((r) => `${r.source} (${r.value})`).join(", ") || "none"}.`,
   ];
+  lines.push(...metrica);
   const aiFinding: Finding | null =
     ai.length > 0
       ? {
@@ -222,4 +224,21 @@ export function ga4TrafficSection(store: Store, input: ReportInput): { lines: st
         }
       : null;
   return { lines, aiFinding };
+}
+
+// Yandex Metrica traffic sources for the period (measured). Empty when nothing was ingested.
+function metricaLines(store: Store, input: ReportInput): string[] {
+  const rows = store.sqlite
+    .prepare(
+      `SELECT json_extract(dimensions_json, '$.ym:s:trafficSource') AS source, value FROM observations
+       WHERE site_id = ? AND source = 'yandex_metrica' AND metric = 'ym:s:visits' AND period_start = ? AND period_end = ?`,
+    )
+    .all(input.siteId, input.periodStart, input.periodEnd) as { source: string | null; value: number }[];
+  if (rows.length === 0) return [];
+  const total = rows.reduce((sum, r) => sum + r.value, 0);
+  return [
+    `- Yandex Metrica: ${total} visits in ${rows.length} traffic source(s) for ${input.periodStart} to ${input.periodEnd}: ${rows
+      .map((r) => `${r.source ?? "unknown"} (${r.value})`)
+      .join(", ")}.`,
+  ];
 }

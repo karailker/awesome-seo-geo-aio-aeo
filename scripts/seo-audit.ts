@@ -1,10 +1,10 @@
 // Prints the Search Console and sitemap audit for one period as Markdown.
 // Optionally ingests a google_gsc_search_analytics JSONL file first.
-// Usage: pnpm seo:audit --origin https://example.com --start 2026-09-01 --end 2026-10-31 [--gsc file.jsonl] [--ga4 file.jsonl]
+// Usage: pnpm seo:audit --origin https://example.com --start 2026-09-01 --end 2026-10-31 [--gsc file.jsonl] [--ga4 file.jsonl] [--metrica file.jsonl]
 // Requires a built core (pnpm -r build) and a seeded site (pnpm db:seed). Path override: AWESOME_SEO_DB.
 import { readFileSync } from "node:fs";
 import { parseArgs } from "node:util";
-import { buildSeoAuditReport, ingestGa4Jsonl, ingestGscJsonl, normalizeUrl, openStore } from "../packages/core/dist/index.js";
+import { buildSeoAuditReport, ingestGa4Jsonl, ingestGscJsonl, ingestMetricaJsonl, normalizeUrl, openStore } from "../packages/core/dist/index.js";
 
 const { values } = parseArgs({
   options: {
@@ -13,6 +13,7 @@ const { values } = parseArgs({
     end: { type: "string" },
     gsc: { type: "string", multiple: true },
     ga4: { type: "string", multiple: true },
+    metrica: { type: "string", multiple: true },
   },
 });
 
@@ -35,6 +36,9 @@ try {
   }
   for (const file of values.gsc ?? []) {
     ingestGscJsonl(store, site.id, readFileSync(file, "utf8"));
+  }
+  for (const file of values.metrica ?? []) {
+    ingestMetricaJsonl(store, site.id, readFileSync(file, "utf8"));
   }
   for (const file of values.ga4 ?? []) {
     ingestGa4Jsonl(store, site.id, origin, readFileSync(file, "utf8"));

@@ -1,0 +1,106 @@
+{
+  "_note": "Recorded from the live Yandex Webmaster API v4 for host https:www.bulmacalig.com:443 (not ownership-verified). Trimmed: first 5 queries only; aggregates otherwise.",
+  "user_id": 2431724119,
+  "summary": {
+    "sqi": 0,
+    "excluded_pages_count": 461,
+    "searchable_pages_count": 29,
+    "site_problems": {
+      "RECOMMENDATION": 2
+    }
+  },
+  "queries_count": 49,
+  "queries": [
+    {
+      "query_id": "bee4433fe65e4042",
+      "query_text": "bulmaca sözlüğü",
+      "indicators": {
+        "TOTAL_SHOWS": 4
+      }
+    },
+    {
+      "query_id": "589224d205522074",
+      "query_text": "anlam bulmaca",
+      "indicators": {
+        "TOTAL_SHOWS": 4
+      }
+    },
+    {
+      "query_id": "145ddb01f0e6ab51",
+      "query_text": "kare bulmaca",
+      "indicators": {
+        "TOTAL_SHOWS": 3
+      }
+    },
+    {
+      "query_id": "b6d455c6a36ed1f4",
+      "query_text": "söylence bulmaca",
+      "indicators": {
+        "TOTAL_SHOWS": 2
+      }
+    },
+    {
+      "query_id": "bf282ad6b9577a18",
+      "query_text": "mecazen kötü huy bulmaca sözlüğü",
+      "indicators": {
+        "TOTAL_SHOWS": 2
+      }
+    }
+  ],
+  "in_search_history": [
+    {
+      "date": "2026-09-23T10:00:05.948+03:00",
+      "value": 17
+    },
+    {
+      "date": "2026-09-24T10:00:10.768+03:00",
+      "value": 17
+    },
+    {
+      "date": "2026-09-26T10:00:10.143+03:00",
+      "value": 17
+    },
+    {
+      "date": "2026-09-28T10:00:01.162+03:00",
+      "value": 17
+    },
+    {
+      "date": "2026-09-30T10:00:04.421+03:00",
+      "value": 17
+    },
+    {
+      "date": "2026-10-02T10:00:05.489+03:00",
+      "value": 17
+    },
+    {
+      "date": "2026-10-05T10:20:04.297+03:00",
+      "value": 17
+    },
+    {
+      "date": "2026-10-07T10:00:09.495+03:00",
+      "value": 29
+    }
+  ],
+  "sitemaps": [
+    {
+      "sitemap_url": "https://www.bulmacalig.com/sitemap-pages.xml",
+      "errors_count": 0
+    },
+    {
+      "sitemap_url": "https://www.bulmacalig.com/sitemap-sozluk-1.xml",
+      "errors_count": 0
+    },
+    {
+      "sitemap_url": "https://www.bulmacalig.com/sitemap-sozluk-hubs.xml",
+      "errors_count": 0
+    },
+    {
+      "sitemap_url": "https://www.bulmacalig.com/sitemap.xml",
+      "errors_count": 0
+    }
+  ],
+  "recrawl_quota": {
+    "daily_quota": 150,
+    "quota_remainder": 150
+  }
+}

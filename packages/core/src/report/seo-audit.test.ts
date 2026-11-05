@@ -6,10 +6,12 @@ import { validateFindings, type Finding } from "../analysis/evidence.js";
 import { reconcileSitemapWithGsc } from "../analysis/reconcile.js";
 import { ingestGscJsonl } from "../ingest/gsc.js";
 import { ingestGa4Jsonl } from "../ingest/ga4.js";
+import { ingestMetricaJsonl } from "../ingest/metrica.js";
 import { openStore, upsertPage, upsertSite, type Store } from "../db/store.js";
 import { buildSeoAuditReport } from "./seo-audit.js";
 
 const GSC = readFileSync(new URL("../../tests/fixtures/gsc/period-run.jsonl", import.meta.url), "utf8");
+const METRICA = readFileSync(new URL("../../tests/fixtures/metrica/traffic-2026-10.jsonl", import.meta.url), "utf8");
 const GA4_SOURCES = readFileSync(new URL("../../tests/fixtures/ga4/sources-2026-10.jsonl", import.meta.url), "utf8");
 const SITE_ID = "site-1";
 const PERIOD = { periodStart: "2026-10-01", periodEnd: "2026-10-31" };
@@ -114,6 +116,14 @@ describe("buildSeoAuditReport", () => {
     expect(report).toContain("- AI referral sessions: 14 from 1 source(s): chatgpt.com (14).");
     expect(report).toContain("### 14 AI referral session(s) in the period");
     expect(report).toContain("Candidate findings: 1. Kept: 1. Dropped: 0.");
+  });
+
+  it("adds Yandex Metrica visits by traffic source to the traffic section", () => {
+    ingestMetricaJsonl(store, SITE_ID, METRICA);
+
+    const report = buildSeoAuditReport(store, INPUT);
+
+    expect(report).toContain("- Yandex Metrica: 396 visits in 6 traffic source(s) for 2026-10-01 to 2026-10-31: Direct traffic (235)");
   });
 
   it("states GA4 traffic is not available without session-source data", () => {

@@ -42,18 +42,19 @@ Not verified:
 - The OAuth client file the user supplied is not used. It stays in place as the user asked.
 - Git: old commits `c3d92bd`, `489679a`, `ddbbb52`, `05374db` (pre-rewrite) still appear on GitHub with `Co-Authored-By: Claude Code` trailers. They are not reachable from `main` on the remote. GitHub's contributor API currently lists only `karailker`.
 
-## P7 progress (2026-11-05)
+## P7 (2026-11-05): complete
 
-- Yandex Metrica: `yandex_metrica_report` verified live (counter 113337943, token via consent, scope metrika:read). Fixture recorded.
-- GA4: `google_ga4_get_metadata` and `google_ga4_run_report` verified live (property 552874034, service account with analytics.readonly, GA4 Data API enabled in bulmacalig-b70a8). Personal dimensions refused. Core ingest `ingestGa4Jsonl` (source `ga4`, pagePath as full URLs).
-- Traffic in the SEO audit: `seo:audit --ga4` adds "Traffic (GA4)" and the measured finding `ga4-ai-referral-sessions`. Live October 2026: 619 sessions, 14 from chatgpt.com. Host list in `knowledge/ai-referrers.md` and `AI_REFERRER_HOSTS`.
-- Agent `traffic-analyst`, skills `analytics/organic-attribution` and `analytics/ai-referral-traffic`, and the GA4 step in `/seo-audit`.
+- Yandex Metrica: `yandex_metrica_report` (optional JSONL output), core `ingestMetricaJsonl`, traffic-source visits in the "Traffic (GA4)" section of `seo:audit --metrica`. Live: 396 visits in 6 sources, October 2026.
+- GA4: `google_ga4_get_metadata`, `google_ga4_run_report`, core `ingestGa4Jsonl`, AI referral finding. Live: 619 sessions, 14 from chatgpt.com.
+- Agent `traffic-analyst`, skills `analytics/organic-attribution` and `analytics/ai-referral-traffic`, `knowledge/ai-referrers.md`.
 
-Open:
-- Yandex Metrica data is not ingested into observations, so it is not in the report yet. The tool works; the ingest and report section are missing.
-- GA4 fixtures in core are recorded from the live API; the ingest tests use them.
+## P8 (2026-11-05): partial
 
-## Next: P7 completion, then P8 (Bing and Yandex Webmaster)
+- Yandex Webmaster (`yandex_webmaster_hosts`, `_host_summary`, `_search_queries`, `_indexing`): verified live against `https:www.bulmacalig.com:443`. The host is NOT ownership-verified in Yandex Webmaster, so summary counts (461 excluded, 29 searchable) and query data may be partial. Indexing history path confirmed; per-URL indexing samples endpoint returns 404 for this host, so per-URL reconciliation with Yandex is not possible yet.
+- Bing: not started. Needs a Bing Webmaster API key (`BING_WEBMASTER_API_KEY`, `.env.example`).
+- Reconciliation across three sources is not done (depends on Bing and on per-URL Yandex data).
+
+## Next: P8 (Bing Webmaster, reconciliation across three sources)
 
 Scope from ROADMAP: `google_ga4_run_report`, `google_ga4_get_metadata` (google MCP), `yandex_metrica_report` (yandex MCP, which is still a stub), `traffic-analyst` agent, skills `analytics/organic-attribution` and `analytics/ai-referral-traffic` (AI referral source list in `knowledge/`), and inclusion in `/seo-audit` when connections exist. Needs a GA4 property ID and service account access to the property, and a Metrica counter and OAuth token. Confirm both before starting.
 
