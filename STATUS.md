@@ -57,6 +57,13 @@ Scope `@karailker`, MIT, public, version 0.1.0.
 
 All five packages are live at 0.1.0. A fresh `npx` may hit a cached "no matching version" error right after publishing; use `--prefer-online`.
 
+## Plugin distribution (2026-11-05)
+
+- Plugin 0.2.0 is self-contained: commands, hook, and skills call `npx -y -p @karailker/awesome-seo-core@0.2 awesome-seo <cmd>`. The repo scripts were removed. MCP servers start with `npx -y @karailker/awesome-seo-mcp-*` (live on npm). The crawler still runs from the plugin folder with `uv`.
+- The hook fails closed: exit 0 allows, exit 2 blocks, any other result of the check becomes a block. Tested with the packed core tarball through npx, including a broken CLI.
+- Marketplace: `.claude-plugin/marketplace.json` at the repo root (plugin source `./`). Validated. Install from a local copy failed on WSL symlinks in `node_modules`; a git clone has none, so the GitHub path is the real test.
+- Not yet live: `@karailker/awesome-seo-core@0.2.0` must be published. The hook and commands depend on it. Publish with `cd packages/core && corepack pnpm publish --access public --no-git-checks --otp <code>` (fresh code), then test `/plugin marketplace add karailker/awesome-seo-geo-aio-aeo` and `/plugin install awesome-seo --marketplace karailker/awesome-seo-geo-aio-aeo` in a clean Claude Code session.
+
 ## Known gaps
 
 - Yandex write: not yet successful. Retry after the Yandex incident with a new proposal and approval.
