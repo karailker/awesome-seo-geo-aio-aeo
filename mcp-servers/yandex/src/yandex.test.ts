@@ -60,8 +60,8 @@ describe("mapping and tool", () => {
   it("maps rows and totals by name", () => {
     const mapped = mapMetrica(raw, q);
 
-    expect(mapped.rows[0]).toEqual({ dimensions: { "ym:s:trafficSource": "organic" }, metrics: { "ym:s:visits": 820, "ym:s:users": 610 } });
-    expect(mapped.totals).toEqual({ "ym:s:visits": 1120, "ym:s:users": 850 });
+    expect(mapped.rows[0]).toEqual({ dimensions: { "ym:s:trafficSource": "Direct traffic" }, metrics: { "ym:s:visits": 235, "ym:s:users": 224 } });
+    expect(mapped.totals).toEqual({ "ym:s:visits": 396, "ym:s:users": 370 });
     expect(mapped.sampleShare).toBe(1);
   });
 

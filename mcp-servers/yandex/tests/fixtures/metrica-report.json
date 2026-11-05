@@ -1,11 +1,131 @@
 {
-  "_note": "Hand-written from the documented Stat API response shape. Not recorded: no token yet. Replace with a live response before relying on it.",
-  "query": { "dimensions": ["ym:s:trafficSource"], "metrics": ["ym:s:visits", "ym:s:users"] },
+  "_note": "Recorded from the live Metrica Stat API (counter 113337943, 2026-10-01 to 2026-10-31, traffic source). Aggregates only; trimmed to the fields the mapper reads.",
+  "query": {
+    "ids": [
+      113337943
+    ],
+    "dimensions": [
+      "ym:s:trafficSource"
+    ],
+    "metrics": [
+      "ym:s:visits",
+      "ym:s:users"
+    ],
+    "sort": [
+      "-ym:s:visits"
+    ],
+    "date1": "2026-10-01",
+    "date2": "2026-10-31",
+    "limit": 100,
+    "offset": 1,
+    "group": "Week",
+    "benchmarks_version": "1792972800000",
+    "benchmarks_sub_industry": "false",
+    "auto_group_size": "1",
+    "exp_bucket_size": "100",
+    "attr_name": "",
+    "funnel_window": "",
+    "benchmarks_quantile": "50",
+    "time_interval": "1SECOND",
+    "intervals": "1",
+    "quantile": "50",
+    "offline_window": "21",
+    "attribution": "CROSS_DEVICE_LAST_SIGNIFICANT",
+    "currency": "TRY",
+    "benchmarks_attribution": "Automatic",
+    "adfox_event_id": "0",
+    "funnel_pattern": ""
+  },
   "data": [
-    { "dimensions": [{ "name": "organic" }], "metrics": [820, 610] },
-    { "dimensions": [{ "name": "direct" }], "metrics": [300, 240] }
+    {
+      "dimensions": [
+        {
+          "icon_id": "0",
+          "icon_type": "traffic-source",
+          "name": "Direct traffic",
+          "id": "direct"
+        }
+      ],
+      "metrics": [
+        235,
+        224
+      ]
+    },
+    {
+      "dimensions": [
+        {
+          "icon_id": "3",
+          "icon_type": "traffic-source",
+          "name": "Ad traffic",
+          "id": "ad"
+        }
+      ],
+      "metrics": [
+        94,
+        87
+      ]
+    },
+    {
+      "dimensions": [
+        {
+          "icon_id": "2",
+          "icon_type": "traffic-source",
+          "name": "Search engine traffic",
+          "id": "organic"
+        }
+      ],
+      "metrics": [
+        59,
+        54
+      ]
+    },
+    {
+      "dimensions": [
+        {
+          "icon_id": "1",
+          "icon_type": "traffic-source",
+          "name": "Link traffic",
+          "id": "referral"
+        }
+      ],
+      "metrics": [
+        6,
+        6
+      ]
+    },
+    {
+      "dimensions": [
+        {
+          "icon_id": "-1",
+          "icon_type": "traffic-source",
+          "name": "Internal traffic",
+          "id": "internal"
+        }
+      ],
+      "metrics": [
+        1,
+        1
+      ]
+    },
+    {
+      "dimensions": [
+        {
+          "icon_id": "8",
+          "icon_type": "traffic-source",
+          "name": "Social network traffic",
+          "id": "social"
+        }
+      ],
+      "metrics": [
+        1,
+        1
+      ]
+    }
   ],
-  "totals": [1120, 850],
-  "total_rows": 2,
+  "totals": [
+    396,
+    370
+  ],
+  "total_rows": 6,
   "sample_share": 1
 }
