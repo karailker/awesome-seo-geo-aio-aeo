@@ -4,10 +4,10 @@ A local Claude Code plugin that audits one website across SEO, GEO (generative e
 visibility), AIO (AI discoverability), and AEO (answer readiness). Local-first,
 sitemap-driven, evidence-backed reports in English.
 
-Status: **P3 Search Console** - SQLite store, sitemap discovery, Search Console tools in the
-google MCP, and `/seo-audit` (search-only) are in place. The Yandex, Bing, and performance
-servers are still stubs exposing only `<prefix>_health` and `<prefix>_capabilities`. See
-`docs/ROADMAP.md` for phases.
+Status: **P4 full crawler** - SQLite store, sitemap discovery, Search Console tools,
+`/seo-audit` (search-only), and the crawler (`/crawl-run`: fetch, extraction, AI access check)
+are in place. The Yandex, Bing, and performance servers are still stubs exposing only
+`<prefix>_health` and `<prefix>_capabilities`. See `docs/ROADMAP.md` for phases.
 
 Design docs: `docs/ARCHITECTURE.md`, `docs/DATA-MODEL.md`, `docs/MCP.md`,
 `docs/AGENTS-AND-SKILLS.md`, `docs/SECURITY-AND-APPROVAL.md`, `docs/ROADMAP.md`.
@@ -23,7 +23,12 @@ cd mcp-servers/crawl && uv run pytest # pytest
 pnpm db:migrate                       # create/upgrade data/awesome-seo.sqlite
 pnpm db:seed --origin https://example.com [--sitemap URL] [--url-cap 500]
 pnpm sitemap:ingest --origin https://example.com data/snapshots/<run>.jsonl
+pnpm crawl:ingest --origin https://example.com data/crawl/<run>.jsonl
 ```
+
+In Claude Code, `/crawl-run` fetches the discovered URLs (robots.txt checked at every hop,
+one request per second per host, identifiable User-Agent). A 500-URL run takes about 10
+minutes. The crawler uses `selectolax` and `extruct` (Python, in `mcp-servers/crawl`).
 
 In Claude Code, `/sitemap-sync` runs discovery through the crawl MCP and ingests the result.
 

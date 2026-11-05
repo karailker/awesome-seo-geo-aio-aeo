@@ -103,7 +103,7 @@ Indexes:
 | started_at | TEXT | |
 | finished_at | TEXT | |
 | url_count | INTEGER | |
-| status | TEXT | `running`, `completed`, `partial`, `failed` |
+| status | TEXT | `completed` or `partial` (any URL with errors). `running` and `failed` are reserved |
 | jsonl_path | TEXT | |
 
 ### `crawl_results`
@@ -112,16 +112,21 @@ Indexes:
 | id | TEXT PK | |
 | run_id | TEXT FK → crawl_runs | |
 | page_id | TEXT FK → pages | |
-| status | INTEGER | HTTP status |
+| fetched_at | TEXT | added in P4 |
+| status | INTEGER | HTTP status; null when robots blocked the URL before any request |
 | final_url | TEXT | |
+| redirect_chain_json | TEXT | added in P4: hops with from, status, to |
 | title | TEXT | |
 | meta_description | TEXT | |
 | canonical | TEXT | |
 | lang | TEXT | |
+| hreflang_json | TEXT | added in P4 |
+| headings_json | TEXT | added in P4: level and text, in document order |
 | word_count | INTEGER | |
-| content_hash | TEXT | |
-| robots_allowed | INTEGER | boolean |
+| content_hash | TEXT | `sha256:` of visible text only |
+| robots_allowed | INTEGER | 1 allowed, 0 disallowed, null unknown (robots.txt unreadable) |
 | structured_data_json | TEXT | |
+| raw_html_path | TEXT | added in P4: gzipped raw HTML, off by default |
 | errors_json | TEXT | |
 
 ### `audit_runs`

@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: **Current phase: P4** (P0 complete 2026-11-04; P1 complete 2026-11-05; P2 complete 2026-11-05; P3 complete 2026-11-05: `/seo-audit` run live on the bulmacalig.com domain property, every finding cites observations)
+Status: **Current phase: P5** (P0 complete 2026-11-04; P1 complete 2026-11-05; P2 complete 2026-11-05; P3 complete 2026-11-05: `/seo-audit` run live on the bulmacalig.com domain property, every finding cites observations; P4 complete 2026-11-05: crawl, extraction, AI access check, ingest, all fixtures green)
 
 Update the status line when a phase is complete. Phases are sequential unless noted.
 
@@ -65,7 +65,9 @@ Done when:
 - Missing GSC access produces an explicit "not available" section, not an error or a guess
 - `VERIFY:` notes exist for URL Inspection quotas
 
-## P4: Full crawler
+## P4: Full crawler ✅
+
+Verification notes (2026-11-05): crawler tests (36) run against a local HTTP server in `tests/conftest.py`, with no external network. Live: five sitemap URLs of `www.bulmacalig.com` were crawled (5 of 5 status 200, robots allowed) and ingested. Not done in P4: the `seo-audit` report does not yet use crawl data. The `technical-audit` skill is written, but its report section is not implemented.
 
 Deliverables:
 - `crawl_fetch_pages`: robots.txt compliance, per-host rate limit, identifiable UA, timeout and retry policy, JSONL output, optional gzipped raw HTML (off by default)
