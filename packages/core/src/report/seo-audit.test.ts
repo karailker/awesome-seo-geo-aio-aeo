@@ -96,6 +96,14 @@ describe("buildSeoAuditReport", () => {
     expect(report).toContain("https://example.com/d");
   });
 
+  it("flags a sitemap that hit the URL cap as possibly truncated", () => {
+    store.sqlite.prepare("UPDATE sites SET url_cap = 3").run(); // beforeEach ingests 3 sitemap pages
+
+    const report = buildSeoAuditReport(store, INPUT);
+
+    expect(report).toContain("3 URLs equals the URL cap (3). The sitemap may be truncated");
+  });
+
   it("states Search Console is not available and reports no findings without rows", () => {
     const report = buildSeoAuditReport(store, INPUT);
 

@@ -116,6 +116,10 @@ export function buildSeoAuditReport(store: Store, input: ReportInput): string {
   const missing: string[] = [];
   if (!gscAvailable) missing.push("Search Console: no rows for this period. No findings from Search Console are reported.");
   if (sitemap.n === 0) missing.push("Sitemap: no URLs ingested. Run /sitemap-sync first.");
+  const cap = store.sqlite.prepare("SELECT url_cap AS cap FROM sites WHERE id = ?").get(input.siteId) as { cap: number } | undefined;
+  if (sitemap.n > 0 && cap && sitemap.n >= cap.cap) {
+    missing.push(`Sitemap: ${sitemap.n} URLs equals the URL cap (${cap.cap}). The sitemap may be truncated, so reconciliation is partial.`);
+  }
   if (gscAvailable && recon.gscPageCount === 0) missing.push("Search Console: no page-level rows. Reconciliation is not possible.");
 
   const sections: string[] = [
