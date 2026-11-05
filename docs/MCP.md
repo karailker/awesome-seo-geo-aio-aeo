@@ -1,123 +1,101 @@
 # MCP servers and tools
 
+Status: implemented as of 2026-11-05. Tool names are `<prefix>_<action>`. In Claude Code they appear as `mcp__plugin_awesome-seo_<server>__<tool>`.
+
 ## Servers
 
 | Server | Language | Sources | Write tools |
 |---|---|---|---|
-| `google` | TypeScript | Search Console, GA4, Merchant Center | `gsc_submit_sitemap`, `merchant_update_product` |
-| `yandex` | TypeScript | Yandex Webmaster, Yandex Metrica | `yandex_webmaster_add_sitemap` |
-| `bing` | TypeScript | Bing Webmaster Tools | `bing_submit_url` |
-| `performance` | TypeScript | PageSpeed Insights, local Lighthouse, CrUX | none |
-| `crawl` | Python (FastMCP) | Sitemap, live HTTP fetch, HTML analysis | none |
+| `google` | TypeScript | Search Console, GA4 Data API, Merchant API (code only, deferred) | `google_gsc_submit_sitemap` |
+| `yandex` | TypeScript | Yandex Metrica Stat API, Yandex Webmaster API v4 | `yandex_webmaster_add_sitemap` |
+| `bing` | TypeScript | Bing Webmaster API | `bing_submit_url` |
+| `performance` | TypeScript | PageSpeed Insights, CrUX API, local Lighthouse | none |
+| `crawl` | Python (FastMCP) | Sitemap discovery, page fetching, extraction, AI access check | none |
 
-Every server exposes:
-- `<prefix>_health`: process status and configuration presence (never returns secret values)
-- `<prefix>_capabilities`: list of tools, which are read or write, and which credentials each tool needs
+Every server exposes `<prefix>_health` (credential presence only, never values) and `<prefix>_capabilities` (tools, read or write, and the credentials each needs).
 
-Prefixes: `google`, `yandex`, `bing`, `performance`, `crawl`. Tool names use `<source>_<action>` in snake_case.
+Write tools are blocked unless an approved proposal exists for the exact payload. The PreToolUse hook (`hooks/scripts/validate-approval.sh`) checks this before each call. See `docs/SECURITY-AND-APPROVAL.md`.
 
 ## Response envelope
 
-All data tools return this shape (TypeScript type in `packages/core`, mirrored in Python as a Pydantic model):
+All data tools return:
 
 ```ts
 type ToolResult<T> = {
   ok: boolean;
   data?: T;
-  source: string;            // e.g. "gsc", "ga4", "psi", "lighthouse-local", "crawl"
+  source: string;            // "gsc", "ga4", "bing", "psi", "crux", "lighthouse-local", "crawl", "yandex_metrica", "yandex_webmaster", ...
   collectedAt: string;       // ISO 8601, UTC
-  period?: { start: string; end: string }; // ISO dates, when applicable
-  warnings: string[];        // e.g. "data delayed by 2 days", "row limit reached"
+  period?: { start: string; end: string };
+  warnings: string[];
   errors: { code: string; message: string; retryable: boolean }[];
 };
 ```
 
-Errors use stable codes: `AUTH_MISSING`, `AUTH_EXPIRED`, `PERMISSION_DENIED`, `QUOTA_EXCEEDED`, `NOT_FOUND`, `RATE_LIMITED`, `UPSTREAM_ERROR`, `INVALID_INPUT`, `TIMEOUT`.
+Write tools also return `startedAt` and `finishedAt` (the API call's own times). The approval record uses them.
+
+Error codes: `AUTH_MISSING`, `AUTH_EXPIRED`, `PERMISSION_DENIED`, `QUOTA_EXCEEDED`, `NOT_FOUND`, `RATE_LIMITED`, `UPSTREAM_ERROR`, `INVALID_INPUT`, `TIMEOUT`.
+
+Data tools that write files take `output_path`, relative to the data directory (`AWESOME_SEO_DATA_DIR`, default `./data`). The path must stay inside that directory and end in `.jsonl`.
 
 ## Google server
 
-| Tool | Input (summary) | Output (summary) | VERIFY |
-|---|---|---|---|
-| `google_gsc_list_properties` | none | properties and permission level | service account access |
-| `google_gsc_search_analytics` | property, date range, dimensions (query, page, country, device, searchAppearance), filters, row limit | rows with clicks, impressions, CTR, position | data retention, row limits |
-| `google_gsc_inspect_url` | property, URL | index status, canonical, crawl info | daily and per-minute quotas |
-| `google_gsc_list_sitemaps` | property | sitemaps and status | |
-| `google_ga4_run_report` | property ID, date range, dimensions, metrics, filters | rows | |
-| `google_ga4_get_metadata` | property ID | available dimensions and metrics | |
-| `google_merchant_list_products` | account, page size | products | Merchant API version |
-| `google_merchant_list_product_issues` | account, product filter | issues grouped by type | Merchant API version |
-| `google_gsc_submit_sitemap` *(write)* | property, sitemap URL | status | requires approval |
-| `google_merchant_update_product` *(write)* | account, product ID, fields | updated product | requires approval |
-
-Note: tool names above use the `google_` prefix for all Google tools. Use this naming consistently.
+| Tool | Input (summary) | Notes |
+|---|---|---|
+| `google_gsc_list_properties` | none | Search Console properties and permission level. |
+| `google_gsc_search_analytics` | `site`, `start_date`, `end_date`, `dimensions` (page, query, country, device), `row_limit` ≤ 25000, `output_path` | JSONL. Delay warning. VERIFY: row limit. |
+| `google_gsc_inspect_url` | `site`, `url` | URL Inspection. VERIFY: 2000 per property per day, 600 per minute. Not called live yet. |
+| `google_gsc_list_sitemaps` | `site` | Sitemaps with status. |
+| `google_gsc_submit_sitemap` *(write)* | `site`, `feedpath` | Webmasters scope. Verified live (2026-11-05). |
+| `google_ga4_get_metadata` | `property_id` | Dimension and metric names. |
+| `google_ga4_run_report` | `property_id`, `start_date`, `end_date`, `dimensions`, `metrics`, `limit` ≤ 100000, `output_path` | JSONL. User and session identifiers are refused. |
+| `google_merchant_list_products` | `account?`, `page_size` ≤ 250 | Deferred (P9): the site sells no products. Code only. |
+| `google_merchant_list_product_issues` | `account?`, `page_size` ≤ 250 | Deferred (P9). Issues grouped by code. |
 
 ## Yandex server
 
-| Tool | Input (summary) | Output (summary) | VERIFY |
-|---|---|---|---|
-| `yandex_webmaster_host_summary` | host ID | indexing summary, SQI, errors | endpoint version |
-| `yandex_webmaster_search_queries` | host ID, date range, order, paging | queries with impressions, clicks, positions | |
-| `yandex_webmaster_indexing` | host ID, paging | indexing samples and status | |
-| `yandex_metrica_report` | counter ID, date range, metrics, dimensions, filters | rows | |
-| `yandex_webmaster_add_sitemap` *(write)* | host ID, sitemap URL | status | requires approval |
+| Tool | Input (summary) | Notes |
+|---|---|---|
+| `yandex_metrica_report` | `counter_id?`, `date1`, `date2`, `metrics`, `dimensions`, `limit`, `output_path?` | Aggregated only; visitor dimensions refused. Sampling and row-limit warnings. Verified live. |
+| `yandex_webmaster_hosts` | none | Hosts and verification state. |
+| `yandex_webmaster_host_summary` | `host_id` | SQI, searchable and excluded page counts. |
+| `yandex_webmaster_search_queries` | `host_id`, `limit` | Popular queries by shows. |
+| `yandex_webmaster_indexing` | `host_id` | In-search history, sitemaps with error counts, recrawl quota. |
+| `yandex_webmaster_in_search_urls` | `host_id`, `output_path?` | Per-URL in-search samples (snapshot). JSONL for core ingest. |
+| `yandex_webmaster_add_sitemap` *(write)* | `host_id`, `sitemap_url` | POST to the host's sitemaps path. Live attempt on 2026-11-05 returned 405 (host write route closed); Yandex Webmaster was read-only during an incident. Retry later. |
 
 ## Bing server
 
-| Tool | Input (summary) | Output (summary) | VERIFY |
-|---|---|---|---|
-| `bing_search_stats` | site URL, date range | impressions, clicks, CTR, position over time | API key scope |
-| `bing_page_stats` | site URL, page URL or list | per-page stats | |
-| `bing_url_info` | site URL, page URL | crawl and index info | |
-| `bing_submit_url` *(write)* | site URL, page URL | submission status | daily quota; requires approval |
+| Tool | Input (summary) | Notes |
+|---|---|---|
+| `bing_search_stats` | `site`, `start_date?`, `end_date?`, `output_path?` | Daily impressions and clicks (Rank and Traffic). |
+| `bing_page_stats` | `site`, `output_path?` | Per-page, per-day stats. Page URLs are `www`, as in the sitemap. |
+| `bing_url_info` | `site`, `url` | Crawl and discovery dates, HTTP status. |
+| `bing_submit_url` *(write)* | `site`, `url` | POST SubmitUrl with a JSON body. Daily quota (VERIFY). Acceptance is only confirmed when the response is an explicit `true` or a later check shows it. |
 
 ## Performance server
 
-| Tool | Input (summary) | Output (summary) | VERIFY |
-|---|---|---|---|
-| `performance_psi_run` | URL, strategy (mobile/desktop), categories | `lab_*` metrics, `field_*` metrics, opportunities | PSI daily quota |
-| `performance_lighthouse_local_run` | URL, strategy, throttling preset | `lab_*` metrics, opportunities; `source: "lighthouse-local"` | requires local Chrome |
-| `performance_crux_query` | origin or URL, form factor, metrics | `field_*` metrics with percentiles | endpoint and rate limits |
-
-Lab and field fields are always separate. Example field names: `lab_lcp_ms`, `field_lcp_p75_ms`.
+| Tool | Input (summary) | Notes |
+|---|---|---|
+| `performance_psi_run` | `url`, `strategy` (mobile, desktop), `fallback_local` (default true) | Lab values (`lab_*`) and field values (`field_*`) in separate fields, plus opportunities. If PSI fails, the local Lighthouse run is used (`source: lighthouse-local`) and the PSI error goes into `warnings`. VERIFY: PSI quota. |
+| `performance_lighthouse_local_run` | `url`, `strategy` | Local Chrome run. Lab values only. |
+| `performance_crux_query` | `origin` or `url`, `form_factor?` | `field_*` p75 values only. 404 means "not in dataset", reported as null, not zero. |
 
 ## Crawl server (Python)
 
-| Tool | Input (summary) | Output (summary) |
+| Tool | Input (summary) | Notes |
 |---|---|---|
-| `crawl_discover_sitemap` | sitemap URL, URL cap | URLs with `lastmod`, child sitemap errors |
-| `crawl_fetch_pages` | URL list, concurrency per host, timeout, output path | JSONL path, counts, errors |
-| `crawl_extract_structured_data` | JSONL path or URL | structured data per URL |
-| `crawl_check_access` | site root, sample URLs | robots rules per AI user agent, `llms.txt` status |
+| `crawl_discover_sitemap` | `sitemap_url`, `output_path`, `url_cap` (default 500) | Index and gzip sitemaps. robots.txt checked; unreadable robots fails closed. |
+| `crawl_fetch_pages` | `input_path` (discovery JSONL), `output_path`, `url_cap`, `store_raw_html` (default false) | Redirect chain, robots check on each hop, 1 request per second per host, retries on 5xx and timeouts. |
+| `crawl_extract_structured_data` | `url` | One page: on-page fields, headings, content hash, JSON-LD, microdata, RDFa, invalid JSON-LD count. Nothing written. |
+| `crawl_check_access` | `site_root`, `sample_urls` (up to 200) | Robots rules for AI user agents on the samples, and llms.txt. Unknown when robots is unreadable. VERIFY: agent tokens. |
 
-Crawl JSONL record (one line per URL):
-
-```json
-{
-  "run_id": "2026-11-04T18:00:00Z-a1b2",
-  "url": "https://example.com/page",
-  "fetched_at": "2026-11-04T18:00:02Z",
-  "status": 200,
-  "final_url": "https://example.com/page/",
-  "redirect_chain": [],
-  "content_type": "text/html",
-  "title": "...",
-  "meta_description": "...",
-  "canonical": "...",
-  "lang": "en",
-  "hreflang": [],
-  "headings": [{"level": 1, "text": "..."}],
-  "word_count": 812,
-  "content_hash": "sha256:...",
-  "structured_data": [],
-  "robots_allowed": true,
-  "errors": []
-}
-```
+Crawl record fields (one JSON line per URL): `run_id`, `url`, `fetched_at`, `status`, `final_url`, `redirect_chain`, `content_type`, `title`, `meta_description`, `canonical`, `lang`, `hreflang`, `headings`, `word_count`, `content_hash`, `structured_data`, `jsonld_syntax_errors`, `robots_allowed` (true, false, or null for unknown), `raw_html_path`, `errors`.
 
 ## Adding a new tool
 
 1. Confirm it fits an existing server and has one responsibility.
-2. Add input and output Zod schemas (TypeScript) or Pydantic models (Python).
-3. Classify it as read or write. Write tools must be listed in `docs/SECURITY-AND-APPROVAL.md` and go through the approval engine.
-4. Add fixture tests.
+2. Add input and output schemas (Zod in TypeScript, Pydantic or typed dicts in Python).
+3. Classify it as read or write. Write tools must go through the approval gate: add the action to `ACTION_RISK` in `packages/core/src/approval/engine.ts`, the mapping in `scripts/approval.ts`, and the matcher in `hooks/hooks.json`.
+4. Add fixture-based tests. Live checks are fine when they are read-only.
 5. Add it to this file.

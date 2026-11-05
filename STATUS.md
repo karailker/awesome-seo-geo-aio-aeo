@@ -1,82 +1,75 @@
 # STATUS
 
-Date: 2026-11-05. Phase: P6 complete (two skills deferred), P7 next.
+Date: 2026-11-05. Phase: P10 complete. Next: P11 (evaluation). P9 deferred.
 
-## Done
+## Phases
 
-| Phase | Contents |
-|---|---|
-| P0 | Docs, workspace, plugin manifests, stub MCP servers (`*_health`, `*_capabilities`) |
-| P1 | `packages/core`: Drizzle schema, migration `0000`, store (WAL, foreign keys, busy_timeout, `schema_migrations`), Zod schemas, `normalizeUrl`. Scripts: `db:migrate`, `db:seed` |
-| P2 | Crawl MCP `crawl_discover_sitemap`: plain, index, and gzip sitemaps; robots.txt (fail closed); 1 req/s per host; identifiable UA; URL cap; DTD/ENTITY refused. Core `ingestSitemapJsonl`. Script `sitemap:ingest`. Command `/sitemap-sync` |
-| P3 | google MCP: `google_gsc_list_properties`, `google_gsc_search_analytics`, `google_gsc_inspect_url`, `google_gsc_list_sitemaps`; read-only scope; service account JWT via `node:crypto`. Core: GSC ingest, sitemap–GSC reconciliation, evidence gate, SEO audit report. Script `seo:audit`. Command `/seo-audit`. Agents `search-analyst`, `evidence-auditor`. Skills: query-analysis, sitemap-reconciliation, indexation-analysis, evidence-validation, report-generation |
-| P4 | Crawl MCP: `crawl_fetch_pages` (redirect chain with robots check per hop, retry on 5xx and timeouts, 1 req/s per host, JSONL, optional gzipped raw HTML off by default), `crawl_extract_structured_data` (on-page fields, heading outline, content hash, JSON-LD, microdata, RDFa via extruct), `crawl_check_access` (AI user agents, llms.txt). Core: migration `0001` (`crawl_runs`, `crawl_results`), `ingestCrawlJsonl` (skips a stored run). Script `crawl:ingest`. Command `/crawl-run`. Skill `seo/technical-audit` |
-| P5 | performance MCP: `performance_psi_run` (lab_* from Lighthouse, field_* from CrUX p75, kept separate; opportunities; falls back to local Lighthouse when PSI fails, tagged `lighthouse-local`), `performance_crux_query` (field_* only), `performance_lighthouse_local_run` (system Chrome, sandbox on, lab only). Packages approved by user: `lighthouse` 13.6.0, `chrome-launcher` 1.2.2. Command `/perf-audit`. Agent `performance-analyst`. Skill `performance/cwv-diagnosis` |
-| P6 | Core: `deriveCrawlObservations` (page metrics from crawl results, source `crawl`, deterministic ids), `ingestAccessReport` (crawl_check_access JSON as observations, unknown robots not recorded), `buildGeoReport` (Measured, Findings labeled measured or inferred, structured data validation with syntax errors and missing recommended properties kept separate, crawler access table, answer coverage counts, evidence gate). Migration `0002` adds `crawl_results.jsonld_syntax_errors`. Script `geo:audit`. Commands `/geo-audit`, `/aio-audit`, `/aeo-audit`. Agent `visibility-analyst`. Skills: geo/citation-readiness, aio/crawler-access, aio/machine-readable-content, aio/source-attribution, aeo/structured-data-validation, aeo/answer-coverage. Deferred: geo/entity-consistency, aeo/faq-quality |
+| Phase | State | What is in the repo |
+|---|---|---|
+| P0 Scaffold | done | Workspace, plugin manifests, stub servers, docs |
+| P1 Core and SQLite | done | Drizzle schema, migrations, store (WAL, foreign keys), Zod schemas, `db:migrate`, `db:seed` |
+| P2 Sitemap discovery | done | `crawl_discover_sitemap`, `sitemap:ingest`, `/sitemap-sync` |
+| P3 Search Console | done | `google_gsc_*`, GSC ingest, `seo:audit`, `/seo-audit` (search part) |
+| P4 Full crawler | done | `crawl_fetch_pages`, `crawl_extract_structured_data`, `crawl_check_access`, `crawl:ingest`, `/crawl-run` |
+| P5 Performance | done | `performance_psi_run` (with local fallback), `performance_crux_query`, `performance_lighthouse_local_run`, `/perf-audit` |
+| P6 GEO, AIO, AEO | done, two skills deferred | `geo:audit`, `/geo-audit`, `/aio-audit`, `/aeo-audit`, `visibility-analyst`; `entity-consistency` and `faq-quality` not built |
+| P7 Analytics | done | GA4 tools and ingest, Metrica tool and ingest, AI referral traffic, traffic section in `seo:audit` |
+| P8 Bing and Yandex Webmaster | done | Bing tools and ingest; Yandex Webmaster tools (incl. in-search samples); three-source reconciliation |
+| P9 Merchant Center | deferred | Code and tests exist. The site sells no products, so no live check is planned |
+| P10 Approval and write tools | done | Approval engine (migration 0003), PreToolUse gate, `approval` CLI, `/approve-action`, three write tools |
+| P11 Evaluation | next | Golden dataset, evaluator (precision and recall), evidence coverage check |
+| P12 Reporting and polish | not started | Scoring doc, `/connections-check`, README setup per credential |
 
-## Verified (2026-11-05)
+## Tests (2026-11-05)
 
-- P5 (performance): `/perf-audit` run end to end through the MCP server on 5 sampled URLs. Result in `data/reports/perf-audit-www.bulmacalig.com-20261105.md`. PSI works live for all 5. CrUX works live: the key's API restriction was fixed by the user. Field data is "not in dataset" for bulmacalig.com (low traffic). A high-traffic origin (`https://web.dev`) returned real field metrics, and the CrUX fixture is now that recorded response.
-- P6 (GEO/AIO/AEO): `pnpm geo:audit` on the live 5-URL crawl and a live `crawl_check_access` result (10 AI user agents allowed, llms.txt valid). Core 35 tests, crawler 37, performance 19, google 11. Build, typecheck, and `claude plugin validate .` pass.
-- Bugs found and fixed in this pass:
-  - CrUX fallback test was reached through a real Chrome launch. Fixed by disabling fallback in PSI error-envelope tests.
-  - PSI returns 400 for an invalid key, so fallback was skipped. The fallback now depends on the URL only.
-  - JSON-LD syntax count was read after the script nodes were removed, so it was always 0. Fixed by counting first.
-  - `robots_blocked` was 0 for robots-unknown pages. Fixed: stays null.
+- core 62, google 22, yandex 18, bing 9, performance 19 (TypeScript, Vitest)
+- crawler 37 (Python, pytest)
+- `pnpm -r build`, `pnpm -r typecheck`, `claude plugin validate .`: pass (validate has warnings only: marketplace install advice and icon)
 
-Not verified:
-- `/perf-audit`, `/geo-audit`, `/aio-audit`, `/aeo-audit` run inside a live Claude Code session. The steps were run through the MCP server and the scripts directly.
-- Vendor user-agent tokens, the llms.txt rule, the recommended-property lists, and the PSI and CrUX quotas are `VERIFY:` in code.
+## Live checks done (read-only unless noted)
+
+- Search Console: sites, sitemaps, search analytics (page and query) on `sc-domain:bulmacalig.com`.
+- Search Console write: sitemap `sitemap-pages.xml` re-submitted through an approved proposal, inside a Claude Code session. Verified by `lastSubmitted`.
+- GA4 property 552874034: metadata, page and session-source reports. October 2026: 619 sessions, 14 from chatgpt.com.
+- Yandex Metrica counter 113337943: traffic sources, October 2026: 396 visits.
+- Yandex Webmaster: hosts, summary, popular queries, in-search history, sitemaps, quota, in-search samples (30 URLs).
+- Bing Webmaster: site list, rank and traffic (31 days), page stats (8 rows), URL info, quota.
+- PageSpeed Insights (lab values), CrUX (field values for a high-traffic origin), local Lighthouse on `www.bulmacalig.com` (score 100).
+- Crawl: sitemap discovery and crawl of 5 URLs on `www.bulmacalig.com` (5 of 5 status 200).
+- Approval gate in a headless Claude Code session: unapproved call blocked; approved calls allowed.
+
+Live writes (each approved by the user for the test):
+- Google Search Console, `sitemap-pages.xml`: success, verified.
+- Bing SubmitUrl, `https://www.bulmacalig.com/kare`: call succeeded; the owner sees the submission in Bing (12:42 local time); quota 99 is consistent with acceptance. `GetUrlInfo` last crawl not updated yet (crawling is later). Acceptance is not confirmed by the API.
+- Yandex Webmaster add sitemap, `sitemap-pages.xml`: POST returned 405 (route closed; `OPTIONS` says `Allow: GET`). Yandex Webmaster was then read-only during a provider incident. Recorded as failure. Retry later with a new proposal.
 
 ## Known gaps
 
-- The `seo-audit` report does not use crawl data yet. The `technical-audit` skill describes the report sections, but they are not implemented.
-- GEO: entity consistency and FAQ quality are not implemented. The answer-coverage join with Search Console queries is not done.
-- P6 checks read author and date from JSON-LD only, not microdata or visible bylines.
-- Crawl is sequential: about 1 page per second. No paging for Search Console beyond 25000 rows.
-- Pages removed from a sitemap are not marked stale. Ingest only adds and updates.
-- Sitemap entries on other hosts are skipped, not stored.
-- Search Console site and origin: the seed uses `https://www.bulmacalig.com`, but the Search Console property is the domain property `sc-domain:bulmacalig.com`. No `site_properties` mapping exists yet.
-- The crawler's `AWESOME_SEO_CONTACT_URL` is unset in this environment, so the User-Agent contains the placeholder. Set it before a real run.
+- Yandex write: not yet successful. Retry after the Yandex incident with a new proposal and approval.
+- Bing acceptance: re-check `GetUrlInfo` `LastCrawledDate` after 2026-11-05 09:42Z.
+- The first GSC execution log row (`5c772bcc`) keeps record-time values; its real submit time was 09:37:03.790Z (Search Console `lastSubmitted`).
+- The execution log records the time the call ran, provided by the write tool; the `approval record` command requires those times.
+- GA4 page report is one request (100 000 rows max, no paging).
+- Search Console: one request per call (25 000 rows max, no paging).
 - `scripts/*.ts` run through Node type stripping and are not typechecked.
-- The OAuth client file the user supplied is not used. It stays in place as the user asked.
-- Git: old commits `c3d92bd`, `489679a`, `ddbbb52`, `05374db` (pre-rewrite) still appear on GitHub with `Co-Authored-By: Claude Code` trailers. They are not reachable from `main` on the remote. GitHub's contributor API currently lists only `karailker`.
+- The seed origin is `https://www.bulmacalig.com`. Search Console property is `sc-domain:bulmacalig.com`. No `site_properties` mapping yet.
+- Pages removed from a sitemap are not marked stale.
+- Yandex per-URL data is a snapshot (in-search samples); there is no date range for it.
+- Crawler `AWESOME_SEO_CONTACT_URL` is unset, so the User-Agent carries a placeholder. Set it before a larger crawl.
+- Every VERIFY-marked endpoint, quota, and rule is unconfirmed against vendor documentation. See `grep -rn VERIFY`.
 
-## P7 (2026-11-05): complete
+## Open decisions
 
-- Yandex Metrica: `yandex_metrica_report` (optional JSONL output), core `ingestMetricaJsonl`, traffic-source visits in the "Traffic (GA4)" section of `seo:audit --metrica`. Live: 396 visits in 6 sources, October 2026.
-- GA4: `google_ga4_get_metadata`, `google_ga4_run_report`, core `ingestGa4Jsonl`, AI referral finding. Live: 619 sessions, 14 from chatgpt.com.
-- Agent `traffic-analyst`, skills `analytics/organic-attribution` and `analytics/ai-referral-traffic`, `knowledge/ai-referrers.md`.
+1. Distribution of the plugin. The MCP servers need a build (`pnpm -r build`) and the crawler needs `uv sync`. Neither is in git (`dist/`, `.venv/` are ignored), so a marketplace install from git would not start the servers. Options: (a) commit build output for releases, (b) publish each MCP server to npm and reference it with `npx` in `.mcp.json`, (c) document the build step and keep local `--plugin-dir` installs. See README.
+2. npm publication. Recommended only after decision 1 (b). The current packages are `private: true`. Publishing is outward-facing and needs the owner's npm account and the package scope.
+3. Rotate the secrets pasted in chat during this project: Yandex client secret and tokens, Bing API key, PageSpeed and CrUX keys.
 
-## P8 (2026-11-05): complete
+## Credentials and local files (not in the repo)
 
-- Bing Webmaster (`bing_search_stats`, `bing_page_stats`, `bing_url_info`): live with the key in `~/.config/awesome-seo/bing.env` (600). Site in Bing: `https://bulmacalig.com/` (apex). Live: 31 daily rows for Oct 2026 (974 impressions, 14 clicks); 8 page-level rows.
-- Yandex Webmaster (`yandex_webmaster_hosts`, `_host_summary`, `_search_queries`, `_indexing`, `_in_search_urls`): live. Per-URL data comes from the in-search samples (30 URLs). Host not ownership-verified: the data may be partial.
-- Reconciliation across Search Console (29 pages, 25 in both), Bing (3 pages, all in both), and Yandex (30 snapshot URLs, 29 in both). Live report at `seo:audit --gsc --bing --yandex`.
-- Quotas and endpoint versions are VERIFY-marked in code (Bing quota, Yandex Webmaster endpoints).
-
-## P9 (2026-11-05): deferred
-
-The site sells no products, so Merchant Center is out of scope for now. Code and tests stay in the repo. Live check not planned.
-
-## P9 detail (kept for reference)
-
-- Code: `google_merchant_list_products` and `google_merchant_list_product_issues` (Merchant API products v1, scope `content`, account from `GOOGLE_MERCHANT_ACCOUNT_ID`). Issues grouped by code with affected product IDs and URLs. Tests use hand-written fixtures, marked as such. Skill `ecommerce/merchant-feed-health`, command `/ecommerce-audit`.
-- Live: the Merchant API is enabled in `bulmacalig-b70a8`, but returns 401 "project not registered with the merchant account". Needed from the user: (1) the numeric Merchant Center account ID; (2) in Merchant Center, link the Google Cloud project `bulmacalig-b70a8`; (3) add `awesome-seo-gsc@bulmacalig-b70a8.iam.gserviceaccount.com` as a user.
-- Not done: core ingest of Merchant issues, the ecommerce report section, live verification, P10 write tools.
-
-## P10 (2026-11-05): complete, live-verified
-
-- Hook in a Claude Code session: headless `claude -p` with `--plugin-dir .`. An unapproved GSC sitemap submit was blocked by `hooks/scripts/validate-approval.sh` with the reason in the tool error, and nothing was submitted. Approved calls passed the same hook.
-- Live writes (all approved by the user for this test):
-  - Google Search Console, `sc-domain:bulmacalig.com` `sitemap-pages.xml`: success inside a Claude session, 09:40:47.8Z to 09:40:48.6Z. Search Console `lastSubmitted` 09:40:48.2Z confirms it.
-  - Bing, `https://bulmacalig.com/` `https://www.bulmacalig.com/kare`: POST SubmitUrl returned no error, body `null`. Recorded as success with `verified: false` at the time. Later checks (2026-11-05 09:48Z): the owner sees the submission in Bing Webmaster at 12:42 local time (09:42Z), and `GetUrlSubmissionQuota` shows DailyQuota 99. That is consistent with acceptance, but the starting quota is not known, so it is not proof. `GetUrlInfo` still shows last crawl 2026-10-09; crawling happens after submission. Bing's SubmitUrl response shape is still unverified. Re-check `GetUrlInfo` later.
-  - Yandex, `https:www.bulmacalig.com:443` `sitemap-pages.xml` (already listed): POST returned 405. OPTIONS on that path said `Allow: GET`. At that time the API showed the host as not verified. The owner says ownership was verified earlier. Later read-only check: the API shows `verified: true` for all three hosts. Yandex Webmaster is currently read-only because of an attack on its data centers, so no write was retried. Recorded as failure with the error. The sitemap list did not change. Retry later with a new proposal and approval.
-- Execution times are now the write call's own start and finish, from the tool result. The first GSC execution (`5c772bcc`) was recorded before this change: its log times are the record time (09:37:20Z). The real submit time, from Search Console, was 09:37:03.790Z. The row was left as it is.
-- Not done: Yandex write verified (blocked: Yandex Webmaster is read-only during the data-center incident; retry with a new proposal after it is restored); Bing acceptance confirmed; `merchant_update_product` (P9 deferred).
-
-## Next: P11 (evaluation)
+- `~/.config/awesome-seo/gsc-service-account.json` (service account key, mode 600)
+- `~/.config/awesome-seo/performance.env`, `yandex.env`, `bing.env` (mode 600)
+- `~/Downloads`: the OAuth client JSON (`client_secret_2_...json`) is unused and remains there.
 
 ## Toolchain
 
-pnpm 12.16.1 (via corepack), uv (Python 3.12.14 pinned for the crawler), Node 24.22.0, Claude Code 2.1.308, Google Chrome 155 at /usr/bin/google-chrome. SQLite 3.53.4 (via better-sqlite3 13.0.3). Crawler: selectolax 1.0.2 (lexbor backend), extruct 0.18.0. Performance: lighthouse 13.6.0, chrome-launcher 1.2.2.
+pnpm 12.16.1 (corepack), Node 24.22.0, uv (Python 3.12.14 for the crawler), Claude Code 2.1.308, Google Chrome 155 (`/usr/bin/google-chrome`). SQLite 3.53.4 (better-sqlite3 13.0.3). Crawler: selectolax 1.0.2 (lexbor), extruct 0.18.0, httpx. Performance: lighthouse 13.6.0, chrome-launcher 1.2.2.

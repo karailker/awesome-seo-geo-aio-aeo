@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: **Current phase: P11** (P0 complete 2026-11-04; P1 complete 2026-11-05; P2 complete 2026-11-05; P3 complete 2026-11-05; P4 complete 2026-11-05; P5 complete 2026-11-05 with CrUX live; P6 complete 2026-11-05 with two skills deferred; P7 complete 2026-11-05: Metrica and GA4 live, AI referral traffic; P8 complete 2026-11-05 (P9 started: Merchant API code written, live check blocked): Bing and Yandex Webmaster live; reconciliation across Search Console, Bing, and Yandex (Yandex as a snapshot from the in-search samples); Yandex host not ownership-verified, so its data may be partial)
+Status: **Current phase: P11 (not started)**. Done: P0–P8, P10 (P9 deferred: no products; P10 live-tested, with a Yandex write blocked by a provider outage). Last change: 2026-11-05. Details per phase below; the current repo state is in `STATUS.md`.
 
 Update the status line when a phase is complete. Phases are sequential unless noted.
 

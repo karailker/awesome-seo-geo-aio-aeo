@@ -1,116 +1,86 @@
 # Security and approval
 
+Status: the approval gate, hook, and write tools are implemented and live-tested (2026-11-05). Evaluation gates (P11) are not implemented yet.
+
 ## Credentials
 
 | Source | Auth | Where the secret lives | Notes |
 |---|---|---|---|
-| Search Console | service account | key file outside the repo, path in env var; or OS keychain | property must grant the service account access |
-| GA4 | service account | same as above | property access required |
-| Merchant Center | OAuth | token in OS keychain or encrypted file | `VERIFY:` API version |
-| Yandex Webmaster | OAuth token | OS keychain or encrypted file | token expiry must be checked |
-| Yandex Metrica | OAuth token | OS keychain or encrypted file | |
-| Bing Webmaster | API key | OS keychain or encrypted file | |
-| PageSpeed Insights | API key | OS keychain or encrypted file | |
-| CrUX | API key | OS keychain or encrypted file | |
+| Search Console, GA4 | Service account JSON key | Key file outside the repo, path in `GOOGLE_SERVICE_ACCOUNT_KEY_FILE`. Used for GSC (webmasters.readonly; webmasters for submit) and GA4 (analytics.readonly). | Property access must be granted to the service account email. |
+| Merchant Center | Service account (planned) | Same key file. | Deferred (P9). The project must be linked to the Merchant Center account. |
+| Yandex Metrica, Yandex Webmaster | OAuth token from a registered Yandex app | `~/.config/awesome-seo/yandex.env` (mode 600): `YANDEX_METRICA_TOKEN`, `YANDEX_WEBMASTER_TOKEN`, `YANDEX_METRICA_COUNTER_ID`. Client ID and secret are kept there too. | The token needs the metrika:read and webmaster permissions granted in the app. |
+| Bing Webmaster | API key | `~/.config/awesome-seo/bing.env` (mode 600): `BING_WEBMASTER_API_KEY`. | Sent as a query parameter (the API's only method). Never in errors or files. |
+| PageSpeed Insights, CrUX | API keys | `~/.config/awesome-seo/performance.env` (mode 600): `PAGESPEED_API_KEY`, `CRUX_API_KEY`. | The key's project must have the API enabled and the key's restrictions must allow it. |
 
 Rules:
-- Priority: OS keychain. Fallback: encrypted local file with a key derived from a user passphrase or OS-provided key. Plain-text `.env` is allowed only for development and must be git-ignored.
-- SQLite stores `connections.credential_ref` (a name), provider, scopes, and status. Never the secret.
-- Logs and tool outputs redact anything that looks like a token or key.
+- Priority: a file outside the repo, mode 600, loaded into the environment. A plain `.env` is allowed for development only and is git-ignored.
+- SQLite stores only the name of a credential, never the value.
+- Logs, tool outputs, errors, and written files never contain keys, tokens, or secrets. Errors carry stable codes, not upstream response bodies.
 - `.env.example` lists variable names only.
-- `*_health` tools report whether a credential is present, never its value.
+- `*_health` tools report presence, never values.
 
 ## Approval model
 
-Write actions are never executed directly. They go through this flow:
+Write actions are never executed without an approved proposal. Flow:
 
 ```
-Agent proposes ──► action_proposals (pending, payload hash stored)
-                           │
-User runs /approve-action ─┤
-                           ├── rejected ──► end
-                           └── approved (approval row with hash)
-                                   │
-Hook checks: proposal approved, not expired, current payload hash == approved hash
-                                   │
-                           Execute write tool
-                                   │
-                  Verify result (re-read the resource)
-                                   │
-                  execution_logs (outcome, verification)
+Agent (or user) proposes ──► action_proposals (pending, payload hash stored)
+                                     │
+User runs /approve-action ───────────┤
+                                     ├── rejected ──► end
+                                     └── approved (approvals row with the hash)
+                                             │
+PreToolUse hook: proposal approved, not expired, approval hash == payload hash, target matches
+                                             │
+                                     write tool runs (returns its own startedAt and finishedAt)
+                                             │
+                     read tool verifies the remote state (verification JSON)
+                                             │
+                     execution_logs row (outcome, times, verification or error); proposal → executed or failed
 ```
 
-### ActionProposal
+Rules:
+1. Approval is per proposal, per target, per payload. It does not carry over.
+2. If the payload changes, the hash no longer matches. A new proposal and approval are needed.
+3. Expired proposals cannot run (default lifetime 24 hours).
+4. After a run, the remote state is read back and the result is recorded. A write is complete only when verified and recorded.
+5. Failed writes are never retried automatically. The user decides.
+6. Reads, analysis, and recommendations need no approval. Preparing a write creates a proposal only.
+7. The record command needs the call's real start and finish times. It never uses the time the record was written.
 
-```ts
-type ActionProposal = {
-  id: string;
-  siteId: string;
-  actionType: "google_gsc_submit_sitemap" | "yandex_webmaster_add_sitemap"
-            | "bing_submit_url" | "google_merchant_update_product";
-  target: string;
-  description: string;
-  proposedPayload: Record<string, unknown>;
-  payloadHash: string;          // sha256 of canonical JSON of proposedPayload
-  expectedImpact?: string;
-  riskLevel: "low" | "medium" | "high";
-  status: "pending" | "approved" | "rejected" | "executed" | "failed" | "expired";
-  createdAt: string;
-  expiresAt: string;            // default: 24 hours after creation
-  approvedAt?: string;
-  executedAt?: string;
-};
-```
-
-### Rules
-
-1. Approval is per proposal, per target, per payload. Approval does not carry over to other proposals.
-2. If the payload changes after approval, the hash no longer matches and a new proposal and approval are required.
-3. Expired proposals cannot be executed.
-4. Execution must be idempotent where the API allows it. If not, check the current remote state before executing, and record the check in `execution_logs`.
-5. After execution, re-read the remote state and store the verification result. A write is not complete until verified.
-6. On failure, do not retry automatically for writes. Record the error and mark the proposal `failed`.
-7. Read, analyze, and recommend operations need no approval. Prepare operations create proposals only.
-
-### Risk levels
-
-| Action | Default risk | Notes |
-|---|---|---|
-| `google_gsc_submit_sitemap` | low | Reversible by resubmitting or removing the sitemap in the console |
-| `yandex_webmaster_add_sitemap` | low | Same |
-| `bing_submit_url` | low | Quota-limited; check quota before proposing |
-| `google_merchant_update_product` | medium | Affects live shopping listings; show a before/after diff in the proposal |
+Risk levels: `gsc_submit_sitemap`, `yandex_webmaster_add_sitemap`, `bing_submit_url` are low. `merchant_update_product` (deferred) is medium.
 
 ## Hooks
 
-`hooks/hooks.json` registers a pre-tool-use hook on write tool names. `hooks/scripts/validate-approval.sh` receives the tool name and arguments, asks `core` (via a small CLI) whether an approved, unexpired proposal exists with a matching payload hash, and blocks the call if not.
-
-The hook must fail closed: if the check cannot run, the write is blocked.
+- `hooks/hooks.json` registers a PreToolUse hook on the three write tool names.
+- `hooks/scripts/validate-approval.sh` runs `node scripts/approval.ts check-hook`. The check reads the tool name and input from stdin, finds the matching proposal in SQLite, and exits 0 (allow) or 2 (block, with the reason on stderr).
+- Fail closed: an unknown tool, malformed input, a missing node, or a database error blocks the call.
+- Tested: hook-level tests run the real script (6 cases). A headless Claude Code session confirmed a blocked call and an allowed call.
 
 ## Crawler and fetch policy
 
-- Respect robots.txt for every host, including AI user agents used only for checks (the crawler's own UA is separate and identifiable).
-- Per-host rate limit: default 1 request per second, configurable downward only without confirmation.
-- Identifiable User-Agent with a contact URL placeholder from config.
+- robots.txt is checked for every host and every redirect hop. If it cannot be read, access is unknown, and the crawler does not treat the URL as allowed.
+- Per-host rate limit: 1 request per second. Faster needs confirmation.
+- Identifiable User-Agent. The contact URL comes from `AWESOME_SEO_CONTACT_URL`.
 - No authentication bypass, no form submission, no CAPTCHA handling.
-- Raw HTML storage is off by default.
+- Raw HTML storage is off by default (`store_raw_html`).
 
 ## Data retention
 
-- Observations: kept indefinitely by default; a retention setting can prune by age later.
-- Raw crawl HTML: off by default; if enabled, pruned after 30 days.
-- API cache: TTL per source, default 24 hours for analytics, 7 days for static resources.
-- Credentials: removed from the keychain via `scripts/` command when a connection is deleted.
+- Observations: kept by default. A retention setting can prune by age later.
+- Raw HTML (when enabled): pruned after 30 days. Not pruned automatically yet.
+- Credentials: removed by hand. A `scripts/` command is planned.
 
 ## Output and privacy
 
-- Reports must not include secrets, raw tokens, or full service account details.
-- Reports may include site URLs and aggregated analytics. Do not include individual user data from GA4 or Metrica; query aggregates only.
+- Reports must not include secrets, raw tokens, or service account details.
+- Analytics: aggregates only. Individual-user and session dimensions are refused by the GA4 and Metrica tools.
+- Search queries and URLs appear in reports because they are part of the site's own data.
 
-## Evaluation gates
+## Evaluation gates (P11, not implemented)
 
 Before a report is written:
-- Every finding has at least one evidence row.
-- Confidence labels match evidence strength (`low` when only inferred, `high` only for direct observations with stated date ranges).
-- Missing sources are listed in the report.
-- Lab and field data are not mixed in any table or output.
+- Every finding has at least one evidence row (enforced in code by `validateFindings`).
+- Confidence labels match the evidence (planned).
+- Missing sources are listed in the report (implemented).
+- Lab and field performance data are not mixed (implemented; separate names).

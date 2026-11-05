@@ -1,5 +1,7 @@
 # Data model (SQLite)
 
+Status: 2026-11-05. Each table is marked implemented, or planned where the code does not write it yet. Migrations live in `packages/core/migrations/`.
+
 ## Principles
 
 - WAL mode, foreign keys on, `busy_timeout` set.
@@ -12,7 +14,7 @@
 
 ## Tables
 
-### `sites`
+### `sites` (implemented)
 | Column | Type | Notes |
 |---|---|---|
 | id | TEXT PK | UUID |
@@ -22,7 +24,7 @@
 | url_cap | INTEGER | default 500 |
 | created_at | TEXT | |
 
-### `site_properties`
+### `site_properties` (planned: not written yet)
 Maps a site to provider-specific identifiers.
 | Column | Type | Notes |
 |---|---|---|
@@ -32,7 +34,7 @@ Maps a site to provider-specific identifiers.
 | external_id | TEXT | property URL, GA4 property ID, counter ID, host ID, account ID |
 | UNIQUE | (site_id, provider) | |
 
-### `connections`
+### `connections` (planned: not written yet)
 | Column | Type | Notes |
 |---|---|---|
 | id | TEXT PK | |
@@ -43,7 +45,7 @@ Maps a site to provider-specific identifiers.
 | status | TEXT | `ok`, `missing`, `expired`, `permission_denied`, `unknown` |
 | last_checked_at | TEXT | |
 
-### `pages`
+### `pages` (implemented)
 | Column | Type | Notes |
 |---|---|---|
 | id | TEXT PK | |
@@ -55,7 +57,7 @@ Maps a site to provider-specific identifiers.
 | last_seen_at | TEXT | |
 | UNIQUE | (site_id, url) | |
 
-### `queries`
+### `queries` (planned: not written yet)
 | Column | Type | Notes |
 |---|---|---|
 | id | TEXT PK | |
@@ -64,7 +66,7 @@ Maps a site to provider-specific identifiers.
 | locale | TEXT | nullable |
 | UNIQUE | (site_id, query, locale) | |
 
-### `observations`
+### `observations` (implemented; sources: gsc, ga4, bing, yandex_webmaster, yandex_metrica, crawl)
 Normalized metrics from every source.
 | Column | Type | Notes |
 |---|---|---|
@@ -87,7 +89,7 @@ Indexes:
 - `idx_observations_lookup` on `(site_id, source, metric, period_start)`
 - `idx_observations_entity` on `(site_id, entity_type, entity_id)`
 
-### `api_cache`
+### `api_cache` (planned: not written yet)
 | Column | Type | Notes |
 |---|---|---|
 | cache_key | TEXT PK | hash of tool name and parameters |
@@ -95,7 +97,7 @@ Indexes:
 | created_at | TEXT | |
 | expires_at | TEXT | TTL |
 
-### `crawl_runs`
+### `crawl_runs` (implemented)
 | Column | Type | Notes |
 |---|---|---|
 | id | TEXT PK | run ID |
@@ -106,7 +108,7 @@ Indexes:
 | status | TEXT | `completed` or `partial` (any URL with errors). `running` and `failed` are reserved |
 | jsonl_path | TEXT | |
 
-### `crawl_results`
+### `crawl_results` (implemented)
 | Column | Type | Notes |
 |---|---|---|
 | id | TEXT PK | |
@@ -130,7 +132,7 @@ Indexes:
 | jsonld_syntax_errors | INTEGER | added in P6: JSON-LD blocks that fail strict JSON parsing; null when not extracted |
 | errors_json | TEXT | |
 
-### `audit_runs`
+### `audit_runs` (planned: reports are generated, not stored yet)
 | Column | Type | Notes |
 |---|---|---|
 | id | TEXT PK | |
@@ -143,7 +145,7 @@ Indexes:
 | status | TEXT | |
 | summary_json | TEXT | sources used, sources missing |
 
-### `findings`
+### `findings` (planned: findings are in reports, not stored yet)
 | Column | Type | Notes |
 |---|---|---|
 | id | TEXT PK | |
@@ -156,7 +158,7 @@ Indexes:
 | affected_count | INTEGER | |
 | status | TEXT | `open`, `resolved`, `unverified` |
 
-### `evidence`
+### `evidence` (planned: evidence ids are checked in code, not stored yet)
 | Column | Type | Notes |
 |---|---|---|
 | id | TEXT PK | |
@@ -167,7 +169,7 @@ Indexes:
 
 Rule: a finding must have at least one evidence row. The evidence-auditor checks this.
 
-### `opportunities`
+### `opportunities` (planned, P12)
 | Column | Type | Notes |
 |---|---|---|
 | id | TEXT PK | |
@@ -177,7 +179,7 @@ Rule: a finding must have at least one evidence row. The evidence-auditor checks
 | effort | TEXT | `low`, `medium`, `high` |
 | description | TEXT | |
 
-### `action_proposals`
+### `action_proposals` (implemented, P10)
 | Column | Type | Notes |
 |---|---|---|
 | id | TEXT PK | |
@@ -193,7 +195,7 @@ Rule: a finding must have at least one evidence row. The evidence-auditor checks
 | created_at | TEXT | |
 | expires_at | TEXT | |
 
-### `approvals`
+### `approvals` (implemented, P10)
 | Column | Type | Notes |
 |---|---|---|
 | id | TEXT PK | |
@@ -202,7 +204,7 @@ Rule: a finding must have at least one evidence row. The evidence-auditor checks
 | approved_at | TEXT | |
 | approved_by | TEXT | `user` |
 
-### `execution_logs`
+### `execution_logs` (implemented, P10)
 | Column | Type | Notes |
 |---|---|---|
 | id | TEXT PK | |
@@ -213,7 +215,7 @@ Rule: a finding must have at least one evidence row. The evidence-auditor checks
 | verification_json | TEXT | post-execution check result |
 | error_json | TEXT | nullable |
 
-### `schema_migrations`
+### `schema_migrations` (implemented; migrations 0000 to 0003)
 | Column | Type | Notes |
 |---|---|---|
 | version | INTEGER PK | |

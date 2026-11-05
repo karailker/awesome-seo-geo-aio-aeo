@@ -71,6 +71,18 @@ PSI (primary) / local Lighthouse (fallback) ──► performance MCP ─┘
 | D6 | GEO/AIO/AEO from crawl and search/analytics data in v1 | No AI platform prompt-testing API in v1 scope; prompt-based measurement deferred |
 | D7 | English outputs | Project language; user may converse in another language |
 
+## Status (2026-11-05)
+
+Implemented: all five MCP servers with read tools; core store, ingest, reports, and the approval engine; the PreToolUse gate for three write tools; agents, skills, and commands listed in `docs/AGENTS-AND-SKILLS.md`.
+
+Deviations from the original design:
+- The Merchant Center part (P9) is deferred, because the site sells no products.
+- The write gate runs as a PreToolUse hook that reads the same SQLite database as core. It does not call an MCP server.
+- Crawl and reports use local fixtures in tests. Live checks were run read-only, plus three approved writes.
+- Yandex Webmaster per-URL data is an in-search snapshot, not a dated report.
+
+Distribution (open): the MCP servers need a build step, and the crawler needs `uv sync`. Build outputs are not in git. See `STATUS.md`, open decisions.
+
 ## Deferred (not in v1)
 
 - Prompt-based AI visibility measurement (ChatGPT, Gemini, Perplexity)
