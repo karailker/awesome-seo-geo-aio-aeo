@@ -4,11 +4,11 @@ description: Compares the URLs in the sitemap with the pages that Search Console
 ---
 
 ## Purpose
-Show which sitemap URLs have no Search Console page data in the period, and which Search Console pages are not in the sitemap.
+Show which sitemap URLs have no page data in the period from each search source (Search Console, Bing Webmaster, Yandex Webmaster), and which source pages are not in the sitemap.
 
 ## When to use
 - After `/sitemap-sync` and a Search Console page pull.
-- Not for: Bing or Yandex URL sets (P8), or fixing the sitemap.
+- Not for: fixing the sitemap.
 
 ## Inputs
 - `origin`, `start`, `end`.
@@ -20,7 +20,9 @@ Show which sitemap URLs have no Search Console page data in the period, and whic
 
 ## Method
 - Both sides are normalized with `normalizeUrl` (fragment removed, absolute http(s) only).
-- "Sitemap only": in the sitemap, no Search Console page row for the period.
+- Range sources (Search Console, Bing): a page counts if its observation period overlaps the report period.
+- Yandex: a snapshot of pages in search on the collection date. The report states that date.
+- "Sitemap only": in the sitemap, no page data from that source.
 - "Search Console only": Search Console page row, not in the sitemap.
 - Hosts matter. `www.` and apex hosts are different URLs. Report them as found, and do not merge them.
 

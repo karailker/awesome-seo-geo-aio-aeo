@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: **Current phase: P8 (in progress)** (P0 complete 2026-11-04; P1 complete 2026-11-05; P2 complete 2026-11-05; P3 complete 2026-11-05; P4 complete 2026-11-05; P5 complete 2026-11-05 with CrUX live; P6 complete 2026-11-05 with two skills deferred; P7 complete 2026-11-05: Metrica and GA4 live, AI referral traffic; P8 partial: Yandex Webmaster and Bing Webmaster live; reconciliation covers Search Console and Bing; Yandex per-URL data not available for this host)
+Status: **Current phase: P9** (P0 complete 2026-11-04; P1 complete 2026-11-05; P2 complete 2026-11-05; P3 complete 2026-11-05; P4 complete 2026-11-05; P5 complete 2026-11-05 with CrUX live; P6 complete 2026-11-05 with two skills deferred; P7 complete 2026-11-05: Metrica and GA4 live, AI referral traffic; P8 complete 2026-11-05: Bing and Yandex Webmaster live; reconciliation across Search Console, Bing, and Yandex (Yandex as a snapshot from the in-search samples); Yandex host not ownership-verified, so its data may be partial)
 
 Update the status line when a phase is complete. Phases are sequential unless noted.
 
@@ -124,7 +124,7 @@ Done when:
 - AI referral sources are classified by a documented source list in `knowledge/`
 - Traffic findings cite GA4 or Metrica observations with the date range stated
 
-## P8: Bing and Yandex Webmaster (in progress)
+## P8: Bing and Yandex Webmaster ✅
 
 Deliverables:
 - `bing_search_stats`, `bing_page_stats`, `bing_url_info`

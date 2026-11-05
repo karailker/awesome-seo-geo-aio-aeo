@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { hostSummary, indexing, listHosts, searchQueries } from "./webmaster-tools.js";
+import { hostSummary, indexing, inSearchUrls, listHosts, searchQueries } from "./webmaster-tools.js";
 
 const rec = JSON.parse(readFileSync(new URL("../tests/fixtures/webmaster-live.json", import.meta.url), "utf8"));
 const HOST = "https:www.bulmacalig.com:443";
@@ -94,5 +94,29 @@ describe("Yandex Webmaster tools", () => {
     const r = await listHosts(env, impl);
 
     expect(r.errors[0]?.code).toBe("PERMISSION_DENIED");
+  });
+
+  it("pages through in-search samples and writes one JSONL line per URL", async () => {
+    const data = (await import("node:fs")).mkdtempSync((await import("node:os")).tmpdir() + "/yw-");
+    const pages: string[] = [];
+    const impl = (async (input: string | URL | Request) => {
+      const url = new URL(String(input));
+      if (url.pathname.endsWith("/in-search/samples")) {
+        const offset = Number(url.searchParams.get("offset"));
+        const limit = Number(url.searchParams.get("limit"));
+        pages.push(`${offset}/${limit}`);
+        const all = Array.from({ length: 150 }, (_, i) => ({ url: `https://www.bulmacalig.com/p${i}`, last_access: "2026-10-08T00:00:00+03:00" }));
+        return new Response(JSON.stringify({ count: 150, samples: all.slice(offset, offset + limit) }), { status: 200 });
+      }
+      return new Response(JSON.stringify(url.pathname.endsWith("/user/") ? { user_id: rec.user_id } : {}), { status: 200 });
+    }) as typeof fetch;
+
+    const r = await inSearchUrls({ host_id: HOST, output_path: "yandex/in.jsonl" }, { ...env, AWESOME_SEO_DATA_DIR: data }, impl);
+
+    expect(r.data).toMatchObject({ count: 150 });
+    expect(pages).toEqual(["0/100", "100/100"]);
+    const lines = (await import("node:fs")).readFileSync(data + "/yandex/in.jsonl", "utf8").trim().split("\n");
+    expect(lines).toHaveLength(150);
+    (await import("node:fs")).rmSync(data, { recursive: true, force: true });
   });
 });

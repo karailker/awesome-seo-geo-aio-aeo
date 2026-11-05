@@ -49,3 +49,23 @@ export function hostPath(uid: number, hostId: string): string {
   checkHostId(hostId);
   return `/user/${uid}/hosts/${hostId}`;
 }
+
+export type InSearchSample = { url: string; lastAccess: string | null; title: string | null };
+
+// Pages Yandex currently shows in search, paged with offset/limit. Capped to keep one call bounded.
+export async function inSearchSamples(fetchImpl: typeof fetch, token: string, uid: number, hostId: string): Promise<InSearchSample[]> {
+  const base = `${hostPath(uid, hostId)}/search-urls/in-search/samples`;
+  const out: InSearchSample[] = [];
+  const pageSize = 100;
+  const maxRows = 2000;
+  for (let offset = 0; offset < maxRows; offset += pageSize) {
+    const body = (await webmasterGet(fetchImpl, token, `${base}?offset=${offset}&limit=${pageSize}`)) as {
+      count?: number;
+      samples?: { url: string; last_access?: string; title?: string }[];
+    };
+    const page = body.samples ?? [];
+    for (const s of page) out.push({ url: s.url, lastAccess: s.last_access ?? null, title: s.title ?? null });
+    if (page.length < pageSize || (body.count !== undefined && out.length >= body.count)) break;
+  }
+  return out;
+}

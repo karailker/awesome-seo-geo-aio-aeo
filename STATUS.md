@@ -48,14 +48,14 @@ Not verified:
 - GA4: `google_ga4_get_metadata`, `google_ga4_run_report`, core `ingestGa4Jsonl`, AI referral finding. Live: 619 sessions, 14 from chatgpt.com.
 - Agent `traffic-analyst`, skills `analytics/organic-attribution` and `analytics/ai-referral-traffic`, `knowledge/ai-referrers.md`.
 
-## P8 (2026-11-05): partial
+## P8 (2026-11-05): complete
 
-- Bing Webmaster (`bing_search_stats`, `bing_page_stats`, `bing_url_info`): live with the key stored in `~/.config/awesome-seo/bing.env` (600). Site registered in Bing: `https://bulmacalig.com/` (apex). Page URLs in Bing are `www` and match the sitemap. Live: 31 daily rows for Oct 2026 (974 impressions, 14 clicks); 8 page-level rows (Bing returns a short list).
-- Core `ingestBingJsonl` (source `bing`). Reconciliation now covers Search Console and Bing (`reconcileSitemapWith`). Traffic section shows Bing totals.
-- Yandex Webmaster (`yandex_webmaster_hosts`, `_host_summary`, `_search_queries`, `_indexing`): live. The host is not ownership-verified; summary counts may be partial. Per-URL indexing samples return 404, so Yandex is not in the per-URL reconciliation.
-- Open: Yandex host ownership verification by the user; per-URL Yandex data source; quotas and endpoints marked VERIFY.
+- Bing Webmaster (`bing_search_stats`, `bing_page_stats`, `bing_url_info`): live with the key in `~/.config/awesome-seo/bing.env` (600). Site in Bing: `https://bulmacalig.com/` (apex). Live: 31 daily rows for Oct 2026 (974 impressions, 14 clicks); 8 page-level rows.
+- Yandex Webmaster (`yandex_webmaster_hosts`, `_host_summary`, `_search_queries`, `_indexing`, `_in_search_urls`): live. Per-URL data comes from the in-search samples (30 URLs). Host not ownership-verified: the data may be partial.
+- Reconciliation across Search Console (29 pages, 25 in both), Bing (3 pages, all in both), and Yandex (30 snapshot URLs, 29 in both). Live report at `seo:audit --gsc --bing --yandex`.
+- Quotas and endpoint versions are VERIFY-marked in code (Bing quota, Yandex Webmaster endpoints).
 
-## Next: P8 completion (Yandex per-URL source or a documented exclusion), then P9 (Merchant Center)
+## Next: P9 (Merchant Center)
 
 Scope from ROADMAP: `google_ga4_run_report`, `google_ga4_get_metadata` (google MCP), `yandex_metrica_report` (yandex MCP, which is still a stub), `traffic-analyst` agent, skills `analytics/organic-attribution` and `analytics/ai-referral-traffic` (AI referral source list in `knowledge/`), and inclusion in `/seo-audit` when connections exist. Needs a GA4 property ID and service account access to the property, and a Metrica counter and OAuth token. Confirm both before starting.
 

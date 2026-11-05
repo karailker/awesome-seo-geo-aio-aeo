@@ -1,6 +1,10 @@
 // Tool handlers for Yandex Webmaster. Token from YANDEX_WEBMASTER_TOKEN. Each returns the ToolResult envelope.
 import type { ToolResult } from "@awesome-seo/core";
-import { checkHostId, hostPath, userId, webmasterGet, WebmasterError } from "./webmaster.js";
+import { randomUUID } from "node:crypto";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { dirname } from "node:path";
+import { resolveDataOutput } from "@awesome-seo/core";
+import { checkHostId, hostPath, inSearchSamples, userId, webmasterGet, WebmasterError } from "./webmaster.js";
 
 export const WEBMASTER_TOKEN_VAR = "YANDEX_WEBMASTER_TOKEN";
 type Env = NodeJS.ProcessEnv;
@@ -77,6 +81,32 @@ export async function indexing(input: { host_id: string }, env: Env = process.en
       },
       [VERIFY_NOTE],
     );
+  } catch (err) {
+    return fail(err);
+  }
+}
+
+// URLs Yandex shows in search for the host. Optional JSONL output for core ingest: one line per URL,
+// period = the collection date (a snapshot, not a range).
+export async function inSearchUrls(input: { host_id: string; output_path?: string }, env: Env = process.env, fetchImpl: typeof fetch = fetch) {
+  try {
+    checkHostId(input.host_id);
+    const t = token(env);
+    const uid = await userId(fetchImpl, t);
+    const samples = await inSearchSamples(fetchImpl, t, uid, input.host_id);
+    const collectedAt = new Date().toISOString();
+    const day = collectedAt.slice(0, 10);
+    let outputPath: string | null = null;
+    if (input.output_path) {
+      outputPath = resolveDataOutput(input.output_path, ".jsonl", env);
+      const runId = `${collectedAt.replace(/[-:.]/g, "")}-${randomUUID().slice(0, 4)}`;
+      const lines = samples.map((x) =>
+        JSON.stringify({ run_id: runId, collected_at: collectedAt, host_id: input.host_id, period_start: day, period_end: day, dimensions: { url: x.url, last_access: x.lastAccess }, metrics: { in_search: 1 } }),
+      );
+      mkdirSync(dirname(outputPath), { recursive: true });
+      writeFileSync(outputPath, lines.map((l) => `${l}\n`).join(""), "utf8");
+    }
+    return ok({ hostId: input.host_id, count: samples.length, samples, outputPath }, [VERIFY_NOTE]);
   } catch (err) {
     return fail(err);
   }

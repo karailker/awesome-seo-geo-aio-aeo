@@ -1,7 +1,7 @@
 // yandex MCP server (P7): Yandex Metrica aggregated reports. Webmaster tools come in P8.
 import { capabilitiesPayload, healthPayload, serveMcp, z, type StubServerConfig } from "@awesome-seo/core";
 import { METRICA_COUNTER_VAR, METRICA_TOKEN_VAR, metricaReport } from "./tools.js";
-import { hostSummary, indexing, listHosts, searchQueries, WEBMASTER_TOKEN_VAR } from "./webmaster-tools.js";
+import { hostSummary, indexing, inSearchUrls, listHosts, searchQueries, WEBMASTER_TOKEN_VAR } from "./webmaster-tools.js";
 
 const CONFIG: StubServerConfig = {
   prefix: "yandex",
@@ -16,6 +16,7 @@ const CONFIG: StubServerConfig = {
     { name: "yandex_webmaster_host_summary", access: "read", credentials: [WEBMASTER_TOKEN_VAR] },
     { name: "yandex_webmaster_search_queries", access: "read", credentials: [WEBMASTER_TOKEN_VAR] },
     { name: "yandex_webmaster_indexing", access: "read", credentials: [WEBMASTER_TOKEN_VAR] },
+    { name: "yandex_webmaster_in_search_urls", access: "read", credentials: [WEBMASTER_TOKEN_VAR] },
   ],
 };
 
@@ -71,6 +72,14 @@ serveMcp(CONFIG.name, CONFIG.version, (server) => {
     "yandex_webmaster_indexing",
     { description: "Indexing: in-search history, sitemaps with errors, recrawl quota.", inputSchema: { host_id: z.string().min(1) } },
     async (args) => asText(await indexing(args)),
+  );
+  server.registerTool(
+    "yandex_webmaster_in_search_urls",
+    {
+      description: "URLs Yandex currently shows in search for a host. Optional JSONL output under the data directory for core ingest.",
+      inputSchema: { host_id: z.string().min(1), output_path: z.string().optional().describe("Relative to the data directory, ends in .jsonl") },
+    },
+    async (args) => asText(await inSearchUrls(args)),
   );
 }).catch((err) => {
   console.error(err);

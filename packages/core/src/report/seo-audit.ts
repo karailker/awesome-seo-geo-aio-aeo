@@ -113,7 +113,7 @@ export function buildSeoAuditReport(store: Store, input: ReportInput): string {
   const traffic = ga4TrafficSection(store, input);
   const candidates = [...(gscAvailable ? findingsFrom(pages, queries) : []), ...(traffic.aiFinding ? [traffic.aiFinding] : [])];
   const { valid, problems } = validateFindings(store, input.siteId, candidates);
-  const recons: Reconciliation[] = (["gsc", "bing"] as SearchSource[]).map((src) => reconcileSitemapWith(store, input.siteId, src, input.periodStart, input.periodEnd));
+  const recons: Reconciliation[] = (["gsc", "bing", "yandex"] as SearchSource[]).map((src) => reconcileSitemapWith(store, input.siteId, src, input.periodStart, input.periodEnd));
   const recon = recons[0]!;
 
   const missing: string[] = [];
@@ -167,8 +167,9 @@ export function buildSeoAuditReport(store: Store, input: ReportInput): string {
     ...recons.flatMap((r) => {
       const label = SOURCE_LABEL[r.source];
       if (r.sourcePageCount === 0) return [`Not available: ${label} page data is missing for this period.`, ""];
+      const when = r.snapshot ? ` (snapshot collected ${r.collectedOn})` : "";
       return [
-        `### ${label}`,
+        `### ${label}${when}`,
         `- Sitemap URLs: ${r.sitemapCount}. ${label} pages: ${r.sourcePageCount}. In both: ${r.both}.`,
         "",
         `In sitemap, no ${label} page data for this period (${r.sitemapOnly.length}):`,

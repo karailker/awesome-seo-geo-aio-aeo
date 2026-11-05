@@ -1,10 +1,10 @@
 // Prints the Search Console and sitemap audit for one period as Markdown.
 // Optionally ingests a google_gsc_search_analytics JSONL file first.
-// Usage: pnpm seo:audit --origin https://example.com --start 2026-09-01 --end 2026-10-31 [--gsc file.jsonl] [--ga4 file.jsonl] [--metrica file.jsonl] [--bing file.jsonl]
+// Usage: pnpm seo:audit --origin https://example.com --start 2026-09-01 --end 2026-10-31 [--gsc file.jsonl] [--ga4 file.jsonl] [--metrica file.jsonl] [--bing file.jsonl] [--yandex file.jsonl]
 // Requires a built core (pnpm -r build) and a seeded site (pnpm db:seed). Path override: AWESOME_SEO_DB.
 import { readFileSync } from "node:fs";
 import { parseArgs } from "node:util";
-import { buildSeoAuditReport, ingestGa4Jsonl, ingestBingJsonl, ingestGscJsonl, ingestMetricaJsonl, normalizeUrl, openStore } from "../packages/core/dist/index.js";
+import { buildSeoAuditReport, ingestGa4Jsonl, ingestBingJsonl, ingestGscJsonl, ingestMetricaJsonl, ingestYandexWebmasterJsonl, normalizeUrl, openStore } from "../packages/core/dist/index.js";
 
 const { values } = parseArgs({
   options: {
@@ -15,6 +15,7 @@ const { values } = parseArgs({
     ga4: { type: "string", multiple: true },
     metrica: { type: "string", multiple: true },
     bing: { type: "string", multiple: true },
+    yandex: { type: "string", multiple: true },
   },
 });
 
@@ -37,6 +38,9 @@ try {
   }
   for (const file of values.gsc ?? []) {
     ingestGscJsonl(store, site.id, readFileSync(file, "utf8"));
+  }
+  for (const file of values.yandex ?? []) {
+    ingestYandexWebmasterJsonl(store, site.id, readFileSync(file, "utf8"));
   }
   for (const file of values.bing ?? []) {
     ingestBingJsonl(store, site.id, readFileSync(file, "utf8"));
