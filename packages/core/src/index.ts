@@ -5,6 +5,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 
 export * from "./domain.js";
 export * from "./db/store.js";
+export * from "./ingest/sitemap.js";
 
 // Response envelope for all data tools — docs/MCP.md.
 export type ToolResult<T> = {
