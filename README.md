@@ -4,8 +4,9 @@ A local Claude Code plugin that audits one website across SEO, GEO (generative e
 visibility), AIO (AI discoverability), and AEO (answer readiness). Local-first,
 sitemap-driven, evidence-backed reports in English.
 
-Status: **P1 core and SQLite** - SQLite store with migrations, site seed, and Zod schemas
-are in place. MCP servers are still stubs exposing only `<prefix>_health` and
+Status: **P2 sitemap discovery** - SQLite store, site seed, sitemap discovery in the crawl
+MCP (`crawl_discover_sitemap`), and `/sitemap-sync` are in place. The Google, Yandex,
+Bing, and performance servers are still stubs exposing only `<prefix>_health` and
 `<prefix>_capabilities`. See `docs/ROADMAP.md` for phases.
 
 Design docs: `docs/ARCHITECTURE.md`, `docs/DATA-MODEL.md`, `docs/MCP.md`,
@@ -21,9 +22,14 @@ pnpm -r test                          # Vitest
 cd mcp-servers/crawl && uv run pytest # pytest
 pnpm db:migrate                       # create/upgrade data/awesome-seo.sqlite
 pnpm db:seed --origin https://example.com [--sitemap URL] [--url-cap 500]
+pnpm sitemap:ingest --origin https://example.com data/snapshots/<run>.jsonl
 ```
 
-The database path can be overridden with `AWESOME_SEO_DB`. The scripts run `.ts` files
+In Claude Code, `/sitemap-sync` runs discovery through the crawl MCP and ingests the result.
+
+The database path can be overridden with `AWESOME_SEO_DB`. Crawl output goes under
+`AWESOME_SEO_DATA_DIR` (default `./data`). Set `AWESOME_SEO_CONTACT_URL` to a page that
+describes the crawler; it goes into the User-Agent. The scripts run `.ts` files
 directly, which needs Node 22.18+ or 24 (type stripping).
 
 Credentials: copy `.env.example` to `.env` (git-ignored, dev-only) or use the OS

@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: **Current phase: P2** (P0 complete 2026-11-04; P1 complete 2026-11-05: migrations apply and are idempotent, store tests green, seed and migrate scripts work)
+Status: **Current phase: P3** (P0 complete 2026-11-04; P1 complete 2026-11-05; P2 complete 2026-11-05: sitemap discovery fixtures green, ingest idempotent, `/sitemap-sync` verified on fixtures)
 
 Update the status line when a phase is complete. Phases are sequential unless noted.
 
@@ -35,7 +35,7 @@ Done when:
 - Migrations apply to an empty DB and are idempotent
 - Store tests cover insert, upsert, foreign key enforcement, and transaction rollback
 
-## P2: Sitemap discovery
+## P2: Sitemap discovery ✅
 
 Deliverables:
 - `crawl_discover_sitemap` tool: resolves sitemap index recursively, returns URLs with `lastmod`, enforces the URL cap, records errors

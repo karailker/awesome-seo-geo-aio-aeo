@@ -1,40 +1,38 @@
 # STATUS
 
-Date: 2026-11-05. Phase: P1 complete, P2 next.
+Date: 2026-11-05. Phase: P2 complete, P3 next.
 
 ## Done
 
-| Phase | Commit | Contents |
-|---|---|---|
-| P0 | `c3d92bd`, `489679a`, `ddbbb52` | Docs, workspace, plugin manifests, stub MCP servers (`*_health`, `*_capabilities`) |
-| P0 fixes | uncommitted | pnpm 12 build approval moved to `allowBuilds` in `pnpm-workspace.yaml`; dead duplicate `pnpm` block removed from `package.json` |
-| P1 | uncommitted | `packages/core`: Drizzle schema for `sites`, `site_properties`, `connections`, `pages`, `observations`, `api_cache`; generated migration `migrations/0000_*.sql`; store with WAL, foreign keys, busy_timeout, migration runner recording `schema_migrations`; `withTransaction`; `upsertSite`, `upsertPage`, `insertObservation`; Zod `Site`, `Page`, `Observation`; `normalizeUrl`. Scripts `scripts/migrate.ts` and `scripts/seed.ts` (`pnpm db:migrate`, `pnpm db:seed`) |
+| Phase | Contents |
+|---|---|
+| P0 | Docs, workspace, plugin manifests, stub MCP servers (`*_health`, `*_capabilities`) |
+| P1 | `packages/core`: Drizzle schema (sites, site_properties, connections, pages, observations, api_cache), migration `0000`, store (WAL, foreign keys, busy_timeout, `schema_migrations`), Zod schemas, `normalizeUrl`. Scripts: `db:migrate`, `db:seed` |
+| P2 | Crawl MCP `crawl_discover_sitemap`: plain, index, and gzip sitemaps; robots.txt check (fail closed when unreadable); 1 req/s per host; identifiable UA; URL cap (default 500); DTD/ENTITY refused; per-child error tolerance. Writes JSONL under `data/`. Core `ingestSitemapJsonl` upserts `pages` with `source='sitemap'`. Scripts: `sitemap:ingest`. Command: `/sitemap-sync` |
+
+Git: history rewritten on 2026-11-05 to remove `Co-Authored-By` lines from all commit messages. Backup of the pre-rewrite head: local branch `backup/pre-attribution-rewrite`.
 
 ## Verified (2026-11-05)
 
-- `pnpm install`, `pnpm -r build`, `pnpm -r typecheck`, `pnpm -r test` (core: 9 tests pass)
-- `cd mcp-servers/crawl && uv run pytest` (2 pass)
-- `pnpm db:migrate` twice: second run applies nothing; `pnpm db:seed` twice: one site row, `created: false` on the second run
+- `pnpm -r build`, `pnpm -r typecheck`, `pnpm -r test` (core: 14 tests)
+- `cd mcp-servers/crawl && uv run pytest` (12 tests: 2 health, 10 sitemap)
+- `claude plugin validate .`
+- End to end: `db:migrate`, `db:seed`, `sitemap:ingest` twice on the fixture JSONL. Page count stays at 3 and all rows have `source='sitemap'`.
 
-Environment fix: `node_modules/` and `mcp-servers/crawl/.venv/` were created on the Windows side. The symlinks and interpreter were broken under WSL `/mnt/d` (ntfs3). Both were deleted and reinstalled on Linux. Re-run `pnpm install` and `uv sync` on any machine where they break.
+Not verified: `/sitemap-sync` run inside a live Claude Code session against a real site. The command is written, but only its ingest and crawler steps are tested.
 
-## Pending / needs a decision
+## Known gaps
 
-Resolved 2026-11-05:
-- Tool prefixes: `docs/MCP.md` is canonical. Google tools use `google_*`; performance tools use `performance_*`. ROADMAP, SECURITY-AND-APPROVAL, DATA-MODEL aligned.
-- License: MIT (`LICENSE`, `plugin.json` `license` field). Author name taken from git config; change if needed.
-- `.serena/` added to `.gitignore`.
-- Remote `origin` is `github.com/karailker/awesome-seo-geo-aio-aeo`.
-
-## Known gaps in P1
-
-- "Observation normalization helpers" is thin: only JSON serialization of `dimensions` and `provenance`. Add more when P3 defines the real sources.
+- Pages removed from a sitemap are not marked stale. Ingest only adds and updates.
+- Sitemap entries on other hosts are skipped, not stored.
+- `crawl_discover_sitemap` writes JSONL to `AWESOME_SEO_DATA_DIR`, relative to the working directory. Plugin runs need that directory set.
+- P1 "observation normalization helpers" is thin. Extend in P3 when real sources arrive.
 - `scripts/*.ts` run through Node type stripping and are not typechecked.
-- The migration generator is `drizzle-kit`, which is dev-only. Migrations are applied by our own runner, not by Drizzle's migrator.
+- `.serena/` is git-ignored. `docs/ROADMAP.md` P3 needs Google service account setup before implementation.
 
-## Not started
+## Next: P3 (Search Console vertical slice)
 
-- P2 onward: sitemap discovery, ingest into `pages`, `/sitemap-sync`.
+Blocked on setup, not code: a service account key file outside the repo, with access granted on the GSC property. Confirm the property and key location before starting.
 
 ## Toolchain
 
