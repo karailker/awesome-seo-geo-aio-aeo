@@ -2,7 +2,7 @@
 // Commands:
 //   propose --action <type> --target <t> --origin <site origin> --payload-file <json> --description <text>
 //   approve <proposal-id> | reject <proposal-id> | list
-//   record <proposal-id> --outcome success|failure [--verification-file f] [--error-file f]
+//   record <proposal-id> --outcome success|failure --started-at <ISO> --finished-at <ISO> [--verification-file f] [--error-file f]
 //   check-hook   (reads a PreToolUse event on stdin; exit 0 allows, exit 2 blocks, any error blocks)
 // Requires a built core (pnpm -r build). Path override: AWESOME_SEO_DB.
 import { readFileSync } from "node:fs";
@@ -99,10 +99,15 @@ function main(): void {
     } else if (cmd === "record") {
       const outcome = need(flags, "outcome");
       if (outcome !== "success" && outcome !== "failure") throw new Error("--outcome must be success or failure");
-      const now = new Date().toISOString();
+      // Times are the write call's own start and finish, from the tool result. Never the record time.
+      const startedAt = need(flags, "started-at");
+      const finishedAt = need(flags, "finished-at");
+      if (Number.isNaN(Date.parse(startedAt)) || Number.isNaN(Date.parse(finishedAt)) || finishedAt < startedAt) {
+        throw new Error("--started-at and --finished-at must be ISO times, finished not before started");
+      }
       recordExecution(store, positional[0] ?? "", {
-        startedAt: now,
-        finishedAt: now,
+        startedAt,
+        finishedAt,
         outcome,
         verification: flags["verification-file"] ? JSON.parse(readFileSync(flags["verification-file"], "utf8")) : undefined,
         error: flags["error-file"] ? JSON.parse(readFileSync(flags["error-file"], "utf8")) : undefined,

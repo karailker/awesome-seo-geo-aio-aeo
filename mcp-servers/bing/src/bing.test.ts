@@ -111,8 +111,12 @@ describe("Bing tools", () => {
 
   it("submits a URL through SubmitUrl with the site and URL as parameters", async () => {
     const calls: string[] = [];
-    const impl = (async (input: string | URL | Request) => {
+    const methods: string[] = [];
+    const bodies: (string | null)[] = [];
+    const impl = (async (input: string | URL | Request, init?: RequestInit) => {
       calls.push(String(input));
+      methods.push(init?.method ?? "GET");
+      bodies.push(typeof init?.body === "string" ? init.body : null);
       return new Response(JSON.stringify({ d: true }), { status: 200 });
     }) as typeof fetch;
 
@@ -120,6 +124,8 @@ describe("Bing tools", () => {
 
     expect(calls[0]).toContain("/SubmitUrl?");
     expect(calls[0]).toContain(`apikey=${KEY}`);
+    expect(methods[0]).toBe("POST");
+    expect(JSON.parse(bodies[0] ?? "{}")).toEqual({ siteUrl: "https://bulmacalig.com/", url: "https://www.bulmacalig.com/kare" });
     expect(r).toMatchObject({ ok: true, data: { submitted: true } });
   });
 });

@@ -65,11 +65,15 @@ The site sells no products, so Merchant Center is out of scope for now. Code and
 - Live: the Merchant API is enabled in `bulmacalig-b70a8`, but returns 401 "project not registered with the merchant account". Needed from the user: (1) the numeric Merchant Center account ID; (2) in Merchant Center, link the Google Cloud project `bulmacalig-b70a8`; (3) add `awesome-seo-gsc@bulmacalig-b70a8.iam.gserviceaccount.com` as a user.
 - Not done: core ingest of Merchant issues, the ecommerce report section, live verification, P10 write tools.
 
-## P10 (2026-11-05): complete
+## P10 (2026-11-05): complete, live-verified
 
-- Engine, gate, CLI, write tools, and `/approve-action` as described in the code and docs. Tests: core 62 (engine 9, hook 6 run against the real script), bing 9, google 22, yandex 18.
-- Live run (user approved): proposal `5c772bcc-...` to re-submit the existing sitemap `https://www.bulmacalig.com/sitemap.xml` on `sc-domain:bulmacalig.com`. Gate passed for the exact payload. The write went through the google MCP write tool over stdio. Search Console afterwards: `lastSubmitted` moved from 2026-11-01T09:53 to 2026-11-05T09:37, errors 0, not pending. The proposal is `executed`, with an approval row (payload hash) and an execution log row with the verification JSON. The gate blocks the same payload again.
-- Limits: the write was called from a script over stdio, not from a Claude Code session, so the PreToolUse hook did not run inside Claude; its decision was checked with the same payload before the call. The execution log stores start and finish as the record time, not the call time. Yandex and Bing writes are implemented and tested with fakes only.
+- Hook in a Claude Code session: headless `claude -p` with `--plugin-dir .`. An unapproved GSC sitemap submit was blocked by `hooks/scripts/validate-approval.sh` with the reason in the tool error, and nothing was submitted. Approved calls passed the same hook.
+- Live writes (all approved by the user for this test):
+  - Google Search Console, `sc-domain:bulmacalig.com` `sitemap-pages.xml`: success inside a Claude session, 09:40:47.8Z to 09:40:48.6Z. Search Console `lastSubmitted` 09:40:48.2Z confirms it.
+  - Bing, `https://bulmacalig.com/` `https://www.bulmacalig.com/kare`: POST SubmitUrl returned no error, body `null`. Recorded as success with `verified: false`: `GetUrlInfo` still shows last crawl 2026-10-09, before the submit, so acceptance is not confirmed. Bing's SubmitUrl response shape is still unverified.
+  - Yandex, `https:www.bulmacalig.com:443` `sitemap-pages.xml` (already listed): POST returned 405. OPTIONS on that path says `Allow: GET`. The host is not ownership-verified, so the route is probably closed for this host. Recorded as failure with the error. The sitemap list did not change.
+- Execution times are now the write call's own start and finish, from the tool result. The first GSC execution (`5c772bcc`) was recorded before this change: its log times are the record time (09:37:20Z). The real submit time, from Search Console, was 09:37:03.790Z. The row was left as it is.
+- Not done: Yandex write verified on a verified host (needs the user to verify host ownership in Yandex Webmaster); Bing acceptance confirmed; `merchant_update_product` (P9 deferred).
 
 ## Next: P11 (evaluation)
 

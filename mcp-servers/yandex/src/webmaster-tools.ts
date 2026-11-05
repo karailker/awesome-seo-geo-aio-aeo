@@ -114,15 +114,18 @@ export async function inSearchUrls(input: { host_id: string; output_path?: strin
 
 // Write (P10). Runs only after the approval gate passed.
 export async function addSitemap(input: { host_id: string; sitemap_url: string }, env: Env = process.env, fetchImpl: typeof fetch = fetch) {
+  const startedAt = new Date().toISOString();
   try {
     checkHostId(input.host_id);
     if (!/^https?:\/\//.test(input.sitemap_url)) throw new WebmasterError("INVALID_INPUT", "sitemap_url must be an http(s) URL", false);
     const t = token(env);
     const uid = await userId(fetchImpl, t);
     const { webmasterPost } = await import("./webmaster.js");
+    const startedAt = new Date().toISOString();
     await webmasterPost(fetchImpl, t, `${hostPath(uid, input.host_id)}/sitemaps`, { url: input.sitemap_url });
-    return ok({ hostId: input.host_id, sitemapUrl: input.sitemap_url, submitted: true }, [VERIFY_NOTE, "Verify with yandex_webmaster_indexing (sitemaps)."]);
+    const finishedAt = new Date().toISOString();
+    return ok({ hostId: input.host_id, sitemapUrl: input.sitemap_url, submitted: true, startedAt, finishedAt }, [VERIFY_NOTE, "Verify with yandex_webmaster_indexing (sitemaps)."]);
   } catch (err) {
-    return fail(err);
+    return { ...fail(err), startedAt, finishedAt: new Date().toISOString() };
   }
 }

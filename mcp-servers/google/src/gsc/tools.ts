@@ -121,8 +121,10 @@ export function searchAnalytics(
 export async function submitSitemap(getClient: ClientProvider, input: { site: string; feedpath: string }) {
   try {
     if (!/^https?:\/\//.test(input.feedpath)) throw new GscError("INVALID_INPUT", "feedpath must be an http(s) URL", false);
+    const startedAt = new Date().toISOString();
     await (await getClient()).submitSitemap(input.site, input.feedpath);
-    return ok({ site: input.site, feedpath: input.feedpath, submitted: true }, ["Submission accepted. Verify with google_gsc_list_sitemaps."]);
+    const finishedAt = new Date().toISOString();
+    return ok({ site: input.site, feedpath: input.feedpath, submitted: true, startedAt, finishedAt }, ["Submission accepted. Verify with google_gsc_list_sitemaps."]);
   } catch (err) {
     return fail(err);
   }

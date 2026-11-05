@@ -22,11 +22,17 @@ export function bingDate(value: string): string {
   return new Date(Number(m[1])).toISOString().slice(0, 10);
 }
 
-export async function bingCall(fetchImpl: typeof fetch, key: string, method: string, params: Record<string, string>): Promise<unknown> {
-  const q = new URLSearchParams({ ...params, apikey: key });
+// GET with query parameters, or POST with a JSON body when body is given (SubmitUrl requires POST; verified live).
+export async function bingCall(fetchImpl: typeof fetch, key: string, method: string, params: Record<string, string>, postBody?: Record<string, string>): Promise<unknown> {
+  const q = new URLSearchParams({ apikey: key, ...(postBody ? {} : params) });
   let res: Response;
   try {
-    res = await fetchImpl(`${BING_BASE}${method}?${q.toString()}`, { headers: { accept: "application/json" }, signal: AbortSignal.timeout(TIMEOUT_MS) });
+    res = await fetchImpl(`${BING_BASE}${method}?${q.toString()}`, {
+      method: postBody ? "POST" : "GET",
+      headers: { accept: "application/json", ...(postBody ? { "content-type": "application/json; charset=utf-8" } : {}) },
+      body: postBody ? JSON.stringify(postBody) : undefined,
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
   } catch (err) {
     if (err instanceof Error && (err.name === "TimeoutError" || err.name === "AbortError")) {
       throw new BingError("TIMEOUT", "Bing Webmaster request timed out", true);
