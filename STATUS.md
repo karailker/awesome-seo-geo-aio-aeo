@@ -43,6 +43,20 @@ Live writes (each approved by the user for the test):
 - Bing SubmitUrl, `https://www.bulmacalig.com/kare`: call succeeded; the owner sees the submission in Bing (12:42 local time); quota 99 is consistent with acceptance. `GetUrlInfo` last crawl not updated yet (crawling is later). Acceptance is not confirmed by the API.
 - Yandex Webmaster add sitemap, `sitemap-pages.xml`: POST returned 405 (route closed; `OPTIONS` says `Allow: GET`). Yandex Webmaster was then read-only during a provider incident. Recorded as failure. Retry later with a new proposal.
 
+## npm publication (2026-11-05)
+
+Scope `@karailker`, MIT, public, version 0.1.0.
+
+| Package | Registry state (last check) |
+|---|---|
+| `@karailker/awesome-seo-core` | 0.1.0 live |
+| `@karailker/awesome-seo-mcp-performance` | 0.1.0 live |
+| `@karailker/awesome-seo-mcp-google` | not yet: registry shows 0.0.0-stage |
+| `@karailker/awesome-seo-mcp-bing` | not yet: registry shows 0.0.0-stage |
+| `@karailker/awesome-seo-mcp-yandex` | not on the registry yet |
+
+Remaining: publish the three packages one at a time from their directories (`corepack pnpm publish --access public --no-git-checks`), completing the browser sign-in step each time. Then check with `npm view <package> version`. `.mcp.json` already uses `npx -y` for the four TypeScript servers, so until they are live, the repo's own plugin servers will not start.
+
 ## Known gaps
 
 - Yandex write: not yet successful. Retry after the Yandex incident with a new proposal and approval.
