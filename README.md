@@ -48,6 +48,10 @@ keychain. Key files must live outside the repo. Health tools run without credent
 4. Export `GOOGLE_SERVICE_ACCOUNT_KEY_FILE` to that path before starting Claude Code.
 5. Run `/seo-audit <origin> <start> <end>` in Claude Code, or `pnpm seo:audit` with JSONL files from `google_gsc_search_analytics`.
 
+### Performance setup (P5)
+
+Keys are read from the environment. Store them outside the repo, for example in `~/.config/awesome-seo/performance.env` with mode 600, with the names `PAGESPEED_API_KEY` and `CRUX_API_KEY`. Load them before starting Claude Code: `set -a; . ~/.config/awesome-seo/performance.env; set +a`. The PageSpeed Insights API and the Chrome UX Report API must both be enabled in the key's Google Cloud project, and the key's restrictions must allow them.
+
 The OAuth client JSON (`installed` or `web`) does not work for this flow. Use a service account key.
 
 ## Load the plugin

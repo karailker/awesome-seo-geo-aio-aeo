@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: **Current phase: P5** (P0 complete 2026-11-04; P1 complete 2026-11-05; P2 complete 2026-11-05; P3 complete 2026-11-05: `/seo-audit` run live on the bulmacalig.com domain property, every finding cites observations; P4 complete 2026-11-05: crawl, extraction, AI access check, ingest, all fixtures green)
+Status: **Current phase: P5, in progress** (P0 complete 2026-11-04; P1 complete 2026-11-05; P2 complete 2026-11-05; P3 complete 2026-11-05; P4 complete 2026-11-05; P5 partial: PSI works live, CrUX blocked by API permission, local Lighthouse waiting on dependency approval)
 
 Update the status line when a phase is complete. Phases are sequential unless noted.
 
@@ -81,7 +81,9 @@ Done when:
 - Crawler never exceeds the per-host rate limit in tests
 - Two runs of the same fixture produce identical content hashes
 
-## P5: Performance
+## P5: Performance (in progress)
+
+Status (2026-11-05): `performance_psi_run` and `performance_crux_query` are implemented with fixture tests (12). Live PSI works on `www.bulmacalig.com` (lab values returned, field values null because the URL has no CrUX data). Live CrUX returns 403 (PERMISSION_DENIED): the Chrome UX Report API is not enabled for the key's project, or the key is restricted. `performance_lighthouse_local_run` is not started: it needs the `lighthouse` npm package, which requires user approval first. The `/perf-audit` command and agent and the `cwv-diagnosis` skill are written but have not been run end to end.
 
 Deliverables:
 - `performance_psi_run`: PageSpeed Insights API, returns lab and field data separately
