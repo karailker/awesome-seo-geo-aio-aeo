@@ -42,6 +42,11 @@ Not verified:
 - The OAuth client file the user supplied is not used. It stays in place as the user asked.
 - Git: old commits `c3d92bd`, `489679a`, `ddbbb52`, `05374db` (pre-rewrite) still appear on GitHub with `Co-Authored-By: Claude Code` trailers. They are not reachable from `main` on the remote. GitHub's contributor API currently lists only `karailker`.
 
+## P7 progress (2026-11-05)
+
+- Yandex Metrica: token obtained with user consent (scope metrika:read) and stored in `~/.config/awesome-seo/yandex.env` (mode 600). `yandex_metrica_report` verified live on counter 113337943: 6 traffic-source rows, totals 396 visits and 370 users for 2026-10-01 to 2026-10-31, no sampling. Fixture recorded.
+- Not done: Metrica observations ingest and report section, `traffic-analyst` agent, `analytics/*` skills, `knowledge/ai-referrers.md`, GA4 tools (need property ID and service account access).
+
 ## Next: P7 (Analytics)
 
 Scope from ROADMAP: `google_ga4_run_report`, `google_ga4_get_metadata` (google MCP), `yandex_metrica_report` (yandex MCP, which is still a stub), `traffic-analyst` agent, skills `analytics/organic-attribution` and `analytics/ai-referral-traffic` (AI referral source list in `knowledge/`), and inclusion in `/seo-audit` when connections exist. Needs a GA4 property ID and service account access to the property, and a Metrica counter and OAuth token. Confirm both before starting.
