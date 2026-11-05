@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { buildAssertion, loadServiceAccount, TokenProvider, type ServiceAccount } from "./auth.js";
 import { GscClient } from "./client.js";
 import { GscError, fromHttpStatus } from "./errors.js";
-import { searchAnalytics, type ClientProvider } from "./tools.js";
+import { searchAnalytics, submitSitemap, type ClientProvider } from "./tools.js";
 
 const { privateKey, publicKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
 const privatePem = privateKey.export({ type: "pkcs8", format: "pem" }).toString();
@@ -223,5 +223,16 @@ describe("searchAnalytics tool", () => {
     const result = await searchAnalytics(provider, input, dataEnv());
 
     expect(result.errors[0]?.code).toBe("AUTH_MISSING");
+  });
+
+  it("submits a sitemap with a PUT to the encoded property and feedpath", async () => {
+    const { impl, calls } = fakeFetch((url, init) => (init.method === "PUT" ? new Response(null, { status: 204 }) : json({})));
+    const provider: ClientProvider = async () => new GscClient(new TokenProvider(SA, "https://www.googleapis.com/auth/webmasters", impl), impl);
+
+    const result = await submitSitemap(provider, { site: SITE, feedpath: "https://www.example.com/sitemap.xml" });
+
+    const put = calls.find((c) => c.init.method === "PUT");
+    expect(put?.url).toBe("https://www.googleapis.com/webmasters/v3/sites/sc-domain%3Aexample.com/sitemaps/https%3A%2F%2Fwww.example.com%2Fsitemap.xml");
+    expect(result).toMatchObject({ ok: true, data: { submitted: true } });
   });
 });

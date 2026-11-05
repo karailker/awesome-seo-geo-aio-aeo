@@ -33,7 +33,7 @@ export class GscClient {
     private readonly fetchImpl: typeof fetch,
   ) {}
 
-  private async call<T>(method: "GET" | "POST", url: string, body?: unknown): Promise<T> {
+  private async call<T>(method: "GET" | "POST" | "PUT", url: string, body?: unknown): Promise<T> {
     const token = await this.tokens.getToken();
     let res: Response;
     try {
@@ -53,6 +53,7 @@ export class GscClient {
       throw new GscError("UPSTREAM_ERROR", "Search Console API request failed", true);
     }
     if (!res.ok) throw fromHttpStatus(res.status);
+    if (res.status === 204) return undefined as T; // e.g. sitemap PUT returns no body
     return (await res.json()) as T;
   }
 
@@ -69,6 +70,11 @@ export class GscClient {
 
   async inspectUrl(site: string, inspectionUrl: string): Promise<unknown> {
     return this.call<unknown>("POST", INSPECT_URL, { inspectionUrl, siteUrl: site });
+  }
+
+  // Write (P10): submits a sitemap. Only reachable through the approval gate. Needs the webmasters scope.
+  async submitSitemap(site: string, feedpath: string): Promise<void> {
+    await this.call<unknown>("PUT", `${SITES_URL}/${encodeURIComponent(site)}/sitemaps/${encodeURIComponent(feedpath)}`);
   }
 
   async listSitemaps(site: string): Promise<unknown> {

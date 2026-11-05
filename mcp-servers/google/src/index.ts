@@ -3,7 +3,7 @@ import { capabilitiesPayload, healthPayload, serveMcp, z, type StubServerConfig 
 import { loadServiceAccount, SEARCH_CONSOLE_READONLY_SCOPE, TokenProvider, type ServiceAccount } from "./gsc/auth.js";
 import { GscClient } from "./gsc/client.js";
 import { GscError } from "./gsc/errors.js";
-import { inspectUrl, listProperties, listSitemaps, searchAnalytics, type ClientProvider } from "./gsc/tools.js";
+import { inspectUrl, listProperties, listSitemaps, searchAnalytics, submitSitemap, type ClientProvider } from "./gsc/tools.js";
 import { GA4_SCOPE, Ga4Client } from "./ga4/api.js";
 import { ga4Metadata, ga4RunReport, type Ga4ClientProvider } from "./ga4/tools.js";
 import { MERCHANT_SCOPE, MerchantClient } from "./merchant/api.js";
@@ -25,6 +25,7 @@ const CONFIG: StubServerConfig = {
     { name: "google_gsc_list_sitemaps", access: "read", credentials: [KEY_VAR] },
     { name: "google_ga4_get_metadata", access: "read", credentials: [KEY_VAR] },
     { name: "google_ga4_run_report", access: "read", credentials: [KEY_VAR] },
+    { name: "google_gsc_submit_sitemap", access: "write", credentials: [KEY_VAR] },
     { name: "google_merchant_list_products", access: "read", credentials: [KEY_VAR] },
     { name: "google_merchant_list_product_issues", access: "read", credentials: [KEY_VAR] },
   ],
@@ -47,6 +48,14 @@ const getClient: ClientProvider = async () => {
   // Read-only scope: P3 needs no write access. Sitemap submit (P10) will need its own scope.
   client = new GscClient(new TokenProvider(account(), SEARCH_CONSOLE_READONLY_SCOPE, fetch), fetch);
   return client;
+};
+
+// Write client (P10): webmasters scope, used only by google_gsc_submit_sitemap after the approval gate.
+let writeClient: GscClient | null = null;
+const getWriteClient: ClientProvider = async () => {
+  if (writeClient) return writeClient;
+  writeClient = new GscClient(new TokenProvider(account(), "https://www.googleapis.com/auth/webmasters", fetch), fetch);
+  return writeClient;
 };
 
 let ga4: Ga4Client | null = null;
@@ -105,6 +114,14 @@ serveMcp(CONFIG.name, CONFIG.version, (server) => {
       inputSchema: { site: siteSchema, url: z.string().url() },
     },
     async (args) => asText(await inspectUrl(getClient, args)),
+  );
+  server.registerTool(
+    "google_gsc_submit_sitemap",
+    {
+      description: "WRITE: submit a sitemap to Search Console. Requires an approved proposal for this exact site and feedpath (approval gate).",
+      inputSchema: { site: siteSchema, feedpath: z.string().url().describe("Sitemap URL") },
+    },
+    async (args) => asText(await submitSitemap(getWriteClient, args)),
   );
   server.registerTool(
     "google_gsc_list_sitemaps",

@@ -109,3 +109,16 @@ export async function urlInfo(input: { site: string; url: string }, env: Env = p
     return fail(err);
   }
 }
+
+// Write (P10). Runs only after the approval gate passed. Bing's SubmitUrl is subject to a daily quota (VERIFY).
+export async function submitUrl(input: { site: string; url: string }, env: Env = process.env, fetchImpl: typeof fetch = fetch) {
+  try {
+    const site = siteUrl(input.site);
+    const url = siteUrl(input.url);
+    const d = await bingCall(fetchImpl, key(env), "SubmitUrl", { siteUrl: site, url });
+    // Only an explicit true counts as accepted. The SubmitUrl response shape is not verified; confirm with bing_url_info.
+    return ok({ site, url, submitted: d === true, response: d }, ["Bing URL submission is subject to a daily quota (VERIFY). Confirm with bing_url_info."]);
+  } catch (err) {
+    return fail(err);
+  }
+}

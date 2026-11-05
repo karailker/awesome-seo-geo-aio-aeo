@@ -69,3 +69,25 @@ export async function inSearchSamples(fetchImpl: typeof fetch, token: string, ui
   }
   return out;
 }
+
+// Write (P10). Only reachable through the approval gate.
+export async function webmasterPost(fetchImpl: typeof fetch, token: string, path: string, body: unknown): Promise<unknown> {
+  let res: Response;
+  try {
+    res = await fetchImpl(`${BASE}${path}`, {
+      method: "POST",
+      headers: { Authorization: `OAuth ${token}`, "content-type": "application/json" },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+  } catch {
+    throw new WebmasterError("UPSTREAM_ERROR", "Yandex Webmaster request failed", true);
+  }
+  const message = `Yandex Webmaster returned HTTP ${res.status}`;
+  if (res.status === 401) throw new WebmasterError("AUTH_EXPIRED", message, false);
+  if (res.status === 403) throw new WebmasterError("PERMISSION_DENIED", message, false);
+  if (res.status === 404) throw new WebmasterError("NOT_FOUND", message, false);
+  if (res.status === 429) throw new WebmasterError("RATE_LIMITED", message, true);
+  if (!res.ok) throw new WebmasterError("UPSTREAM_ERROR", message, res.status >= 500);
+  return res.status === 204 ? {} : res.json();
+}

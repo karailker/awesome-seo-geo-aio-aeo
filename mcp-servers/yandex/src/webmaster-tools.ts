@@ -111,3 +111,18 @@ export async function inSearchUrls(input: { host_id: string; output_path?: strin
     return fail(err);
   }
 }
+
+// Write (P10). Runs only after the approval gate passed.
+export async function addSitemap(input: { host_id: string; sitemap_url: string }, env: Env = process.env, fetchImpl: typeof fetch = fetch) {
+  try {
+    checkHostId(input.host_id);
+    if (!/^https?:\/\//.test(input.sitemap_url)) throw new WebmasterError("INVALID_INPUT", "sitemap_url must be an http(s) URL", false);
+    const t = token(env);
+    const uid = await userId(fetchImpl, t);
+    const { webmasterPost } = await import("./webmaster.js");
+    await webmasterPost(fetchImpl, t, `${hostPath(uid, input.host_id)}/sitemaps`, { url: input.sitemap_url });
+    return ok({ hostId: input.host_id, sitemapUrl: input.sitemap_url, submitted: true }, [VERIFY_NOTE, "Verify with yandex_webmaster_indexing (sitemaps)."]);
+  } catch (err) {
+    return fail(err);
+  }
+}

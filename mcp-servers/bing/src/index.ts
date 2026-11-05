@@ -1,6 +1,6 @@
 // bing MCP server (P8): Bing Webmaster search stats, page stats, and URL info. Read-only.
 import { capabilitiesPayload, healthPayload, serveMcp, z, type StubServerConfig } from "@awesome-seo/core";
-import { BING_KEY_VAR, pageStats, searchStats, urlInfo } from "./tools.js";
+import { BING_KEY_VAR, pageStats, searchStats, submitUrl, urlInfo } from "./tools.js";
 
 const CONFIG: StubServerConfig = {
   prefix: "bing",
@@ -13,6 +13,7 @@ const CONFIG: StubServerConfig = {
     { name: "bing_search_stats", access: "read", credentials: [BING_KEY_VAR] },
     { name: "bing_page_stats", access: "read", credentials: [BING_KEY_VAR] },
     { name: "bing_url_info", access: "read", credentials: [BING_KEY_VAR] },
+    { name: "bing_submit_url", access: "write", credentials: [BING_KEY_VAR] },
   ],
 };
 
@@ -55,6 +56,14 @@ serveMcp(CONFIG.name, CONFIG.version, (server) => {
     "bing_url_info",
     { description: "Crawl and index information for one URL: HTTP status, last crawl, discovery date.", inputSchema: { site, url: z.string().url() } },
     async (args) => asText(await urlInfo(args)),
+  );
+  server.registerTool(
+    "bing_submit_url",
+    {
+      description: "WRITE: submit a URL to Bing for crawling. Requires an approved proposal for this exact site and URL (approval gate). Daily quota.",
+      inputSchema: { site, url: z.string().url() },
+    },
+    async (args) => asText(await submitUrl(args)),
   );
 }).catch((err) => {
   console.error(err);

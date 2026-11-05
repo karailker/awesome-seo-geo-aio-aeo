@@ -15,6 +15,7 @@
     "sitemap:ingest": "node scripts/sitemap-ingest.ts",
     "seo:audit": "node scripts/seo-audit.ts",
     "crawl:ingest": "node scripts/crawl-ingest.ts",
-    "geo:audit": "node scripts/geo-audit.ts"
+    "geo:audit": "node scripts/geo-audit.ts",
+    "approval": "node scripts/approval.ts"
   }
 }

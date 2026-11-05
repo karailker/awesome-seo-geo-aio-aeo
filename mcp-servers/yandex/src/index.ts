@@ -1,7 +1,7 @@
 // yandex MCP server (P7): Yandex Metrica aggregated reports. Webmaster tools come in P8.
 import { capabilitiesPayload, healthPayload, serveMcp, z, type StubServerConfig } from "@awesome-seo/core";
 import { METRICA_COUNTER_VAR, METRICA_TOKEN_VAR, metricaReport } from "./tools.js";
-import { hostSummary, indexing, inSearchUrls, listHosts, searchQueries, WEBMASTER_TOKEN_VAR } from "./webmaster-tools.js";
+import { addSitemap, hostSummary, indexing, inSearchUrls, listHosts, searchQueries, WEBMASTER_TOKEN_VAR } from "./webmaster-tools.js";
 
 const CONFIG: StubServerConfig = {
   prefix: "yandex",
@@ -17,6 +17,7 @@ const CONFIG: StubServerConfig = {
     { name: "yandex_webmaster_search_queries", access: "read", credentials: [WEBMASTER_TOKEN_VAR] },
     { name: "yandex_webmaster_indexing", access: "read", credentials: [WEBMASTER_TOKEN_VAR] },
     { name: "yandex_webmaster_in_search_urls", access: "read", credentials: [WEBMASTER_TOKEN_VAR] },
+    { name: "yandex_webmaster_add_sitemap", access: "write", credentials: [WEBMASTER_TOKEN_VAR] },
   ],
 };
 
@@ -80,6 +81,14 @@ serveMcp(CONFIG.name, CONFIG.version, (server) => {
       inputSchema: { host_id: z.string().min(1), output_path: z.string().optional().describe("Relative to the data directory, ends in .jsonl") },
     },
     async (args) => asText(await inSearchUrls(args)),
+  );
+  server.registerTool(
+    "yandex_webmaster_add_sitemap",
+    {
+      description: "WRITE: add a sitemap to a Yandex Webmaster host. Requires an approved proposal for this exact host and sitemap (approval gate).",
+      inputSchema: { host_id: z.string().min(1), sitemap_url: z.string().url() },
+    },
+    async (args) => asText(await addSitemap(args)),
   );
 }).catch((err) => {
   console.error(err);

@@ -127,3 +127,43 @@ export const crawlResults = sqliteTable(
   },
   (t) => [index("idx_crawl_results_run").on(t.runId)],
 );
+
+// P10: approval engine (docs/SECURITY-AND-APPROVAL.md). Writes happen only in core.
+export const actionProposals = sqliteTable("action_proposals", {
+  id: text("id").primaryKey(),
+  siteId: text("site_id")
+    .notNull()
+    .references(() => sites.id),
+  actionType: text("action_type").notNull(),
+  target: text("target").notNull(),
+  description: text("description").notNull(),
+  proposedPayloadJson: text("proposed_payload_json").notNull(),
+  payloadHash: text("payload_hash").notNull(),
+  expectedImpact: text("expected_impact"),
+  riskLevel: text("risk_level").notNull(),
+  status: text("status").notNull(), // pending | approved | rejected | executed | failed | expired
+  createdAt: text("created_at").notNull(),
+  expiresAt: text("expires_at").notNull(),
+});
+
+export const approvals = sqliteTable("approvals", {
+  id: text("id").primaryKey(),
+  proposalId: text("proposal_id")
+    .notNull()
+    .references(() => actionProposals.id),
+  payloadHash: text("payload_hash").notNull(), // hash at approval time
+  approvedAt: text("approved_at").notNull(),
+  approvedBy: text("approved_by").notNull(),
+});
+
+export const executionLogs = sqliteTable("execution_logs", {
+  id: text("id").primaryKey(),
+  proposalId: text("proposal_id")
+    .notNull()
+    .references(() => actionProposals.id),
+  startedAt: text("started_at").notNull(),
+  finishedAt: text("finished_at").notNull(),
+  outcome: text("outcome").notNull(), // success | failure
+  verificationJson: text("verification_json"),
+  errorJson: text("error_json"),
+});

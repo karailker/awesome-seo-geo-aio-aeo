@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { bingDate } from "./bing.js";
-import { pageStats, searchStats, urlInfo } from "./tools.js";
+import { pageStats, searchStats, submitUrl, urlInfo } from "./tools.js";
 
 const live = JSON.parse(readFileSync(new URL("../tests/fixtures/bing-live.json", import.meta.url), "utf8"));
 const KEY = "bing-test-key-value-0001";
@@ -107,5 +107,19 @@ describe("Bing tools", () => {
       process.env.AWESOME_SEO_DATA_DIR = prev;
       rmSync(data, { recursive: true, force: true });
     }
+  });
+
+  it("submits a URL through SubmitUrl with the site and URL as parameters", async () => {
+    const calls: string[] = [];
+    const impl = (async (input: string | URL | Request) => {
+      calls.push(String(input));
+      return new Response(JSON.stringify({ d: true }), { status: 200 });
+    }) as typeof fetch;
+
+    const r = await submitUrl({ site: "https://bulmacalig.com/", url: "https://www.bulmacalig.com/kare" }, env, impl);
+
+    expect(calls[0]).toContain("/SubmitUrl?");
+    expect(calls[0]).toContain(`apikey=${KEY}`);
+    expect(r).toMatchObject({ ok: true, data: { submitted: true } });
   });
 });

@@ -55,13 +55,25 @@ Not verified:
 - Reconciliation across Search Console (29 pages, 25 in both), Bing (3 pages, all in both), and Yandex (30 snapshot URLs, 29 in both). Live report at `seo:audit --gsc --bing --yandex`.
 - Quotas and endpoint versions are VERIFY-marked in code (Bing quota, Yandex Webmaster endpoints).
 
-## P9 (2026-11-05): in progress, blocked
+## P9 (2026-11-05): deferred
+
+The site sells no products, so Merchant Center is out of scope for now. Code and tests stay in the repo. Live check not planned.
+
+## P9 detail (kept for reference)
 
 - Code: `google_merchant_list_products` and `google_merchant_list_product_issues` (Merchant API products v1, scope `content`, account from `GOOGLE_MERCHANT_ACCOUNT_ID`). Issues grouped by code with affected product IDs and URLs. Tests use hand-written fixtures, marked as such. Skill `ecommerce/merchant-feed-health`, command `/ecommerce-audit`.
 - Live: the Merchant API is enabled in `bulmacalig-b70a8`, but returns 401 "project not registered with the merchant account". Needed from the user: (1) the numeric Merchant Center account ID; (2) in Merchant Center, link the Google Cloud project `bulmacalig-b70a8`; (3) add `awesome-seo-gsc@bulmacalig-b70a8.iam.gserviceaccount.com` as a user.
 - Not done: core ingest of Merchant issues, the ecommerce report section, live verification, P10 write tools.
 
-## Next: P9 completion once the account is linked, then P10 (approval engine and write tools)
+## P10 (2026-11-05): in progress
+
+- Core: approval tables (migration `0003`), engine (canonical JSON hash, propose, approve, reject, exact-payload check, expiry, execution record). 9 engine tests.
+- Gate: `hooks/hooks.json` PreToolUse matcher on the three write tools; `hooks/scripts/validate-approval.sh` runs `scripts/approval.ts check-hook`, which fails closed. Hook tests run the real script (6 cases): no proposal, pending, approved, payload changed, expired, unknown tool and bad input. The live run was also checked by hand.
+- Write tools: `google_gsc_submit_sitemap` (webmasters scope), `yandex_webmaster_add_sitemap`, `bing_submit_url`. Tests use fake fetch. Not sent to the live sites: no proposal has been approved by the user.
+- Command `/approve-action`; CLI `pnpm approval propose|approve|reject|record|list`.
+- Not done: live execution with a user-approved proposal and the verification step (needs the user's approval first); `merchant_update_product` (P9 is deferred).
+
+## Next: finish P10 with a user-approved live submission, then P11 (evaluation)
 
 ## Toolchain
 

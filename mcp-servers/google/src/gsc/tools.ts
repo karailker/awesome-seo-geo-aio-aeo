@@ -116,3 +116,14 @@ export function searchAnalytics(
     return ok({ runId, outputPath: target, rowCount: rows.length }, warnings);
   });
 }
+
+// Write (P10). Runs only after the approval gate passed (hooks/scripts/validate-approval.sh).
+export async function submitSitemap(getClient: ClientProvider, input: { site: string; feedpath: string }) {
+  try {
+    if (!/^https?:\/\//.test(input.feedpath)) throw new GscError("INVALID_INPUT", "feedpath must be an http(s) URL", false);
+    await (await getClient()).submitSitemap(input.site, input.feedpath);
+    return ok({ site: input.site, feedpath: input.feedpath, submitted: true }, ["Submission accepted. Verify with google_gsc_list_sitemaps."]);
+  } catch (err) {
+    return fail(err);
+  }
+}

@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { hostSummary, indexing, inSearchUrls, listHosts, searchQueries } from "./webmaster-tools.js";
+import { addSitemap, hostSummary, indexing, inSearchUrls, listHosts, searchQueries } from "./webmaster-tools.js";
 
 const rec = JSON.parse(readFileSync(new URL("../tests/fixtures/webmaster-live.json", import.meta.url), "utf8"));
 const HOST = "https:www.bulmacalig.com:443";
@@ -118,5 +118,21 @@ describe("Yandex Webmaster tools", () => {
     const lines = (await import("node:fs")).readFileSync(data + "/yandex/in.jsonl", "utf8").trim().split("\n");
     expect(lines).toHaveLength(150);
     (await import("node:fs")).rmSync(data, { recursive: true, force: true });
+  });
+
+  it("adds a sitemap with a POST to the host's sitemaps path, with the URL in the body", async () => {
+    const seen: { method: string; path: string; body: string | null }[] = [];
+    const impl = (async (input: string | URL | Request, init?: RequestInit) => {
+      const url = new URL(String(input));
+      seen.push({ method: init?.method ?? "GET", path: url.pathname, body: init?.body ? String(init.body) : null });
+      return url.pathname === "/v4/user/" ? new Response(JSON.stringify({ user_id: rec.user_id }), { status: 200 }) : new Response(null, { status: 204 });
+    }) as typeof fetch;
+
+    const r = await addSitemap({ host_id: HOST, sitemap_url: "https://www.bulmacalig.com/sitemap.xml" }, env, impl);
+
+    const post = seen.find((s) => s.method === "POST");
+    expect(post?.path).toBe(`/v4/user/${rec.user_id}/hosts/${HOST}/sitemaps`);
+    expect(JSON.parse(post?.body ?? "{}")).toEqual({ url: "https://www.bulmacalig.com/sitemap.xml" });
+    expect(r).toMatchObject({ ok: true, data: { submitted: true } });
   });
 });
