@@ -7,6 +7,7 @@ The content hash covers visible text only, so the same page gives the same hash 
 from __future__ import annotations
 
 import hashlib
+import json
 import re
 from typing import Any
 from urllib.parse import urljoin
@@ -53,6 +54,7 @@ def extract_page(html: str, url: str) -> dict[str, Any]:
         if text:
             headings.append({"level": int(node.tag[1]), "text": text})
 
+    jsonld_errors = jsonld_syntax_errors(tree)  # before scripts are removed below
     for node in tree.css(_NON_CONTENT):
         node.decompose()
     body = tree.body
@@ -70,7 +72,19 @@ def extract_page(html: str, url: str) -> dict[str, Any]:
         "word_count": word_count,
         "content_hash": content_hash,
         "structured_data": structured_data(html, url),
+        "jsonld_syntax_errors": jsonld_errors,
     }
+
+
+def jsonld_syntax_errors(tree: HTMLParser) -> int:
+    """JSON-LD blocks that fail strict JSON parsing. extruct is lenient and may still return them."""
+    errors = 0
+    for node in tree.css('script[type="application/ld+json" i]'):
+        try:
+            json.loads(node.text(strip=True) or "")
+        except ValueError:
+            errors += 1
+    return errors
 
 
 def structured_data(html: str, url: str) -> list[dict[str, Any]]:

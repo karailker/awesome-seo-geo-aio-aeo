@@ -52,3 +52,15 @@ def test_missing_canonical_is_none():
 
     assert fields["canonical"] is None
     assert fields["title"] == "Same title"
+
+
+def test_counts_invalid_json_ld_blocks_separately_from_valid_ones():
+    html = (
+        '<html><head><script type="application/ld+json">{"@type": "Article"}</script>'
+        '<script type="application/ld+json">{"@type": "Article",}</script></head><body></body></html>'
+    )
+
+    fields = extract_page(html, f"{BASE}/bad")
+
+    # Strict JSON check counts the trailing-comma block. extruct parses it leniently, so it still appears.
+    assert fields["jsonld_syntax_errors"] == 1

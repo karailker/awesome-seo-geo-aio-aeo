@@ -105,7 +105,7 @@ def test_jsonl_record_has_documented_fields_and_flags_missing_canonical_and_dupl
     expected = {
         "run_id", "url", "fetched_at", "status", "final_url", "redirect_chain", "content_type", "title",
         "meta_description", "canonical", "lang", "hreflang", "headings", "word_count", "content_hash",
-        "structured_data", "robots_allowed", "raw_html_path", "errors",
+        "structured_data", "jsonld_syntax_errors", "robots_allowed", "raw_html_path", "errors",
     }
     assert set(rows[0]) == expected
     assert rows[0]["canonical"] is None
