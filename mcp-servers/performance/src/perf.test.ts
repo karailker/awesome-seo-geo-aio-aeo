@@ -112,12 +112,12 @@ describe("CrUX mapping and tool", () => {
     const mapped = mapCrux(cruxRaw);
 
     expect(mapped.field).toEqual({
-      field_lcp_p75_ms: 2300,
-      field_fcp_p75_ms: 1600,
-      field_inp_p75_ms: 180,
+      field_lcp_p75_ms: 3123,
+      field_fcp_p75_ms: 3011,
+      field_inp_p75_ms: 206,
       field_cls_p75: 0.05,
     });
-    expect(mapped.period).toEqual({ start: "2026-09-01", end: "2026-09-28" });
+    expect(mapped.period).toEqual({ start: "2026-10-07", end: "2026-11-03" });
   });
 
   it("treats a 404 as not in the dataset, with null field values", async () => {

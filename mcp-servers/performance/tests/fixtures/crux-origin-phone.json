@@ -1,16 +1,43 @@
 {
-  "_note": "Hand-written from the documented CrUX queryRecord response shape. Not a recorded response: the live key was blocked (403) when this was written. VERIFY against a live response once the API is enabled.",
+  "_note": "Recorded from the live CrUX queryRecord endpoint for origin https://web.dev, formFactor PHONE, trimmed to the metrics the mapper uses.",
   "record": {
-    "key": { "origin": "https://www.bulmacalig.com", "formFactor": "PHONE" },
+    "key": {
+      "formFactor": "PHONE",
+      "origin": "https://web.dev"
+    },
     "metrics": {
-      "largest_contentful_paint": { "percentiles": { "p75": 2300 } },
-      "first_contentful_paint": { "percentiles": { "p75": 1600 } },
-      "interaction_to_next_paint": { "percentiles": { "p75": 180 } },
-      "cumulative_layout_shift": { "percentiles": { "p75": "0.05" } }
+      "largest_contentful_paint": {
+        "percentiles": {
+          "p75": 3123
+        }
+      },
+      "first_contentful_paint": {
+        "percentiles": {
+          "p75": 3011
+        }
+      },
+      "interaction_to_next_paint": {
+        "percentiles": {
+          "p75": 206
+        }
+      },
+      "cumulative_layout_shift": {
+        "percentiles": {
+          "p75": "0.05"
+        }
+      }
     },
     "collectionPeriod": {
-      "firstDate": { "year": 2026, "month": 9, "day": 1 },
-      "lastDate": { "year": 2026, "month": 9, "day": 28 }
+      "firstDate": {
+        "year": 2026,
+        "month": 10,
+        "day": 7
+      },
+      "lastDate": {
+        "year": 2026,
+        "month": 11,
+        "day": 3
+      }
     }
   }
 }

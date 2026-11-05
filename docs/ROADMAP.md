@@ -81,9 +81,9 @@ Done when:
 - Crawler never exceeds the per-host rate limit in tests
 - Two runs of the same fixture produce identical content hashes
 
-## P5: Performance ✅ (CrUX live check still open)
+## P5: Performance ✅
 
-Verification notes (2026-11-05): `performance_psi_run` works live (lab values returned). Its fallback to the local Lighthouse run is verified live: an invalid key forced `source: lighthouse-local` with the PSI error reported. `performance_lighthouse_local_run` is verified live on `www.bulmacalig.com` (mobile score 100, field null). Tests: 19 in the performance package, using a recorded PSI response and a hand-written CrUX fixture. Not verified live: CrUX. The Chrome UX Report API returns 403 for the supplied key, so enabling that API in the key's project is needed before the CrUX path can be checked. The `/perf-audit` command is written but not run end to end.
+Verification notes (2026-11-05): PSI, local Lighthouse, and the PSI-to-local fallback are verified live. CrUX is verified live: the key's API restriction was fixed by the user, and a real high-traffic origin (`https://web.dev`) returned field metrics that match the mapper; the fixture is a recorded response. `/perf-audit` was run end to end on 5 sampled URLs and produced a report in `data/reports/` (CrUX: no data for bulmacalig.com, low traffic).
 
 Deliverables:
 - `performance_psi_run`: PageSpeed Insights API, returns lab and field data separately
