@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: **Current phase: P7** (P0 complete 2026-11-04; P1 complete 2026-11-05; P2 complete 2026-11-05; P3 complete 2026-11-05; P4 complete 2026-11-05; P5 complete 2026-11-05 with CrUX live; P6 complete 2026-11-05 with two skills deferred)
+Status: **Current phase: P7 (in progress)** (P0 complete 2026-11-04; P1 complete 2026-11-05; P2 complete 2026-11-05; P3 complete 2026-11-05; P4 complete 2026-11-05; P5 complete 2026-11-05 with CrUX live; P6 complete 2026-11-05 with two skills deferred)
 
 Update the status line when a phase is complete. Phases are sequential unless noted.
 
@@ -111,7 +111,7 @@ Done when:
 - Crawler access findings cite the robots rules and the sampled URLs
 - Structured data validation distinguishes syntax errors from missing recommended properties
 
-## P7: Analytics
+## P7: Analytics (in progress)
 
 Deliverables:
 - `google_ga4_run_report`, `google_ga4_get_metadata` in the google MCP

@@ -44,10 +44,16 @@ Not verified:
 
 ## P7 progress (2026-11-05)
 
-- Yandex Metrica: token obtained with user consent (scope metrika:read) and stored in `~/.config/awesome-seo/yandex.env` (mode 600). `yandex_metrica_report` verified live on counter 113337943: 6 traffic-source rows, totals 396 visits and 370 users for 2026-10-01 to 2026-10-31, no sampling. Fixture recorded.
-- Not done: Metrica observations ingest and report section, `traffic-analyst` agent, `analytics/*` skills, `knowledge/ai-referrers.md`, GA4 tools (need property ID and service account access).
+- Yandex Metrica: `yandex_metrica_report` verified live (counter 113337943, token via consent, scope metrika:read). Fixture recorded.
+- GA4: `google_ga4_get_metadata` and `google_ga4_run_report` verified live (property 552874034, service account with analytics.readonly, GA4 Data API enabled in bulmacalig-b70a8). Personal dimensions refused. Core ingest `ingestGa4Jsonl` (source `ga4`, pagePath as full URLs).
+- Traffic in the SEO audit: `seo:audit --ga4` adds "Traffic (GA4)" and the measured finding `ga4-ai-referral-sessions`. Live October 2026: 619 sessions, 14 from chatgpt.com. Host list in `knowledge/ai-referrers.md` and `AI_REFERRER_HOSTS`.
+- Agent `traffic-analyst`, skills `analytics/organic-attribution` and `analytics/ai-referral-traffic`, and the GA4 step in `/seo-audit`.
 
-## Next: P7 (Analytics)
+Open:
+- Yandex Metrica data is not ingested into observations, so it is not in the report yet. The tool works; the ingest and report section are missing.
+- GA4 fixtures in core are recorded from the live API; the ingest tests use them.
+
+## Next: P7 completion, then P8 (Bing and Yandex Webmaster)
 
 Scope from ROADMAP: `google_ga4_run_report`, `google_ga4_get_metadata` (google MCP), `yandex_metrica_report` (yandex MCP, which is still a stub), `traffic-analyst` agent, skills `analytics/organic-attribution` and `analytics/ai-referral-traffic` (AI referral source list in `knowledge/`), and inclusion in `/seo-audit` when connections exist. Needs a GA4 property ID and service account access to the property, and a Metrica counter and OAuth token. Confirm both before starting.
 
