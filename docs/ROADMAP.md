@@ -146,7 +146,7 @@ Done when:
 - Product issues are grouped by type and linked to product IDs and affected URLs when available
 - `VERIFY:` the current Merchant API version and migration status
 
-## P10: Approval engine and write tools ✅ (live: GSC verified; Bing call accepted but unconfirmed; Yandex route closed for an unverified host)
+## P10: Approval engine and write tools ✅ (live: GSC verified; Bing call accepted but unconfirmed; Yandex write blocked by a provider outage, retry later)
 
 Deliverables:
 - `action_proposals`, `approvals`, `execution_logs` tables

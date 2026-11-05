@@ -71,9 +71,9 @@ The site sells no products, so Merchant Center is out of scope for now. Code and
 - Live writes (all approved by the user for this test):
   - Google Search Console, `sc-domain:bulmacalig.com` `sitemap-pages.xml`: success inside a Claude session, 09:40:47.8Z to 09:40:48.6Z. Search Console `lastSubmitted` 09:40:48.2Z confirms it.
   - Bing, `https://bulmacalig.com/` `https://www.bulmacalig.com/kare`: POST SubmitUrl returned no error, body `null`. Recorded as success with `verified: false`: `GetUrlInfo` still shows last crawl 2026-10-09, before the submit, so acceptance is not confirmed. Bing's SubmitUrl response shape is still unverified.
-  - Yandex, `https:www.bulmacalig.com:443` `sitemap-pages.xml` (already listed): POST returned 405. OPTIONS on that path says `Allow: GET`. The host is not ownership-verified, so the route is probably closed for this host. Recorded as failure with the error. The sitemap list did not change.
+  - Yandex, `https:www.bulmacalig.com:443` `sitemap-pages.xml` (already listed): POST returned 405. OPTIONS on that path said `Allow: GET`. At that time the API showed the host as not verified. The owner says ownership was verified earlier. Later read-only check: the API shows `verified: true` for all three hosts. Yandex Webmaster is currently read-only because of an attack on its data centers, so no write was retried. Recorded as failure with the error. The sitemap list did not change. Retry later with a new proposal and approval.
 - Execution times are now the write call's own start and finish, from the tool result. The first GSC execution (`5c772bcc`) was recorded before this change: its log times are the record time (09:37:20Z). The real submit time, from Search Console, was 09:37:03.790Z. The row was left as it is.
-- Not done: Yandex write verified on a verified host (needs the user to verify host ownership in Yandex Webmaster); Bing acceptance confirmed; `merchant_update_product` (P9 deferred).
+- Not done: Yandex write verified (blocked: Yandex Webmaster is read-only during the data-center incident; retry with a new proposal after it is restored); Bing acceptance confirmed; `merchant_update_product` (P9 deferred).
 
 ## Next: P11 (evaluation)
 
