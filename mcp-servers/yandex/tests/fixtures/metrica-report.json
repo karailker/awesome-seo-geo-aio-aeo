@@ -1,0 +1,11 @@
+{
+  "_note": "Hand-written from the documented Stat API response shape. Not recorded: no token yet. Replace with a live response before relying on it.",
+  "query": { "dimensions": ["ym:s:trafficSource"], "metrics": ["ym:s:visits", "ym:s:users"] },
+  "data": [
+    { "dimensions": [{ "name": "organic" }], "metrics": [820, 610] },
+    { "dimensions": [{ "name": "direct" }], "metrics": [300, 240] }
+  ],
+  "totals": [1120, 850],
+  "total_rows": 2,
+  "sample_share": 1
+}
