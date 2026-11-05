@@ -6,19 +6,11 @@
   "engines": {
     "node": ">=20"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild"
-    ]
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild"
-    ]
-  },
   "scripts": {
     "build": "pnpm -r build",
     "test": "pnpm -r test",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "pnpm -r typecheck",
+    "db:migrate": "node scripts/migrate.ts",
+    "db:seed": "node scripts/seed.ts"
   }
 }

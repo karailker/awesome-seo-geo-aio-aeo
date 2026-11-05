@@ -8,14 +8,19 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "db:generate": "drizzle-kit generate"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
+    "better-sqlite3": "^13.0.3",
+    "drizzle-orm": "^0.45.4",
     "zod": "^3.23.0"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^22.0.0",
+    "drizzle-kit": "^0.31.11",
     "typescript": "^5.6.0",
     "vitest": "^3.0.0"
   }

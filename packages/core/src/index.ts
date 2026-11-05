@@ -1,8 +1,10 @@
-// Shared domain types and stub-server helper.
-// core is the single writer to SQLite (P1+); this module holds no DB logic yet.
+// Shared domain types, SQLite store (single writer), and stub-server helper.
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+
+export * from "./domain.js";
+export * from "./db/store.js";
 
 // Response envelope for all data tools — docs/MCP.md.
 export type ToolResult<T> = {

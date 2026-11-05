@@ -2,5 +2,5 @@ packages:
   - packages/*
   - mcp-servers/*
 
-onlyBuiltDependencies:
-  - esbuild
+allowBuilds:
+  esbuild: true
