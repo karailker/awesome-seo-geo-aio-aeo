@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: **Current phase: P1** (P0 complete 2026-11-04: install/build/test green on TS and Python; plugin loads; all five `*_health` tools return OK)
+Status: **Current phase: P2** (P0 complete 2026-11-04; P1 complete 2026-11-05: migrations apply and are idempotent, store tests green, seed and migrate scripts work)
 
 Update the status line when a phase is complete. Phases are sequential unless noted.
 
@@ -21,7 +21,7 @@ Done when:
 - The plugin loads in Claude Code and all MCP servers start
 - Calling `*_health` on each server returns OK
 
-## P1: Core and SQLite
+## P1: Core and SQLite ✅
 
 Deliverables:
 - Drizzle schema and versioned migrations for: `sites`, `site_properties`, `connections`, `pages`, `observations`, `api_cache`, `schema_migrations`
@@ -49,7 +49,7 @@ Done when:
 ## P3: Search Console vertical slice
 
 Deliverables:
-- `google` MCP: `gsc_list_properties`, `gsc_search_analytics`, `gsc_inspect_url`, `gsc_list_sitemaps`
+- `google` MCP: `google_gsc_list_properties`, `google_gsc_search_analytics`, `google_gsc_inspect_url`, `google_gsc_list_sitemaps`
 - Auth via service account (credential reference in SQLite, key file outside the repo)
 - `search-analyst` agent
 - Skills: `seo/technical-audit`, `seo/indexation-analysis`, `seo/query-analysis`, `seo/sitemap-reconciliation`
@@ -80,9 +80,9 @@ Done when:
 ## P5: Performance
 
 Deliverables:
-- `psi_run`: PageSpeed Insights API, returns lab and field data separately
-- `lighthouse_local_run`: local fallback, triggered when PSI fails, quota is exhausted, or the user requests it; output tagged `source: "lighthouse-local"`
-- `crux_query`: origin-level field data
+- `performance_psi_run`: PageSpeed Insights API, returns lab and field data separately
+- `performance_lighthouse_local_run`: local fallback, triggered when PSI fails, quota is exhausted, or the user requests it; output tagged `source: "lighthouse-local"`
+- `performance_crux_query`: origin-level field data
 - `performance-analyst` agent and `performance/cwv-diagnosis` skill
 - `/perf-audit` command
 
@@ -106,7 +106,7 @@ Done when:
 ## P7: Analytics
 
 Deliverables:
-- `ga4_run_report`, `ga4_get_metadata` in the google MCP
+- `google_ga4_run_report`, `google_ga4_get_metadata` in the google MCP
 - `yandex_metrica_report` in the yandex MCP
 - `traffic-analyst` agent
 - Skills: `analytics/organic-attribution`, `analytics/ai-referral-traffic`
@@ -130,7 +130,7 @@ Done when:
 ## P9: Merchant Center
 
 Deliverables:
-- `merchant_list_products`, `merchant_list_product_issues`
+- `google_merchant_list_products`, `google_merchant_list_product_issues`
 - Skill: `ecommerce/merchant-feed-health`
 - Included in `/ecommerce-audit` (add this command in this phase)
 
@@ -144,7 +144,7 @@ Deliverables:
 - `action_proposals`, `approvals`, `execution_logs` tables
 - `core` approval engine: create proposal, compute payload hash, approve, verify hash before execution, expire
 - `hooks/hooks.json` and `hooks/scripts/validate-approval.sh` for pre-tool-use checks on write tools
-- Write tools: `gsc_submit_sitemap`, `yandex_webmaster_add_sitemap`, `bing_submit_url`, `merchant_update_product`
+- Write tools: `google_gsc_submit_sitemap`, `yandex_webmaster_add_sitemap`, `bing_submit_url`, `google_merchant_update_product`
 - `/approve-action` command
 
 Done when:

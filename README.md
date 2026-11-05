@@ -4,8 +4,9 @@ A local Claude Code plugin that audits one website across SEO, GEO (generative e
 visibility), AIO (AI discoverability), and AEO (answer readiness). Local-first,
 sitemap-driven, evidence-backed reports in English.
 
-Status: **P0 scaffold** - all MCP servers are stubs exposing only `<prefix>_health`
-and `<prefix>_capabilities`. See `docs/ROADMAP.md` for phases.
+Status: **P1 core and SQLite** - SQLite store with migrations, site seed, and Zod schemas
+are in place. MCP servers are still stubs exposing only `<prefix>_health` and
+`<prefix>_capabilities`. See `docs/ROADMAP.md` for phases.
 
 Design docs: `docs/ARCHITECTURE.md`, `docs/DATA-MODEL.md`, `docs/MCP.md`,
 `docs/AGENTS-AND-SKILLS.md`, `docs/SECURITY-AND-APPROVAL.md`, `docs/ROADMAP.md`.
@@ -18,7 +19,12 @@ cd mcp-servers/crawl && uv sync       # Python crawler MCP server
 pnpm -r build                         # compile TypeScript
 pnpm -r test                          # Vitest
 cd mcp-servers/crawl && uv run pytest # pytest
+pnpm db:migrate                       # create/upgrade data/awesome-seo.sqlite
+pnpm db:seed --origin https://example.com [--sitemap URL] [--url-cap 500]
 ```
+
+The database path can be overridden with `AWESOME_SEO_DB`. The scripts run `.ts` files
+directly, which needs Node 22.18+ or 24 (type stripping).
 
 Credentials: copy `.env.example` to `.env` (git-ignored, dev-only) or use the OS
 keychain. Key files must live outside the repo. Stub servers run without any

@@ -46,8 +46,8 @@ Hook checks: proposal approved, not expired, current payload hash == approved ha
 type ActionProposal = {
   id: string;
   siteId: string;
-  actionType: "gsc_submit_sitemap" | "yandex_webmaster_add_sitemap"
-            | "bing_submit_url" | "merchant_update_product";
+  actionType: "google_gsc_submit_sitemap" | "yandex_webmaster_add_sitemap"
+            | "bing_submit_url" | "google_merchant_update_product";
   target: string;
   description: string;
   proposedPayload: Record<string, unknown>;
@@ -76,10 +76,10 @@ type ActionProposal = {
 
 | Action | Default risk | Notes |
 |---|---|---|
-| `gsc_submit_sitemap` | low | Reversible by resubmitting or removing the sitemap in the console |
+| `google_gsc_submit_sitemap` | low | Reversible by resubmitting or removing the sitemap in the console |
 | `yandex_webmaster_add_sitemap` | low | Same |
 | `bing_submit_url` | low | Quota-limited; check quota before proposing |
-| `merchant_update_product` | medium | Affects live shopping listings; show a before/after diff in the proposal |
+| `google_merchant_update_product` | medium | Affects live shopping listings; show a before/after diff in the proposal |
 
 ## Hooks
 

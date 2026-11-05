@@ -176,7 +176,7 @@ Rule: a finding must have at least one evidence row. The evidence-auditor checks
 |---|---|---|
 | id | TEXT PK | |
 | site_id | TEXT FK | |
-| action_type | TEXT | e.g. `gsc_submit_sitemap` |
+| action_type | TEXT | e.g. `google_gsc_submit_sitemap` |
 | target | TEXT | |
 | description | TEXT | |
 | proposed_payload_json | TEXT | |

@@ -1,38 +1,41 @@
 # STATUS
 
-Date: 2026-11-04. Development stopped by user request during P0 wrap-up.
+Date: 2026-11-05. Phase: P1 complete, P2 next.
 
-## Done (P0 - committed, 3 commits)
+## Done
 
-| Commit | Contents |
-|---|---|
-| `c3d92bd` docs | `CLAUDE.md` + all of `docs/` (first commit in repo) |
-| `489679a` feat | Root workspace (`package.json`, `pnpm-workspace.yaml`, `pnpm-lock.yaml`, `tsconfig.base.json`, `vitest.workspace.ts`), `.claude-plugin/plugin.json`, `.mcp.json` (5 servers), `.claude/settings.json` (`MCP_TIMEOUT=30000`), `.gitignore`, `.env.example`, `README.md`, `packages/core` (one module + 2 passing tests) |
-| `ddbbb52` feat | Stub MCP servers: `google`, `yandex`, `bing`, `performance` (TS, official SDK, shared `startStubServer` in core), `crawl` (Python FastMCP, uv, `mcp<2` pinned - 2.x renamed FastMCP). Each exposes only `<prefix>_health` + `<prefix>_capabilities` |
+| Phase | Commit | Contents |
+|---|---|---|
+| P0 | `c3d92bd`, `489679a`, `ddbbb52` | Docs, workspace, plugin manifests, stub MCP servers (`*_health`, `*_capabilities`) |
+| P0 fixes | uncommitted | pnpm 12 build approval moved to `allowBuilds` in `pnpm-workspace.yaml`; dead duplicate `pnpm` block removed from `package.json` |
+| P1 | uncommitted | `packages/core`: Drizzle schema for `sites`, `site_properties`, `connections`, `pages`, `observations`, `api_cache`; generated migration `migrations/0000_*.sql`; store with WAL, foreign keys, busy_timeout, migration runner recording `schema_migrations`; `withTransaction`; `upsertSite`, `upsertPage`, `insertObservation`; Zod `Site`, `Page`, `Observation`; `normalizeUrl`. Scripts `scripts/migrate.ts` and `scripts/seed.ts` (`pnpm db:migrate`, `pnpm db:seed`) |
 
-## Verified (P0 done criteria)
+## Verified (2026-11-05)
 
-- `pnpm install` / `pnpm -r build` / `pnpm -r test`: green (2 core tests pass) - but see Pending #1, install is broken again now
-- `uv sync` + `uv run pytest`: 2 passed
-- Direct stdio check: all 5 servers list exactly the 2 stub tools, `*_health` returns `ok:true`
-- Plugin load (`claude --plugin-dir .`, Claude Code 2.1.308): headless session called all 5 health tools through the plugin, all OK
-- `claude plugin validate .`: manifest valid; warns CLAUDE.md-not-loaded (harmless); errors LICENSE_MISSING (only matters for marketplace submission - needs a license decision)
-- TS server startup measures ~8s on `/mnt/d` (drvfs) - caused intermittent google connect failures; fixed via `.claude/settings.json` `MCP_TIMEOUT=30000`
-- ROADMAP status line set to P1; CLAUDE.md Commands section filled with real commands
+- `pnpm install`, `pnpm -r build`, `pnpm -r typecheck`, `pnpm -r test` (core: 9 tests pass)
+- `cd mcp-servers/crawl && uv run pytest` (2 pass)
+- `pnpm db:migrate` twice: second run applies nothing; `pnpm db:seed` twice: one site row, `created: false` on the second run
 
-## Pending / blocked
+Environment fix: `node_modules/` and `mcp-servers/crawl/.venv/` were created on the Windows side. The symlinks and interpreter were broken under WSL `/mnt/d` (ntfs3). Both were deleted and reinstalled on Linux. Re-run `pnpm install` and `uv sync` on any machine where they break.
 
-1. **`pnpm install` currently fails** (`ERR_PNPM_IGNORED_BUILDS: esbuild`). Cause: `onlyBuiltDependencies: [esbuild]` block was removed from `pnpm-workspace.yaml` on disk after it was added. Not re-added (external change). Fix = restore those 2 lines or run `pnpm approve-builds` once.
-2. **Doc contradiction (blocks P3, not P0)**: `docs/MCP.md` mandates `google_` prefix for all Google tools (`google_gsc_list_properties`, explicit "use consistently" note); `docs/ROADMAP.md` P3/P10 uses `gsc_list_properties`, `gsc_submit_sitemap`. Pick one. Recommendation: MCP.md.
-3. **LICENSE decision**: plugin.json has no `license`; marketplace validation rejects without it.
-4. **Untracked `.serena/`** in repo root (external tool config) - intentionally not committed; decide: gitignore or commit.
-5. No `git remote`; nothing pushed.
-6. `pnpm approve-builds` message still printed on install (cosmetic if #1 resolved).
+## Pending / needs a decision
+
+Resolved 2026-11-05:
+- Tool prefixes: `docs/MCP.md` is canonical. Google tools use `google_*`; performance tools use `performance_*`. ROADMAP, SECURITY-AND-APPROVAL, DATA-MODEL aligned.
+- License: MIT (`LICENSE`, `plugin.json` `license` field). Author name taken from git config; change if needed.
+- `.serena/` added to `.gitignore`.
+- Remote `origin` is `github.com/karailker/awesome-seo-geo-aio-aeo`.
+
+## Known gaps in P1
+
+- "Observation normalization helpers" is thin: only JSON serialization of `dimensions` and `provenance`. Add more when P3 defines the real sources.
+- `scripts/*.ts` run through Node type stripping and are not typechecked.
+- The migration generator is `drizzle-kit`, which is dev-only. Migrations are applied by our own runner, not by Drizzle's migrator.
 
 ## Not started
 
-- Everything from P1 onward (SQLite/Drizzle store, migrations, Zod schemas, ...). P1 not begun per instruction.
+- P2 onward: sitemap discovery, ingest into `pages`, `/sitemap-sync`.
 
-## Toolchain (recorded)
+## Toolchain
 
-pnpm 12.16.1 (via corepack - pnpm was not installed), uv 0.11.8, Node 24.12.0, Python 3.12.7, Claude Code 2.1.308.
+pnpm 12.16.1 (via corepack), uv 0.11.8, Node 24.22.0, Python 3.12, Claude Code 2.1.308. SQLite 3.53.4 (via better-sqlite3 13.0.3).
