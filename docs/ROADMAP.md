@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: **Current phase: P6** (P0 complete 2026-11-04; P1 complete 2026-11-05; P2 complete 2026-11-05; P3 complete 2026-11-05; P4 complete 2026-11-05; P5 complete 2026-11-05 with CrUX live check still open: API permission needed)
+Status: **Current phase: P7** (P0 complete 2026-11-04; P1 complete 2026-11-05; P2 complete 2026-11-05; P3 complete 2026-11-05; P4 complete 2026-11-05; P5 complete 2026-11-05 with CrUX live; P6 complete 2026-11-05 with two skills deferred)
 
 Update the status line when a phase is complete. Phases are sequential unless noted.
 
@@ -97,7 +97,9 @@ Done when:
 - Lab and field fields never share a name
 - `VERIFY:` notes for PSI quota and CrUX endpoints
 
-## P6: GEO, AIO, AEO
+## P6: GEO, AIO, AEO ✅ (two deliverable skills deferred)
+
+Verification notes (2026-11-05): `pnpm geo:audit` run end to end on the live crawl of `www.bulmacalig.com` (5 URLs) with a live `crawl_check_access` result (10 AI user agents, all allowed; llms.txt valid). Core tests (8) cover measured derivation, idempotency, robots-unknown handling, access ingest, and the report sections. Deferred: `geo/entity-consistency` and `aeo/faq-quality` skills and their checks (not implemented in this version; the report says so).
 
 Deliverables:
 - `visibility-analyst` agent

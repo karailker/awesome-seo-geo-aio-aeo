@@ -4,9 +4,9 @@ A local Claude Code plugin that audits one website across SEO, GEO (generative e
 visibility), AIO (AI discoverability), and AEO (answer readiness). Local-first,
 sitemap-driven, evidence-backed reports in English.
 
-Status: **P5 performance** - SQLite store, sitemap discovery, Search Console tools,
+Status: **P6 GEO, AIO, AEO** - SQLite store, sitemap discovery, Search Console tools,
 `/seo-audit` (search-only), and the crawler (`/crawl-run`: fetch, extraction, AI access check)
-are in place. The performance server (PSI, CrUX, local Lighthouse fallback) is in place. The Yandex and Bing servers are still stubs exposing only
+are in place. The performance server (PSI, CrUX, local Lighthouse fallback), and the GEO, AIO, and AEO reports (`/geo-audit`, `/aio-audit`, `/aeo-audit`) are in place. The Yandex and Bing servers are still stubs exposing only
 `<prefix>_health` and `<prefix>_capabilities`. See `docs/ROADMAP.md` for phases.
 
 Design docs: `docs/ARCHITECTURE.md`, `docs/DATA-MODEL.md`, `docs/MCP.md`,
@@ -24,6 +24,7 @@ pnpm db:migrate                       # create/upgrade data/awesome-seo.sqlite
 pnpm db:seed --origin https://example.com [--sitemap URL] [--url-cap 500]
 pnpm sitemap:ingest --origin https://example.com data/snapshots/<run>.jsonl
 pnpm crawl:ingest --origin https://example.com data/crawl/<run>.jsonl
+pnpm geo:audit --origin https://example.com [--access data/access/<file>.json]
 ```
 
 In Claude Code, `/crawl-run` fetches the discovered URLs (robots.txt checked at every hop,

@@ -127,6 +127,7 @@ Indexes:
 | robots_allowed | INTEGER | 1 allowed, 0 disallowed, null unknown (robots.txt unreadable) |
 | structured_data_json | TEXT | |
 | raw_html_path | TEXT | added in P4: gzipped raw HTML, off by default |
+| jsonld_syntax_errors | INTEGER | added in P6: JSON-LD blocks that fail strict JSON parsing; null when not extracted |
 | errors_json | TEXT | |
 
 ### `audit_runs`
