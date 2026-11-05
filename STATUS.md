@@ -51,11 +51,11 @@ Scope `@karailker`, MIT, public, version 0.1.0.
 |---|---|
 | `@karailker/awesome-seo-core` | 0.1.0 live |
 | `@karailker/awesome-seo-mcp-performance` | 0.1.0 live |
-| `@karailker/awesome-seo-mcp-google` | not yet: registry shows 0.0.0-stage |
-| `@karailker/awesome-seo-mcp-bing` | not yet: registry shows 0.0.0-stage |
-| `@karailker/awesome-seo-mcp-yandex` | not on the registry yet |
+| `@karailker/awesome-seo-mcp-google` | 0.1.0 live; run via `npx` from a clean directory: 11 tools |
+| `@karailker/awesome-seo-mcp-bing` | 0.1.0 staged, not promoted (`0.0.0-stage` shown as latest) |
+| `@karailker/awesome-seo-mcp-yandex` | not on the registry; publish reports 0.1.0 as already published or staged |
 
-Remaining: publish the three packages one at a time from their directories (`corepack pnpm publish --access public --no-git-checks`), completing the browser sign-in step each time. Then check with `npm view <package> version`. `.mcp.json` already uses `npx -y` for the four TypeScript servers, so until they are live, the repo's own plugin servers will not start.
+Open: Bing and Yandex need their staged 0.1.0 approved on npmjs.com (package page, staged or pending publications), or a new version (0.1.1) published. Staged versions block re-publishing the same version. `.mcp.json` uses `npx -y` for all four TypeScript servers, so the Bing and Yandex servers do not start from npm until these are live.
 
 ## Known gaps
 
