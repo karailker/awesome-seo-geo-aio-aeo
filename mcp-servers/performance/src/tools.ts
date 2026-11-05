@@ -1,6 +1,6 @@
 // Tool handlers for the performance MCP. Each returns the ToolResult envelope (docs/MCP.md).
 // Keys come from the environment only. They are never returned, logged, or written.
-import type { ToolResult } from "@awesome-seo/core";
+import type { ToolResult } from "@karailker/awesome-seo-core";
 import { mapCrux, queryCrux, type FormFactor } from "./crux.js";
 import { PerfError } from "./errors.js";
 import { runLighthouseLocal } from "./lighthouse.js";

@@ -1,5 +1,5 @@
 // Merchant tool handlers. Account from the argument or GOOGLE_MERCHANT_ACCOUNT_ID. Return the ToolResult envelope.
-import type { ToolResult } from "@awesome-seo/core";
+import type { ToolResult } from "@karailker/awesome-seo-core";
 import { GscError } from "../gsc/errors.js";
 import { MERCHANT_MAX_PAGE, type MerchantClient, type MerchantProduct } from "./api.js";
 

@@ -2,7 +2,7 @@
 import { randomUUID } from "node:crypto";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
-import { resolveDataOutput, type ToolResult } from "@awesome-seo/core";
+import { resolveDataOutput, type ToolResult } from "@karailker/awesome-seo-core";
 import { mapMetrica, MetricaError, runMetricaQuery, type MetricaQuery } from "./metrica.js";
 
 export const METRICA_TOKEN_VAR = "YANDEX_METRICA_TOKEN";

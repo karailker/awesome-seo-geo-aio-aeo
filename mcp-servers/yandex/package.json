@@ -1,7 +1,7 @@
 {
-  "name": "@awesome-seo/mcp-yandex",
-  "version": "0.0.1",
-  "private": true,
+  "name": "@karailker/awesome-seo-mcp-yandex",
+  "version": "0.1.0",
+  "private": false,
   "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.json",
@@ -9,11 +9,32 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@awesome-seo/core": "workspace:*"
+    "@karailker/awesome-seo-core": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.6.0",
     "vitest": "^3.0.0",
     "@types/node": "^22.0.0"
+  },
+  "license": "MIT",
+  "description": "MCP server for Yandex Metrica and Yandex Webmaster (read tools; sitemap add behind the approval gate).",
+  "author": "İlker Kara",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/karailker/awesome-seo-geo-aio-aeo.git"
+  },
+  "homepage": "https://github.com/karailker/awesome-seo-geo-aio-aeo#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=22.18"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "bin": {
+    "awesome-seo-mcp-yandex": "dist/index.js"
   }
 }

@@ -1,5 +1,6 @@
+#!/usr/bin/env node
 // yandex MCP server (P7): Yandex Metrica aggregated reports. Webmaster tools come in P8.
-import { capabilitiesPayload, healthPayload, serveMcp, z, type StubServerConfig } from "@awesome-seo/core";
+import { capabilitiesPayload, healthPayload, serveMcp, z, type StubServerConfig } from "@karailker/awesome-seo-core";
 import { METRICA_COUNTER_VAR, METRICA_TOKEN_VAR, metricaReport } from "./tools.js";
 import { addSitemap, hostSummary, indexing, inSearchUrls, listHosts, searchQueries, WEBMASTER_TOKEN_VAR } from "./webmaster-tools.js";
 

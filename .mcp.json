@@ -1,24 +1,41 @@
 {
   "mcpServers": {
     "google": {
-      "command": "node",
-      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp-servers/google/dist/index.js"]
+      "command": "npx",
+      "args": [
+        "-y",
+        "@karailker/awesome-seo-mcp-google"
+      ]
     },
     "yandex": {
-      "command": "node",
-      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp-servers/yandex/dist/index.js"]
+      "command": "npx",
+      "args": [
+        "-y",
+        "@karailker/awesome-seo-mcp-yandex"
+      ]
     },
     "bing": {
-      "command": "node",
-      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp-servers/bing/dist/index.js"]
+      "command": "npx",
+      "args": [
+        "-y",
+        "@karailker/awesome-seo-mcp-bing"
+      ]
     },
     "performance": {
-      "command": "node",
-      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp-servers/performance/dist/index.js"]
+      "command": "npx",
+      "args": [
+        "-y",
+        "@karailker/awesome-seo-mcp-performance"
+      ]
     },
     "crawl": {
       "command": "uv",
-      "args": ["run", "--directory", "${CLAUDE_PLUGIN_ROOT}/mcp-servers/crawl", "crawl-server"]
+      "args": [
+        "run",
+        "--directory",
+        "${CLAUDE_PLUGIN_ROOT}/mcp-servers/crawl",
+        "crawl-server"
+      ]
     }
   }
 }

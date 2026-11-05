@@ -10,7 +10,7 @@ importers:
 
   mcp-servers/bing:
     dependencies:
-      '@awesome-seo/core':
+      '@karailker/awesome-seo-core':
         specifier: workspace:*
         version: link:../../packages/core
     devDependencies:
@@ -26,7 +26,7 @@ importers:
 
   mcp-servers/google:
     dependencies:
-      '@awesome-seo/core':
+      '@karailker/awesome-seo-core':
         specifier: workspace:*
         version: link:../../packages/core
     devDependencies:
@@ -42,7 +42,7 @@ importers:
 
   mcp-servers/performance:
     dependencies:
-      '@awesome-seo/core':
+      '@karailker/awesome-seo-core':
         specifier: workspace:*
         version: link:../../packages/core
       chrome-launcher:
@@ -64,7 +64,7 @@ importers:
 
   mcp-servers/yandex:
     dependencies:
-      '@awesome-seo/core':
+      '@karailker/awesome-seo-core':
         specifier: workspace:*
         version: link:../../packages/core
     devDependencies:

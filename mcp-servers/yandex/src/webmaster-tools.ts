@@ -1,9 +1,9 @@
 // Tool handlers for Yandex Webmaster. Token from YANDEX_WEBMASTER_TOKEN. Each returns the ToolResult envelope.
-import type { ToolResult } from "@awesome-seo/core";
+import type { ToolResult } from "@karailker/awesome-seo-core";
 import { randomUUID } from "node:crypto";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
-import { resolveDataOutput } from "@awesome-seo/core";
+import { resolveDataOutput } from "@karailker/awesome-seo-core";
 import { checkHostId, hostPath, inSearchSamples, userId, webmasterGet, WebmasterError } from "./webmaster.js";
 
 export const WEBMASTER_TOKEN_VAR = "YANDEX_WEBMASTER_TOKEN";

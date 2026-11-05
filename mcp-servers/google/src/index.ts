@@ -1,5 +1,6 @@
+#!/usr/bin/env node
 // google MCP server: Search Console (P3) and GA4 Data API (P7). Merchant Center comes later.
-import { capabilitiesPayload, healthPayload, serveMcp, z, type StubServerConfig } from "@awesome-seo/core";
+import { capabilitiesPayload, healthPayload, serveMcp, z, type StubServerConfig } from "@karailker/awesome-seo-core";
 import { loadServiceAccount, SEARCH_CONSOLE_READONLY_SCOPE, TokenProvider, type ServiceAccount } from "./gsc/auth.js";
 import { GscClient } from "./gsc/client.js";
 import { GscError } from "./gsc/errors.js";

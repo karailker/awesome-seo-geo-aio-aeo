@@ -2,7 +2,7 @@
 import { randomUUID } from "node:crypto";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
-import { resolveDataOutput, type ToolResult } from "@awesome-seo/core";
+import { resolveDataOutput, type ToolResult } from "@karailker/awesome-seo-core";
 import { GscError } from "./errors.js";
 import { SEARCH_ANALYTICS_MAX_ROWS, type GscClient, type SearchAnalyticsQuery } from "./client.js";
 

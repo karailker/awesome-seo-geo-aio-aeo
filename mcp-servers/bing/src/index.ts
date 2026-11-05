@@ -1,5 +1,6 @@
+#!/usr/bin/env node
 // bing MCP server (P8): Bing Webmaster search stats, page stats, and URL info. Read-only.
-import { capabilitiesPayload, healthPayload, serveMcp, z, type StubServerConfig } from "@awesome-seo/core";
+import { capabilitiesPayload, healthPayload, serveMcp, z, type StubServerConfig } from "@karailker/awesome-seo-core";
 import { BING_KEY_VAR, pageStats, searchStats, submitUrl, urlInfo } from "./tools.js";
 
 const CONFIG: StubServerConfig = {

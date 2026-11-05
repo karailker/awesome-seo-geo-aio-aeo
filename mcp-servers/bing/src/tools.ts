@@ -2,7 +2,7 @@
 import { randomUUID } from "node:crypto";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
-import { resolveDataOutput, type ToolResult } from "@awesome-seo/core";
+import { resolveDataOutput, type ToolResult } from "@karailker/awesome-seo-core";
 import { bingCall, bingDate, BingError } from "./bing.js";
 
 export const BING_KEY_VAR = "BING_WEBMASTER_API_KEY";

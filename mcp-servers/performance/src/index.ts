@@ -1,5 +1,6 @@
+#!/usr/bin/env node
 // performance MCP server (P5): PageSpeed Insights, CrUX, and a local Lighthouse run used as fallback.
-import { capabilitiesPayload, healthPayload, serveMcp, z, type StubServerConfig } from "@awesome-seo/core";
+import { capabilitiesPayload, healthPayload, serveMcp, z, type StubServerConfig } from "@karailker/awesome-seo-core";
 import { CRUX_KEY_VAR, cruxQuery, lighthouseLocalRun, PSI_KEY_VAR, psiRun } from "./tools.js";
 
 const CONFIG: StubServerConfig = {
