@@ -12,6 +12,7 @@
     "typecheck": "pnpm -r typecheck",
     "db:migrate": "node scripts/migrate.ts",
     "db:seed": "node scripts/seed.ts",
-    "sitemap:ingest": "node scripts/sitemap-ingest.ts"
+    "sitemap:ingest": "node scripts/sitemap-ingest.ts",
+    "seo:audit": "node scripts/seo-audit.ts"
   }
 }
