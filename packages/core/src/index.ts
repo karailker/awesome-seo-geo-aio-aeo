@@ -11,6 +11,7 @@ export * from "./ingest/crawl.js";
 export * from "./ingest/geo.js";
 export * from "./ingest/ga4.js";
 export * from "./ingest/metrica.js";
+export * from "./ingest/bing.js";
 export * from "./analysis/ai-referrers.js";
 export * from "./report/geo-audit.js";
 export * from "./ingest/jsonl.js";

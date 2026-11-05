@@ -1,7 +1,7 @@
 // SEO audit report for one period, Search Console only (ROADMAP P3). English output.
 // Every finding cites observation ids; findings that fail the evidence gate are dropped and listed.
 import { validateFindings, type Finding } from "../analysis/evidence.js";
-import { reconcileSitemapWithGsc } from "../analysis/reconcile.js";
+import { reconcileSitemapWith, SOURCE_LABEL, type Reconciliation, type SearchSource } from "../analysis/reconcile.js";
 import { isAiReferrer } from "../analysis/ai-referrers.js";
 import type { Store } from "../db/store.js";
 
@@ -113,7 +113,8 @@ export function buildSeoAuditReport(store: Store, input: ReportInput): string {
   const traffic = ga4TrafficSection(store, input);
   const candidates = [...(gscAvailable ? findingsFrom(pages, queries) : []), ...(traffic.aiFinding ? [traffic.aiFinding] : [])];
   const { valid, problems } = validateFindings(store, input.siteId, candidates);
-  const recon = reconcileSitemapWithGsc(store, input.siteId, input.periodStart, input.periodEnd);
+  const recons: Reconciliation[] = (["gsc", "bing"] as SearchSource[]).map((src) => reconcileSitemapWith(store, input.siteId, src, input.periodStart, input.periodEnd));
+  const recon = recons[0]!;
 
   const missing: string[] = [];
   if (!gscAvailable) missing.push("Search Console: no rows for this period. No findings from Search Console are reported.");
@@ -122,7 +123,7 @@ export function buildSeoAuditReport(store: Store, input: ReportInput): string {
   if (sitemap.n > 0 && cap && sitemap.n >= cap.cap) {
     missing.push(`Sitemap: ${sitemap.n} URLs equals the URL cap (${cap.cap}). The sitemap may be truncated, so reconciliation is partial.`);
   }
-  if (gscAvailable && recon.gscPageCount === 0) missing.push("Search Console: no page-level rows. Reconciliation is not possible.");
+  if (gscAvailable && recon.sourcePageCount === 0) missing.push("Search Console: no page-level rows. Reconciliation is not possible.");
 
   const sections: string[] = [
     `# SEO audit: ${input.origin}`,
@@ -162,19 +163,22 @@ export function buildSeoAuditReport(store: Store, input: ReportInput): string {
   sections.push(
     ...traffic.lines,
     "",
-    "## Sitemap and Search Console reconciliation",
-    gscAvailable && recon.gscPageCount > 0
-      ? [
-          `- Sitemap URLs: ${recon.sitemapCount}. Search Console pages: ${recon.gscPageCount}. In both: ${recon.both}.`,
-          "",
-          `In sitemap, no Search Console page data for this period (${recon.sitemapOnly.length}):`,
-          list(recon.sitemapOnly),
-          "",
-          `In Search Console, not in sitemap (${recon.gscOnly.length}):`,
-          list(recon.gscOnly),
-        ].join("\n")
-      : "Not available: Search Console page data is missing for this period.",
-    "",
+    "## Sitemap and search reconciliation",
+    ...recons.flatMap((r) => {
+      const label = SOURCE_LABEL[r.source];
+      if (r.sourcePageCount === 0) return [`Not available: ${label} page data is missing for this period.`, ""];
+      return [
+        `### ${label}`,
+        `- Sitemap URLs: ${r.sitemapCount}. ${label} pages: ${r.sourcePageCount}. In both: ${r.both}.`,
+        "",
+        `In sitemap, no ${label} page data for this period (${r.sitemapOnly.length}):`,
+        list(r.sitemapOnly),
+        "",
+        `In ${label}, not in sitemap (${r.sourceOnly.length}):`,
+        list(r.sourceOnly),
+        "",
+      ];
+    }),
     "## Evidence check",
     `- Candidate findings: ${candidates.length}. Kept: ${valid.length}. Dropped: ${candidates.length - valid.length}.`,
     ...problems.map((p) => `- Dropped: ${p}`),
@@ -198,8 +202,9 @@ export function ga4TrafficSection(store: Store, input: ReportInput): { lines: st
     )
     .all(input.siteId, input.periodStart, input.periodEnd) as { id: string; value: number; source: string }[];
   const metrica = metricaLines(store, input);
+  const bing = bingTrafficLines(store, input);
   if (rows.length === 0) {
-    return { lines: ["## Traffic (GA4)", "Not available: no GA4 session-source data for this period.", ...metrica], aiFinding: null };
+    return { lines: ["## Traffic (GA4)", "Not available: no GA4 session-source data for this period.", ...metrica, ...bing], aiFinding: null };
   }
   const total = rows.reduce((sum, r) => sum + r.value, 0);
   const ai = rows.filter((r) => isAiReferrer(r.source));
@@ -209,7 +214,7 @@ export function ga4TrafficSection(store: Store, input: ReportInput): { lines: st
     `- Sessions in ${rows.length} source group(s) for ${input.periodStart} to ${input.periodEnd}: ${total}.`,
     `- AI referral sessions: ${aiTotal} from ${ai.length} source(s): ${ai.map((r) => `${r.source} (${r.value})`).join(", ") || "none"}.`,
   ];
-  lines.push(...metrica);
+  lines.push(...metrica, ...bing);
   const aiFinding: Finding | null =
     ai.length > 0
       ? {
@@ -241,4 +246,22 @@ function metricaLines(store: Store, input: ReportInput): string[] {
       .map((r) => `${r.source ?? "unknown"} (${r.value})`)
       .join(", ")}.`,
   ];
+}
+
+// Bing daily impressions and clicks for the period (site-level rows from bing_search_stats). Measured.
+function bingTrafficLines(store: Store, input: ReportInput): string[] {
+  const row = store.sqlite
+    .prepare(
+      `SELECT
+         COALESCE(SUM(CASE WHEN metric = 'impressions' THEN value END), 0) AS impressions,
+         COALESCE(SUM(CASE WHEN metric = 'clicks' THEN value END), 0) AS clicks,
+         COUNT(DISTINCT json_extract(dimensions_json, '$.date')) AS days
+       FROM observations
+       WHERE site_id = ? AND source = 'bing' AND entity_type = 'site'
+         AND json_extract(dimensions_json, '$.date') IS NOT NULL
+         AND json_extract(dimensions_json, '$.date') BETWEEN ? AND ?`,
+    )
+    .get(input.siteId, input.periodStart, input.periodEnd) as { impressions: number; clicks: number; days: number };
+  if (row.days === 0) return [];
+  return [`- Bing Webmaster: ${row.impressions} impressions and ${row.clicks} clicks over ${row.days} day(s) in ${input.periodStart} to ${input.periodEnd}.`];
 }

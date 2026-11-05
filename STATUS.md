@@ -50,11 +50,12 @@ Not verified:
 
 ## P8 (2026-11-05): partial
 
-- Yandex Webmaster (`yandex_webmaster_hosts`, `_host_summary`, `_search_queries`, `_indexing`): verified live against `https:www.bulmacalig.com:443`. The host is NOT ownership-verified in Yandex Webmaster, so summary counts (461 excluded, 29 searchable) and query data may be partial. Indexing history path confirmed; per-URL indexing samples endpoint returns 404 for this host, so per-URL reconciliation with Yandex is not possible yet.
-- Bing: not started. Needs a Bing Webmaster API key (`BING_WEBMASTER_API_KEY`, `.env.example`).
-- Reconciliation across three sources is not done (depends on Bing and on per-URL Yandex data).
+- Bing Webmaster (`bing_search_stats`, `bing_page_stats`, `bing_url_info`): live with the key stored in `~/.config/awesome-seo/bing.env` (600). Site registered in Bing: `https://bulmacalig.com/` (apex). Page URLs in Bing are `www` and match the sitemap. Live: 31 daily rows for Oct 2026 (974 impressions, 14 clicks); 8 page-level rows (Bing returns a short list).
+- Core `ingestBingJsonl` (source `bing`). Reconciliation now covers Search Console and Bing (`reconcileSitemapWith`). Traffic section shows Bing totals.
+- Yandex Webmaster (`yandex_webmaster_hosts`, `_host_summary`, `_search_queries`, `_indexing`): live. The host is not ownership-verified; summary counts may be partial. Per-URL indexing samples return 404, so Yandex is not in the per-URL reconciliation.
+- Open: Yandex host ownership verification by the user; per-URL Yandex data source; quotas and endpoints marked VERIFY.
 
-## Next: P8 (Bing Webmaster, reconciliation across three sources)
+## Next: P8 completion (Yandex per-URL source or a documented exclusion), then P9 (Merchant Center)
 
 Scope from ROADMAP: `google_ga4_run_report`, `google_ga4_get_metadata` (google MCP), `yandex_metrica_report` (yandex MCP, which is still a stub), `traffic-analyst` agent, skills `analytics/organic-attribution` and `analytics/ai-referral-traffic` (AI referral source list in `knowledge/`), and inclusion in `/seo-audit` when connections exist. Needs a GA4 property ID and service account access to the property, and a Metrica counter and OAuth token. Confirm both before starting.
 

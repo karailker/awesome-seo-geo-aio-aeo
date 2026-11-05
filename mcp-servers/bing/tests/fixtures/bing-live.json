@@ -1,0 +1,63 @@
+{
+  "_note": "Recorded from the live Bing Webmaster API for https://bulmacalig.com/ (API key in query string per Bing API; key not stored here). Trimmed to 3 rows per list.",
+  "rank_and_traffic": [
+    {
+      "__type": "RankAndTrafficStats:#Microsoft.Bing.Webmaster.Api",
+      "Clicks": 0,
+      "Date": "/Date(1788652800000)/",
+      "Impressions": 0
+    },
+    {
+      "__type": "RankAndTrafficStats:#Microsoft.Bing.Webmaster.Api",
+      "Clicks": 0,
+      "Date": "/Date(1788739200000)/",
+      "Impressions": 0
+    },
+    {
+      "__type": "RankAndTrafficStats:#Microsoft.Bing.Webmaster.Api",
+      "Clicks": 0,
+      "Date": "/Date(1788825600000)/",
+      "Impressions": 0
+    }
+  ],
+  "page_stats": [
+    {
+      "__type": "QueryStats:#Microsoft.Bing.Webmaster.Api",
+      "AvgClickPosition": -1,
+      "AvgImpressionPosition": 9,
+      "Clicks": 0,
+      "Date": "/Date(1791504000000)/",
+      "Impressions": 1,
+      "Query": "https://www.bulmacalig.com/"
+    },
+    {
+      "__type": "QueryStats:#Microsoft.Bing.Webmaster.Api",
+      "AvgClickPosition": -1,
+      "AvgImpressionPosition": 7,
+      "Clicks": 0,
+      "Date": "/Date(1792108800000)/",
+      "Impressions": 44,
+      "Query": "https://www.bulmacalig.com/cengel"
+    },
+    {
+      "__type": "QueryStats:#Microsoft.Bing.Webmaster.Api",
+      "AvgClickPosition": -1,
+      "AvgImpressionPosition": 6,
+      "Clicks": 0,
+      "Date": "/Date(1792108800000)/",
+      "Impressions": 4,
+      "Query": "https://www.bulmacalig.com/"
+    }
+  ],
+  "url_info": {
+    "__type": "UrlInfo:#Microsoft.Bing.Webmaster.Api",
+    "AnchorCount": 0,
+    "DiscoveryDate": "/Date(1788678000000)/",
+    "DocumentSize": 15980,
+    "HttpStatus": 0,
+    "IsPage": true,
+    "LastCrawledDate": "/Date(1793664696000)/",
+    "TotalChildUrlCount": 0,
+    "Url": "https://www.bulmacalig.com/"
+  }
+}

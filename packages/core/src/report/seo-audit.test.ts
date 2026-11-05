@@ -82,7 +82,7 @@ describe("reconcileSitemapWithGsc", () => {
     const recon = reconcileSitemapWithGsc(store, SITE_ID, PERIOD.periodStart, PERIOD.periodEnd);
 
     expect(recon.sitemapOnly).toEqual(["https://example.com/d"]);
-    expect(recon.gscOnly).toEqual(["https://example.com/c"]);
+    expect(recon.sourceOnly).toEqual(["https://example.com/c"]);
     expect(recon.both).toBe(2);
   });
 });
