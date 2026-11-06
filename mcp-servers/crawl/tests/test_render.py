@@ -82,3 +82,19 @@ def test_render_reports_a_missing_binary_as_render_error(monkeypatch):
     # When / Then
     with pytest.raises(RenderError, match="Chrome not found"):
         render_html("http://127.0.0.1:9/")
+
+
+def test_render_never_loads_a_page_robots_disallows(local_site, monkeypatch):
+    # Given: a robots-disallowed page and a renderer that must not be called
+    def must_not_render(url, timeout=60):
+        raise AssertionError(f"rendered a disallowed URL: {url}")
+
+    monkeypatch.setattr(fetch, "render_html", must_not_render)
+
+    # When: rendering is requested for it
+    record = _page(local_site, "/private/secret.html", render=True)
+
+    # Then: robots decides first; the browser is never started
+    assert record["rendered"] is False
+    assert record["robots_allowed"] is False
+    assert [e["code"] for e in record["errors"]] == ["ROBOTS_DISALLOWED"]
