@@ -103,6 +103,30 @@ function list(items: string[]): string {
   return shown.length > 0 ? shown.join("\n") : "- none";
 }
 
+// Scope line: names only the sources that have data for this site, so the report never says a source is missing when it was ingested.
+function sourceHasRows(store: Store, siteId: string, source: string): boolean {
+  return (store.sqlite.prepare("SELECT COUNT(*) AS n FROM observations WHERE site_id = ? AND source = ?").get(siteId, source) as { n: number }).n > 0;
+}
+
+function scopeSources(store: Store, input: ReportInput, gscAvailable: boolean, sitemapCount: number): string {
+  const hasRows = (source: string) => sourceHasRows(store, input.siteId, source);
+  const included = [
+    ...(gscAvailable ? ["Google Search Console"] : []),
+    ...(sitemapCount > 0 ? ["sitemap"] : []),
+    ...(hasRows("ga4") ? ["GA4"] : []),
+    ...(hasRows("bing") ? ["Bing Webmaster"] : []),
+    ...(hasRows("yandex_webmaster") || hasRows("yandex_metrica") ? ["Yandex"] : []),
+  ];
+  const notIncluded = [
+    ...(hasRows("ga4") ? [] : ["GA4"]),
+    ...(hasRows("bing") ? [] : ["Bing"]),
+    ...(hasRows("yandex_webmaster") || hasRows("yandex_metrica") ? [] : ["Yandex"]),
+    "crawl",
+    "performance",
+  ];
+  return `- Sources in this report: ${included.length > 0 ? included.join(", ") : "none"}. Not included: ${notIncluded.join(", ")}.`;
+}
+
 export function buildSeoAuditReport(store: Store, input: ReportInput): string {
   const { pages, queries, rowCount, lastCollected } = loadEntities(store, input);
   const gscAvailable = rowCount > 0;
@@ -123,6 +147,8 @@ export function buildSeoAuditReport(store: Store, input: ReportInput): string {
   if (sitemap.n > 0 && cap && sitemap.n >= cap.cap) {
     missing.push(`Sitemap: ${sitemap.n} URLs equals the URL cap (${cap.cap}). The sitemap may be truncated, so reconciliation is partial.`);
   }
+  if (!sourceHasRows(store, input.siteId, "bing")) missing.push("Bing Webmaster: no data for this site. Bing is not part of the reconciliation.");
+  if (!sourceHasRows(store, input.siteId, "yandex_webmaster")) missing.push("Yandex Webmaster: no data for this site. Yandex is not part of the reconciliation.");
   if (gscAvailable && recon.sourcePageCount === 0) missing.push("Search Console: no page-level rows. Reconciliation is not possible.");
 
   const sections: string[] = [
@@ -131,7 +157,7 @@ export function buildSeoAuditReport(store: Store, input: ReportInput): string {
     "## Scope",
     `- Site: ${input.origin}`,
     `- Period: ${input.periodStart} to ${input.periodEnd}`,
-    "- Sources in this report: Google Search Console, sitemap. Not included yet: GA4, Bing, Yandex, crawl, performance.",
+    scopeSources(store, input, gscAvailable, sitemap.n),
     "",
     "## Data sources and date ranges",
     gscAvailable

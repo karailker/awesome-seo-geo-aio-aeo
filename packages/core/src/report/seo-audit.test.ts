@@ -118,6 +118,24 @@ describe("buildSeoAuditReport", () => {
     expect(report).toContain("Candidate findings: 1. Kept: 1. Dropped: 0.");
   });
 
+  it("names GA4 in the scope only after GA4 data is ingested", () => {
+    const before = buildSeoAuditReport(store, INPUT);
+    expect(before).toContain("- Sources in this report: sitemap. Not included: GA4, Bing, Yandex, crawl, performance.");
+
+    ingestGa4Jsonl(store, SITE_ID, "https://example.com", GA4_SOURCES);
+    const after = buildSeoAuditReport(store, INPUT);
+
+    expect(after).toContain("- Sources in this report: sitemap, GA4. Not included: Bing, Yandex, crawl, performance.");
+  });
+
+  it("lists missing Bing and Yandex data in the Missing data section, not only in reconciliation", () => {
+    const report = buildSeoAuditReport(store, INPUT);
+    const missingSection = report.slice(report.indexOf("## Missing data"), report.indexOf("## Findings"));
+
+    expect(missingSection).toContain("Bing Webmaster: no data for this site.");
+    expect(missingSection).toContain("Yandex Webmaster: no data for this site.");
+  });
+
   it("adds Yandex Metrica visits by traffic source to the traffic section", () => {
     ingestMetricaJsonl(store, SITE_ID, METRICA);
 
