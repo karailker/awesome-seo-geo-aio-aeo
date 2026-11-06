@@ -118,11 +118,14 @@ def crawl_fetch_pages(
     output_path: str,
     url_cap: int = DEFAULT_URL_CAP,
     store_raw_html: bool = False,
+    render: bool = False,
 ) -> dict[str, Any]:
     """Fetch the URLs in a discovery JSONL (field `url`), one at a time. Follows and records redirects;
     checks robots.txt at every hop; 1 request per second per host; identifiable User-Agent.
     Writes one record per URL to output_path. Raw HTML is stored gzipped only if store_raw_html is true.
-    Both paths are relative to the data directory.
+    Both paths are relative to the data directory. render=true loads each page in headless Chrome so
+    JavaScript-added markup (for example FAQPage JSON-LD) is extracted; Chrome also fetches the page's
+    scripts and styles, which the per-host rate limit does not cover. Requires Chrome (CHROME_PATH).
     """
     if not 1 <= url_cap <= MAX_URL_CAP:
         return _invalid(f"url_cap must be between 1 and {MAX_URL_CAP}")
@@ -135,18 +138,18 @@ def crawl_fetch_pages(
         return _invalid("input_path has no http(s) URLs")
     data_dir = Path(os.environ.get(DATA_DIR_ENV, "data")).resolve()
     with httpx.Client() as client:
-        return crawl_pages(source_urls, target, data_dir, client, want_raw=store_raw_html)
+        return crawl_pages(source_urls, target, data_dir, client, want_raw=store_raw_html, render=render)
 
 
 @mcp.tool(name="crawl_extract_structured_data")
-def crawl_extract_structured_data(url: str) -> dict[str, Any]:
+def crawl_extract_structured_data(url: str, render: bool = False) -> dict[str, Any]:
     """Fetch one URL (robots.txt checked) and return its extracted fields and structured data
-    (JSON-LD, microdata, RDFa). Nothing is written.
+    (JSON-LD, microdata, RDFa). Nothing is written. render=true extracts the DOM after JavaScript ran.
     """
     if urlsplit(url).scheme not in ("http", "https"):
         return _invalid("url must be an http(s) URL")
     with httpx.Client() as client:
-        record = fetch_single(url, client)
+        record = fetch_single(url, client, render=render)
     return {
         "ok": not record["errors"],
         "source": "crawl",

@@ -86,11 +86,11 @@ Data tools that write files take `output_path`, relative to the data directory (
 | Tool | Input (summary) | Notes |
 |---|---|---|
 | `crawl_discover_sitemap` | `sitemap_url`, `output_path`, `url_cap` (default 500) | Index and gzip sitemaps. robots.txt checked; unreadable robots fails closed. |
-| `crawl_fetch_pages` | `input_path` (discovery JSONL), `output_path`, `url_cap`, `store_raw_html` (default false) | Redirect chain, robots check on each hop, 1 request per second per host, retries on 5xx and timeouts. |
-| `crawl_extract_structured_data` | `url` | One page: on-page fields, headings, content hash, JSON-LD, microdata, RDFa, invalid JSON-LD count. Nothing written. |
+| `crawl_fetch_pages` | `input_path` (discovery JSONL), `output_path`, `url_cap`, `store_raw_html` (default false), `render` (default false) | Redirect chain, robots check on each hop, 1 request per second per host, retries on 5xx and timeouts. `render=true` loads each page in headless Chrome (system binary, `CHROME_PATH`) and extracts the DOM after scripts ran. Chrome also requests the page's scripts and styles; the per-host limit does not cover those. |
+| `crawl_extract_structured_data` | `url`, `render` (default false) | One page: on-page fields, headings, content hash, JSON-LD, microdata, RDFa, invalid JSON-LD count. `render=true` extracts the rendered DOM. Nothing written. |
 | `crawl_check_access` | `site_root`, `sample_urls` (up to 200) | Robots rules for AI user agents on the samples, and llms.txt. Unknown when robots is unreadable. VERIFY: agent tokens. |
 
-Crawl record fields (one JSON line per URL): `run_id`, `url`, `fetched_at`, `status`, `final_url`, `redirect_chain`, `content_type`, `title`, `meta_description`, `canonical`, `lang`, `hreflang`, `headings`, `word_count`, `content_hash`, `structured_data`, `jsonld_syntax_errors`, `robots_allowed` (true, false, or null for unknown), `raw_html_path`, `errors`.
+Crawl record fields (one JSON line per URL): `run_id`, `url`, `fetched_at`, `status`, `final_url`, `redirect_chain`, `content_type`, `title`, `meta_description`, `canonical`, `lang`, `hreflang`, `headings`, `word_count`, `content_hash`, `structured_data`, `jsonld_syntax_errors`, `robots_allowed` (true, false, or null for unknown), `rendered` (true when the DOM came from headless Chrome, which `render=true` requests; false otherwise), `raw_html_path`, `errors` (a failed render adds `RENDER_FAILED` and keeps the static HTML).
 
 ## Adding a new tool
 

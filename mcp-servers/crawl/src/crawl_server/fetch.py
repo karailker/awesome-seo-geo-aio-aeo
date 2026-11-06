@@ -19,6 +19,7 @@ from urllib.parse import urljoin, urlsplit
 import httpx
 
 from crawl_server.extract import extract_page
+from crawl_server.render import RenderError, render_html
 from crawl_server.sitemap import Fetcher
 
 MAX_REDIRECTS = 5
@@ -48,14 +49,19 @@ def _request(fetcher: Fetcher, url: str) -> httpx.Response:
     raise AssertionError("unreachable")
 
 
-def fetch_page(fetcher: Fetcher, url: str, want_raw: bool = False) -> dict[str, Any]:
-    """Fetch one URL with its redirect chain and extract its fields. Never raises for page errors."""
+def fetch_page(fetcher: Fetcher, url: str, want_raw: bool = False, render: bool = False) -> dict[str, Any]:
+    """Fetch one URL with its redirect chain and extract its fields. Never raises for page errors.
+
+    With render=True the page is loaded in headless Chrome after the robots check, and the rendered DOM is
+    extracted. If rendering fails, the static HTML is extracted and RENDER_FAILED is recorded.
+    """
     record: dict[str, Any] = {
         "url": url,
         "fetched_at": _now(),
         "status": None,
         "final_url": None,
         "redirect_chain": [],
+        "rendered": False,
         "content_type": None,
         "title": None,
         "meta_description": None,
@@ -119,6 +125,12 @@ def fetch_page(fetcher: Fetcher, url: str, want_raw: bool = False) -> dict[str, 
 
     body = resp.content[:MAX_HTML_BYTES]
     html = body.decode(resp.encoding or "utf-8", errors="replace")
+    if render:
+        try:
+            html = render_html(current)
+            record["rendered"] = True
+        except RenderError as exc:
+            record["errors"].append({"code": "RENDER_FAILED", "message": str(exc), "retryable": False})
     try:
         fields = extract_page(html, current)
     except Exception:  # extraction must not abort the run; the error code is enough for the report
@@ -147,6 +159,7 @@ def crawl_pages(
     data_dir: Path,
     client: httpx.Client,
     want_raw: bool = False,
+    render: bool = False,
 ) -> dict[str, Any]:
     """Fetch URLs in order, write one JSONL record per URL, return the ToolResult envelope."""
     started = _now()
@@ -157,7 +170,7 @@ def crawl_pages(
     counts = {"ok": 0, "robots_blocked": 0, "errors": 0}
     with output_path.open("w", encoding="utf-8") as handle:
         for url in urls:
-            record = fetch_page(fetcher, url, want_raw=want_raw)
+            record = fetch_page(fetcher, url, want_raw=want_raw, render=render)
             _store_raw(record, run_id, data_dir)
             record = {"run_id": run_id, **record}
             if any(e["code"] == "ROBOTS_DISALLOWED" for e in record["errors"]):
@@ -185,9 +198,9 @@ def crawl_pages(
     }
 
 
-def fetch_single(url: str, client: httpx.Client) -> dict[str, Any]:
+def fetch_single(url: str, client: httpx.Client, render: bool = False) -> dict[str, Any]:
     """On-demand fetch and extraction of one URL. Nothing is written."""
-    record = fetch_page(Fetcher(client), url)
+    record = fetch_page(Fetcher(client), url, render=render)
     record.pop("_html", None)
     return record
 
