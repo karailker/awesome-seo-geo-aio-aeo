@@ -88,6 +88,7 @@ The CLI is published as `@karailker/awesome-seo-core` and runs with `npx`:
 | `sitemap-ingest`, `crawl-ingest` | Store sitemap and crawl JSONL |
 | `access-ingest` | Store a saved `crawl_check_access` result (`--origin`, then the JSON file). `geo-audit --access` stores the same result and is the path the commands use |
 | `seo-audit`, `geo-audit` | Markdown reports (inputs: `--gsc`, `--ga4`, `--metrica`, `--bing`, `--yandex`, `--access`) |
+| `technical-audit` | Markdown technical report for a crawl run (`--origin`, optional `--run`) |
 | `approval list\|propose\|approve\|reject\|record` | Write approval flow |
 
 ## Development

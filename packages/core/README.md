@@ -16,6 +16,7 @@ Run with `npx -y -p @karailker/awesome-seo-core@0.2 awesome-seo <command>` from 
 | `crawl-ingest --origin <url> <file.jsonl>` | Store one crawl run |
 | `access-ingest --origin <url> <access.json>` | Store a saved `crawl_check_access` result (idempotent) |
 | `seo-audit`, `geo-audit` | Markdown reports. `geo-audit --access <file>` also stores the access result |
+| `technical-audit --origin <url> [--run <id>]` | Markdown technical report for a crawl run: counts, redirects, canonical, titles, hreflang, headings |
 | `approval ...` | Write approval flow used by the hook and `/approve-action` |
 
 Errors go to stderr with exit code 1. `geo-audit` needs a crawl run for the site first.

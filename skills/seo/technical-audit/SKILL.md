@@ -15,6 +15,7 @@ Report technical facts about the crawled URLs: status, redirects, robots access,
 
 ## Tools
 - `npx -y -p @karailker/awesome-seo-core@0.2 awesome-seo crawl-ingest` (stores the run).
+- `npx -y -p @karailker/awesome-seo-core@0.2 awesome-seo technical-audit --origin <origin> [--run <run_id>]` (the report, from the stored run; the default is the run with the most URLs).
 - `crawl_check_access` (AI crawler rules; separate skill).
 - `crawl_extract_structured_data` for a single URL to inspect.
 
