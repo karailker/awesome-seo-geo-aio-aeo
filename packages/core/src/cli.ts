@@ -6,6 +6,7 @@ import { readFileSync } from "node:fs";
 import { parseArgs, type ParseArgsConfig } from "node:util";
 import {
   ACTION_TYPES,
+  buildTechnicalReport,
   approveProposal,
   buildGeoReport,
   buildSeoAuditReport,
@@ -160,6 +161,23 @@ function cmdSeoAudit(args: string[]): void {
   }
 }
 
+function cmdTechnicalAudit(args: string[]): void {
+  const { values } = parse({ options: { origin: { type: "string" }, run: { type: "string" } } }, args);
+  if (!values.origin) fail("Usage: awesome-seo technical-audit --origin https://example.com [--run <run_id>]");
+  const origin = originOf(values.origin as string);
+  const store = openStore(dbPath());
+  try {
+    const siteId = siteIdFor(store, origin);
+    const run = values.run
+      ? (store.sqlite.prepare("SELECT id FROM crawl_runs WHERE id = ? AND site_id = ?").get(values.run, siteId) as { id: string } | undefined)
+      : (store.sqlite.prepare("SELECT id FROM crawl_runs WHERE site_id = ? ORDER BY url_count DESC, started_at DESC LIMIT 1").get(siteId) as { id: string } | undefined);
+    if (!run) fail("No crawl run found for this site. Run /crawl-run first.");
+    console.log(buildTechnicalReport(store, { siteId, origin, runId: run.id }));
+  } finally {
+    store.close();
+  }
+}
+
 function cmdGeoAudit(args: string[]): void {
   const { values } = parse({ options: { origin: { type: "string" }, run: { type: "string" }, access: { type: "string" } } }, args);
   if (!values.origin) fail("Usage: awesome-seo geo-audit --origin https://example.com [--run <run_id>] [--access file.json]");
@@ -300,9 +318,10 @@ try {
     case "access-ingest": cmdAccessIngest(rest); break;
     case "seo-audit": cmdSeoAudit(rest); break;
     case "geo-audit": cmdGeoAudit(rest); break;
+    case "technical-audit": cmdTechnicalAudit(rest); break;
     case "approval": cmdApproval(rest); break;
     default:
-      fail("usage: awesome-seo <migrate|seed|sitemap-ingest|crawl-ingest|access-ingest|seo-audit|geo-audit|approval> [options]");
+      fail("usage: awesome-seo <migrate|seed|sitemap-ingest|crawl-ingest|access-ingest|seo-audit|geo-audit|technical-audit|approval> [options]");
   }
 } catch (err) {
   console.error(`Error: ${(err as Error).message}`);
