@@ -12,11 +12,11 @@ Run with `npx -y -p @karailker/awesome-seo-core@0.2 awesome-seo <command>` from 
 |---|---|
 | `migrate` | Create or upgrade the schema (current version 3) |
 | `seed --origin <url>` | Register the site (canonical origin, sitemap URL, URL cap) |
-| `sitemap-ingest --origin <url> <file.jsonl>` | Store sitemap URLs (idempotent) |
+| `sitemap-ingest --origin <url> <file.jsonl>` | Store sitemap URLs (idempotent). `ingested` counts rows written; `created` counts URLs new to the site |
 | `crawl-ingest --origin <url> <file.jsonl>` | Store one crawl run |
 | `access-ingest --origin <url> <access.json>` | Store a saved `crawl_check_access` result (idempotent) |
 | `seo-audit`, `geo-audit` | Markdown reports. `geo-audit --access <file>` also stores the access result |
-| `technical-audit --origin <url> [--run <id>]` | Markdown technical report for a crawl run: counts, redirects, canonical, titles, hreflang, headings |
+| `technical-audit --origin <url> [--run <id>] [--gsc <file.jsonl>]` | Markdown technical report for a crawl run: counts, redirects, canonical, titles, hreflang, headings. `--gsc` adds the Search Console pages the crawl did not check |
 | `approval ...` | Write approval flow used by the hook and `/approve-action` |
 
 Errors go to stderr with exit code 1. `geo-audit` needs a crawl run for the site first.
