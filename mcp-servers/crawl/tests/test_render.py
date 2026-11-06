@@ -1,4 +1,6 @@
 import json
+import subprocess
+import sys
 
 import httpx
 import pytest
@@ -98,3 +100,49 @@ def test_render_never_loads_a_page_robots_disallows(local_site, monkeypatch):
     assert record["rendered"] is False
     assert record["robots_allowed"] is False
     assert [e["code"] for e in record["errors"]] == ["ROBOTS_DISALLOWED"]
+
+
+def test_render_starts_chrome_without_a_shell_and_skips_images(monkeypatch):
+    # Given: a fake Chrome that records how it was called
+    from crawl_server import render as render_module
+
+    calls = []
+
+    def fake_run(cmd, **kwargs):
+        calls.append((cmd, kwargs))
+        return subprocess.CompletedProcess(cmd, 0, stdout=b"<html></html>", stderr=b"")
+
+    monkeypatch.setenv("CHROME_PATH", sys.executable)  # any existing binary; subprocess.run is replaced
+    monkeypatch.setattr(render_module.subprocess, "run", fake_run)
+
+    # When
+    dom = render_html("https://example.com/page")
+
+    # Then: args list (no shell), images off, URL last, http(s) only
+    cmd, kwargs = calls[0]
+    assert dom == "<html></html>"
+    assert isinstance(cmd, list)
+    assert "--blink-settings=imagesEnabled=false" in cmd
+    assert cmd[-1] == "https://example.com/page"
+    assert kwargs.get("shell", False) is False
+
+
+def test_render_requests_carry_the_request_outside_rate_limit_warning(local_site):
+    # Given: a page on the local test site
+    from crawl_server import server as tools
+    from crawl_server.render import RENDER_WARNING
+
+    # When: render is requested through the tool
+    result = tools.crawl_extract_structured_data(local_site.url("/index.html"), render=True)
+
+    # Then: the warning is shown whether or not Chrome succeeded
+    assert RENDER_WARNING in result["warnings"]
+    assert "per-host rate limit" in RENDER_WARNING
+
+
+def test_static_extraction_has_no_render_warning(local_site):
+    from crawl_server import server as tools
+
+    result = tools.crawl_extract_structured_data(local_site.url("/index.html"))
+
+    assert result["warnings"] == []

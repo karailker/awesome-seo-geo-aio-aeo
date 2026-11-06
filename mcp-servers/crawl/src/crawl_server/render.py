@@ -19,6 +19,12 @@ RENDER_TIMEOUT_SECONDS = 60
 VIRTUAL_TIME_BUDGET_MS = 8000  # lets scripts that run after load finish before the DOM is dumped
 MAX_RENDERED_BYTES = 10 * 1024 * 1024
 _FALLBACK_NAMES = ("google-chrome", "chromium", "chromium-browser")
+# Images do not change the DOM, so they are not loaded. Scripts and styles still are; they are needed for JS markup.
+NO_IMAGES_FLAG = "--blink-settings=imagesEnabled=false"
+RENDER_WARNING = (
+    "render=true: Chrome also requested the page's scripts, styles and fonts. Those requests are outside the "
+    "per-host rate limit (1 request per second applies to the HTML fetch only)."
+)
 
 
 class RenderError(Exception):
@@ -47,6 +53,7 @@ def render_html(url: str, timeout: int = RENDER_TIMEOUT_SECONDS) -> str:
         binary,
         "--headless=new",
         "--disable-gpu",
+        NO_IMAGES_FLAG,
         f"--virtual-time-budget={VIRTUAL_TIME_BUDGET_MS}",
         "--dump-dom",
         url,

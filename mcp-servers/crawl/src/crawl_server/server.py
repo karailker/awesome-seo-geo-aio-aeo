@@ -17,6 +17,7 @@ from mcp.server.fastmcp import FastMCP
 
 from crawl_server.access import check_access
 from crawl_server.fetch import crawl_pages, fetch_single
+from crawl_server.render import RENDER_WARNING
 from crawl_server.sitemap import DATA_DIR_ENV, DEFAULT_URL_CAP, MAX_URL_CAP, discover_sitemap, resolve_output_path
 
 SERVER_NAME = "crawl"
@@ -138,7 +139,10 @@ def crawl_fetch_pages(
         return _invalid("input_path has no http(s) URLs")
     data_dir = Path(os.environ.get(DATA_DIR_ENV, "data")).resolve()
     with httpx.Client() as client:
-        return crawl_pages(source_urls, target, data_dir, client, want_raw=store_raw_html, render=render)
+        result = crawl_pages(source_urls, target, data_dir, client, want_raw=store_raw_html, render=render)
+    if render:
+        result["warnings"] = [RENDER_WARNING]
+    return result
 
 
 @mcp.tool(name="crawl_extract_structured_data")
@@ -155,7 +159,7 @@ def crawl_extract_structured_data(url: str, render: bool = False) -> dict[str, A
         "source": "crawl",
         "collectedAt": record["fetched_at"],
         "data": record,
-        "warnings": [],
+        "warnings": [RENDER_WARNING] if render else [],
         "errors": record["errors"],
     }
 
