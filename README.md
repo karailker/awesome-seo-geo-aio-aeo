@@ -1,10 +1,12 @@
 # Awesome SEO / GEO / AIO / AEO
 
-A Claude Code plugin that audits one website across SEO, GEO (generative engine visibility), AIO (AI discoverability), and AEO (answer readiness). It combines sitemap discovery, a local crawl, Google Search Console, GA4, Bing Webmaster, Yandex Metrica and Webmaster, PageSpeed Insights, and CrUX. Reports are in English, and every finding cites the observations behind it.
+A Claude Code plugin that audits one website across SEO (Search Engine Optimization), GEO (Generative Engine Optimization), AIO (AI Optimization, AI discoverability), and AEO (Answer Engine Optimization). It combines sitemap discovery, a local crawl, Google Search Console, GA4, Bing Webmaster, Yandex Metrica and Webmaster, PageSpeed Insights, and CrUX. Reports are in English, and every finding cites the observations behind it.
 
 Local-first: data stays in a SQLite file in your project folder. Write actions to search engines (sitemap submit, URL submit) need an approved proposal, and a hook blocks them until one exists.
 
 **Status (2026-11-06):** plugin version 0.2.0. Phases P0–P8 and P10 are done. P9 (Merchant Center) is deferred because the site sells no products. P11 (evaluation) is next. See `STATUS.md` for live checks, known gaps, and open decisions.
+
+**Terms:** SEO = Search Engine Optimization. GEO = Generative Engine Optimization. AIO = AI Optimization (AI discoverability). AEO = Answer Engine Optimization. GSC = Google Search Console. GA4 = Google Analytics 4. PSI = PageSpeed Insights. CrUX = Chrome User Experience Report. MCP = Model Context Protocol.
 
 ## Install as a Claude Code plugin
 

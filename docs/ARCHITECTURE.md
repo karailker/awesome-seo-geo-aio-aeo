@@ -2,7 +2,7 @@
 
 ## Purpose
 
-A local Claude Code plugin that audits one website across SEO, GEO (generative engine visibility), AIO (AI discoverability), and AEO (answer readiness). It combines data from search engine and analytics APIs, performance measurements, and a local crawl of the sitemap. It produces evidence-backed reports in English.
+A local Claude Code plugin that audits one website across SEO (Search Engine Optimization), GEO (Generative Engine Optimization), AIO (AI Optimization, AI discoverability), and AEO (Answer Engine Optimization). It combines data from search engine and analytics APIs, performance measurements, and a local crawl of the sitemap. It produces evidence-backed reports in English.
 
 ## Design principles
 

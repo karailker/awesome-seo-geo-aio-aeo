@@ -1,5 +1,5 @@
 ---
-description: AIO audit (AI discoverability): AI crawler access, llms.txt, machine-readable content, heading structure. Runs the same report as /geo-audit and shows the AIO sections. Read-only.
+description: AIO audit (AI Optimization: AI discoverability): AI crawler access, llms.txt, machine-readable content, heading structure. Runs the same report as /geo-audit and shows the AIO sections. Read-only.
 argument-hint: "[origin] (default: the seeded site)"
 ---
 

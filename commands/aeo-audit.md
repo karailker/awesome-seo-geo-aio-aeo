@@ -1,5 +1,5 @@
 ---
-description: AEO audit (answer readiness): structured data validation (syntax errors separate from missing recommended properties), FAQ markup, answer coverage. Read-only.
+description: AEO audit (Answer Engine Optimization: answer readiness): structured data validation (syntax errors separate from missing recommended properties), FAQ markup, answer coverage. Read-only.
 argument-hint: "[origin] (default: the seeded site)"
 ---
 
