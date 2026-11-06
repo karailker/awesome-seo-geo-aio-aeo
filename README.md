@@ -4,7 +4,7 @@ A Claude Code plugin that audits one website across SEO (Search Engine Optimizat
 
 Local-first: data stays in a SQLite file in your project folder. Write actions to search engines (sitemap submit, URL submit) need an approved proposal, and a hook blocks them until one exists.
 
-**Status (2026-11-06):** plugin version 0.2.0. Phases P0–P8 and P10 are done. P9 (Merchant Center) is deferred because the site sells no products. P11 (evaluation) is next. See `STATUS.md` for live checks, known gaps, and open decisions.
+**Status (2026-11-06):** plugin version 0.2.1, core 0.2.3. Phases P0–P8 and P10 are done. P9 (Merchant Center) is deferred because the site sells no products. P11 (evaluation) is next. See `STATUS.md` for live checks, known gaps, and open decisions.
 
 **Terms:** SEO = Search Engine Optimization. GEO = Generative Engine Optimization. AIO = AI Optimization (AI discoverability). AEO = Answer Engine Optimization. GSC = Google Search Console. GA4 = Google Analytics 4. PSI = PageSpeed Insights. CrUX = Chrome User Experience Report. MCP = Model Context Protocol.
 
@@ -114,7 +114,13 @@ Layout:
 
 ## Publishing
 
-The packages are published under `@karailker`. Latest on npm: core 0.2.1 (0.2.2 when published), `awesome-seo-mcp-performance` 0.1.1, and `awesome-seo-mcp-google`, `-bing`, `-yandex` 0.1.0. Publish per package from its directory with a fresh OTP: `corepack pnpm publish --access public --no-git-checks --otp <code>`. Do not paste the OTP into chat or commit it.
+The packages are published under `@karailker`. Latest on npm after this release: core 0.2.3, `awesome-seo-mcp-performance` 0.1.1, `awesome-seo-mcp-yandex` 0.1.1, and `awesome-seo-mcp-google` and `-bing` 0.1.0 (unchanged since their release). Publish with a fresh OTP from the package directory, one package at a time:
+
+```bash
+cd packages/core && corepack pnpm publish --access public --no-git-checks --otp=<code>
+```
+
+Plugin updates reach users through the marketplace: `claude plugin marketplace update awesome-seo-marketplace`, then reinstall the plugin and restart Claude Code. Do not paste OTP codes into chat or commit them.
 
 ## Security
 
