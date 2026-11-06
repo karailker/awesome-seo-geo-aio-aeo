@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // google MCP server: Search Console (P3) and GA4 Data API (P7). Merchant Center comes later.
-import { capabilitiesPayload, healthPayload, serveMcp, z, type StubServerConfig } from "@karailker/awesome-seo-core";
+import { capabilitiesPayload, healthPayload, loadProjectEnv, serveMcp, z, type StubServerConfig } from "@karailker/awesome-seo-core";
 import { loadServiceAccount, SEARCH_CONSOLE_READONLY_SCOPE, TokenProvider, type ServiceAccount } from "./gsc/auth.js";
 import { GscClient } from "./gsc/client.js";
 import { GscError } from "./gsc/errors.js";
@@ -11,6 +11,9 @@ import { MERCHANT_SCOPE, MerchantClient } from "./merchant/api.js";
 import { listProductIssues, listProducts, type MerchantClientProvider } from "./merchant/tools.js";
 
 const KEY_VAR = "GOOGLE_SERVICE_ACCOUNT_KEY_FILE";
+
+// Credentials come from the project's .env (AWESOME_SEO_ENV_FILE, set by the plugin). Only warnings are printed.
+for (const w of loadProjectEnv(process.env.AWESOME_SEO_ENV_FILE).warnings) console.error(`awesome-seo: ${w}`);
 
 const CONFIG: StubServerConfig = {
   prefix: "google",

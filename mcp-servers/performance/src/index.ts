@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 // performance MCP server (P5): PageSpeed Insights, CrUX, and a local Lighthouse run used as fallback.
-import { capabilitiesPayload, healthPayload, serveMcp, z, type StubServerConfig } from "@karailker/awesome-seo-core";
+import { capabilitiesPayload, healthPayload, loadProjectEnv, serveMcp, z, type StubServerConfig } from "@karailker/awesome-seo-core";
 import { CRUX_KEY_VAR, cruxQuery, lighthouseLocalRun, PSI_KEY_VAR, psiRun } from "./tools.js";
+
+// Credentials come from the project's .env (AWESOME_SEO_ENV_FILE, set by the plugin). Only warnings are printed.
+for (const w of loadProjectEnv(process.env.AWESOME_SEO_ENV_FILE).warnings) console.error(`awesome-seo: ${w}`);
 
 const CONFIG: StubServerConfig = {
   prefix: "performance",

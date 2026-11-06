@@ -1,8 +1,11 @@
 #!/usr/bin/env node
 // yandex MCP server (P7): Yandex Metrica aggregated reports. Webmaster tools come in P8.
-import { capabilitiesPayload, healthPayload, serveMcp, z, type StubServerConfig } from "@karailker/awesome-seo-core";
+import { capabilitiesPayload, healthPayload, loadProjectEnv, serveMcp, z, type StubServerConfig } from "@karailker/awesome-seo-core";
 import { METRICA_COUNTER_VAR, METRICA_TOKEN_VAR, metricaReport } from "./tools.js";
 import { addSitemap, hostSummary, indexing, inSearchUrls, listHosts, searchQueries, WEBMASTER_TOKEN_VAR } from "./webmaster-tools.js";
+
+// Credentials come from the project's .env (AWESOME_SEO_ENV_FILE, set by the plugin). Only warnings are printed.
+for (const w of loadProjectEnv(process.env.AWESOME_SEO_ENV_FILE).warnings) console.error(`awesome-seo: ${w}`);
 
 const CONFIG: StubServerConfig = {
   prefix: "yandex",

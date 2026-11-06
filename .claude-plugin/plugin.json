@@ -1,7 +1,7 @@
 {
   "name": "awesome-seo",
   "description": "Local SEO / GEO / AIO / AEO auditor for a single site: sitemap-driven crawl, search console and analytics APIs, performance measurements, evidence-backed reports.",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "license": "MIT",
   "author": {
     "name": "Ilker Kara"
@@ -9,19 +9,23 @@
   "mcpServers": {
     "google": {
       "command": "npx",
-      "args": ["-y", "@karailker/awesome-seo-mcp-google"]
+      "args": ["-y", "@karailker/awesome-seo-mcp-google"],
+      "env": {"AWESOME_SEO_ENV_FILE": "${CLAUDE_PROJECT_DIR}/.env"}
     },
     "yandex": {
       "command": "npx",
-      "args": ["-y", "@karailker/awesome-seo-mcp-yandex"]
+      "args": ["-y", "@karailker/awesome-seo-mcp-yandex"],
+      "env": {"AWESOME_SEO_ENV_FILE": "${CLAUDE_PROJECT_DIR}/.env"}
     },
     "bing": {
       "command": "npx",
-      "args": ["-y", "@karailker/awesome-seo-mcp-bing"]
+      "args": ["-y", "@karailker/awesome-seo-mcp-bing"],
+      "env": {"AWESOME_SEO_ENV_FILE": "${CLAUDE_PROJECT_DIR}/.env"}
     },
     "performance": {
       "command": "npx",
-      "args": ["-y", "@karailker/awesome-seo-mcp-performance"]
+      "args": ["-y", "@karailker/awesome-seo-mcp-performance"],
+      "env": {"AWESOME_SEO_ENV_FILE": "${CLAUDE_PROJECT_DIR}/.env"}
     },
     "crawl": {
       "command": "uv",

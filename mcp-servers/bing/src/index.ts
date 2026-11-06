@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 // bing MCP server (P8): Bing Webmaster search stats, page stats, and URL info. Read-only.
-import { capabilitiesPayload, healthPayload, serveMcp, z, type StubServerConfig } from "@karailker/awesome-seo-core";
+import { capabilitiesPayload, healthPayload, loadProjectEnv, serveMcp, z, type StubServerConfig } from "@karailker/awesome-seo-core";
 import { BING_KEY_VAR, pageStats, searchStats, submitUrl, urlInfo } from "./tools.js";
+
+// Credentials come from the project's .env (AWESOME_SEO_ENV_FILE, set by the plugin). Only warnings are printed.
+for (const w of loadProjectEnv(process.env.AWESOME_SEO_ENV_FILE).warnings) console.error(`awesome-seo: ${w}`);
 
 const CONFIG: StubServerConfig = {
   prefix: "bing",
