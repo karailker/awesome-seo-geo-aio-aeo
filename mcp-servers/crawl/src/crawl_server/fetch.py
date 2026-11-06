@@ -25,6 +25,7 @@ from crawl_server.sitemap import Fetcher
 MAX_REDIRECTS = 5
 RETRY_ATTEMPTS = 2  # retries after the first attempt, for 5xx and transport timeouts
 RETRY_BACKOFF_SECONDS = (2.0, 4.0)
+MAX_RETRY_AFTER_SECONDS = 60.0  # a server asking for longer is not waited for; the URL is recorded as RATE_LIMITED
 MAX_HTML_BYTES = 10 * 1024 * 1024
 REDIRECT_STATUSES = {301, 302, 303, 307, 308}
 
@@ -33,19 +34,30 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _retry_after_seconds(resp: httpx.Response) -> float | None:
+    """Seconds from a Retry-After header in its numeric form, capped; None when absent or not numeric."""
+    raw = resp.headers.get("retry-after")
+    if raw is None or not raw.strip().isdigit():
+        return None
+    return min(float(raw), MAX_RETRY_AFTER_SECONDS)
+
+
 def _request(fetcher: Fetcher, url: str) -> httpx.Response:
-    """One hop with retries on transport errors and 5xx. Redirects are not followed here."""
+    """One hop with retries on transport errors, 5xx and 429 (honouring Retry-After). Redirects are not followed here."""
     for attempt in range(RETRY_ATTEMPTS + 1):
         last = attempt == RETRY_ATTEMPTS
+        wait = RETRY_BACKOFF_SECONDS[min(attempt, len(RETRY_BACKOFF_SECONDS) - 1)]
         try:
             resp = fetcher.get(url, follow_redirects=False)
         except httpx.HTTPError:
             if last:
                 raise
         else:
-            if resp.status_code < 500 or last:
+            if (resp.status_code < 500 and resp.status_code != 429) or last:
                 return resp
-        time.sleep(RETRY_BACKOFF_SECONDS[attempt])
+            if resp.status_code == 429:
+                wait = _retry_after_seconds(resp) or wait
+        time.sleep(wait)
     raise AssertionError("unreachable")
 
 
@@ -114,8 +126,8 @@ def fetch_page(fetcher: Fetcher, url: str, want_raw: bool = False, render: bool 
     record["content_type"] = resp.headers.get("content-type")
 
     if resp.status_code >= 400:
-        code = "NOT_FOUND" if resp.status_code == 404 else "HTTP_ERROR"
-        record["errors"].append({"code": code, "message": f"HTTP {resp.status_code}", "retryable": resp.status_code >= 500})
+        code = "NOT_FOUND" if resp.status_code == 404 else "RATE_LIMITED" if resp.status_code == 429 else "HTTP_ERROR"
+        record["errors"].append({"code": code, "message": f"HTTP {resp.status_code}", "retryable": resp.status_code >= 500 or resp.status_code == 429})
         return record
 
     content_type = (record["content_type"] or "").lower()

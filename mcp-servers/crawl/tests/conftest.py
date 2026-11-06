@@ -38,6 +38,13 @@ class _Handler(BaseHTTPRequestHandler):
             return self._send(302, b"", "text/plain", {"Location": "/index.html"})
         if path == "/broken":
             return self._send(500, b"server error", "text/plain")
+        if path == "/rate-limited-once":
+            hits = sum(1 for p, _ in server.hits if p == path)
+            if hits == 1:
+                return self._send(429, b"slow down", "text/plain", {"Retry-After": "0"})
+            return self._send(200, b"<html><head><title>ok</title></head><body><h1>ok</h1></body></html>", "text/html; charset=utf-8")
+        if path == "/rate-limited-always":
+            return self._send(429, b"slow down", "text/plain", {"Retry-After": "0"})
         if path == "/robots.txt" and server.robots_status != 200:
             return self._send(server.robots_status, b"", "text/plain")
         if path == "/":

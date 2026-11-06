@@ -135,3 +135,31 @@ def test_robots_unreadable_marks_access_unknown_not_allowed(local_site):
 
     assert record["robots_allowed"] is None
     assert [e["code"] for e in record["errors"]] == ["ROBOTS_UNAVAILABLE"]
+
+
+def test_429_is_retried_after_the_server_asks_and_then_succeeds(local_site, monkeypatch):
+    # Given: a page that answers 429 once, then 200
+    waits = []
+    monkeypatch.setattr(fetch.time, "sleep", lambda seconds: waits.append(seconds))
+
+    # When
+    record = _page(local_site, "/rate-limited-once")
+
+    # Then: the retry waited for the server's Retry-After and the page was extracted
+    assert record["status"] == 200
+    assert record["errors"] == []
+    assert record["title"] == "ok"
+    assert waits == [0.0]
+
+
+def test_persistent_429_is_recorded_as_retryable_rate_limit(local_site, monkeypatch):
+    # Given: a page that always answers 429
+    monkeypatch.setattr(fetch.time, "sleep", lambda seconds: None)
+
+    # When
+    record = _page(local_site, "/rate-limited-always")
+
+    # Then: the error is RATE_LIMITED, retryable, and the page is not extracted
+    assert record["status"] == 429
+    assert record["errors"] == [{"code": "RATE_LIMITED", "message": "HTTP 429", "retryable": True}]
+    assert record["title"] is None
