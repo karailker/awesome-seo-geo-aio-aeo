@@ -18,7 +18,8 @@ type Row = {
   errors: string | null;
 };
 
-export type TechnicalInput = { siteId: string; origin: string; runId: string };
+// searchPages: page URLs from Search Console. Those missing from the crawl run were never checked.
+export type TechnicalInput = { siteId: string; origin: string; runId: string; searchPages?: string[] };
 
 type Problem = { url: string; rowId: string; detail: string };
 
@@ -88,6 +89,9 @@ export function buildTechnicalReport(store: Store, input: TechnicalInput): strin
   // Headings: no h1 on a fetched 200 page
   const noH1 = ok.filter((r) => !parseArray<{ level: number }>(r.headings).some((h) => h.level === 1));
 
+  const crawled = new Set(rows.map((r) => r.url));
+  const notCrawled = [...new Set(input.searchPages ?? [])].filter((u) => !crawled.has(u)).sort();
+
   const robotsUnknown = rows.filter((r) => codesOf(r).includes("ROBOTS_UNAVAILABLE"));
   const notHtml = rows.filter((r) => codesOf(r).includes("NOT_HTML"));
   const extractFailed = rows.filter((r) => codesOf(r).includes("EXTRACT_FAILED"));
@@ -142,6 +146,11 @@ export function buildTechnicalReport(store: Store, input: TechnicalInput): strin
     "## Headings",
     `- 200 pages with no h1: ${noH1.length}.`,
     ...listLines(noH1.map((r) => ({ url: r.url, rowId: r.id, detail: "no h1" }))),
+    "",
+    "## Coverage",
+    `- Search Console pages not in this crawl run: ${input.searchPages ? notCrawled.length : "not checked (no Search Console file given)"}.${input.searchPages ? " Their status, redirects and canonical were not checked." : ""}`,
+    ...(input.searchPages ? notCrawled.map((u) => `- ${u} — not crawled`).slice(0, LIST_CAP) : []),
+    ...(input.searchPages && notCrawled.length > LIST_CAP ? [`- ... and ${notCrawled.length - LIST_CAP} more`] : []),
     "",
     "## Missing data",
     ...(robotsUnknown.length > 0

@@ -116,6 +116,23 @@ describe("buildTechnicalReport", () => {
     expect(sec).toContain("- 1 URL(s) were robots-blocked and not fetched. They are not counted as missing.");
   });
 
+  it("lists Search Console pages that the crawl run did not check", () => {
+    const out = buildTechnicalReport(store, {
+      siteId: SITE_ID, origin: ORIGIN, runId: RUN,
+      searchPages: [`${ORIGIN}/clean`, `${ORIGIN}/category/old`, `${ORIGIN}/category/old`, `${ORIGIN}/product/gone`],
+    });
+    const sec = section(out, "Coverage");
+
+    expect(sec).toContain("- Search Console pages not in this crawl run: 2. Their status, redirects and canonical were not checked.");
+    expect(sec).toContain(`- ${ORIGIN}/category/old — not crawled`);
+    expect(sec).toContain(`- ${ORIGIN}/product/gone — not crawled`);
+    expect(sec).not.toContain(`${ORIGIN}/clean — not crawled`);
+  });
+
+  it("says Search Console coverage was not checked when no Search Console file is given", () => {
+    expect(section(report(), "Coverage")).toContain("- Search Console pages not in this crawl run: not checked (no Search Console file given).");
+  });
+
   it("marks the run partial when any URL failed", () => {
     expect(report()).toContain("- URLs in the run: 6. Run status: partial (some URLs failed).");
   });

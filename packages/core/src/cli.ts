@@ -162,8 +162,8 @@ function cmdSeoAudit(args: string[]): void {
 }
 
 function cmdTechnicalAudit(args: string[]): void {
-  const { values } = parse({ options: { origin: { type: "string" }, run: { type: "string" } } }, args);
-  if (!values.origin) fail("Usage: awesome-seo technical-audit --origin https://example.com [--run <run_id>]");
+  const { values } = parse({ options: { origin: { type: "string" }, run: { type: "string" }, gsc: { type: "string", multiple: true } } }, args);
+  if (!values.origin) fail("Usage: awesome-seo technical-audit --origin https://example.com [--run <run_id>] [--gsc <file.jsonl>]");
   const origin = originOf(values.origin as string);
   const store = openStore(dbPath());
   try {
@@ -172,7 +172,12 @@ function cmdTechnicalAudit(args: string[]): void {
       ? (store.sqlite.prepare("SELECT id FROM crawl_runs WHERE id = ? AND site_id = ?").get(values.run, siteId) as { id: string } | undefined)
       : (store.sqlite.prepare("SELECT id FROM crawl_runs WHERE site_id = ? ORDER BY url_count DESC, started_at DESC LIMIT 1").get(siteId) as { id: string } | undefined);
     if (!run) fail("No crawl run found for this site. Run /crawl-run first.");
-    console.log(buildTechnicalReport(store, { siteId, origin, runId: run.id }));
+    // Search Console page URLs from the given JSONL files (the gsc tool output); used only for the coverage check.
+    const searchPages = values.gsc
+      ? [...new Set((values.gsc as string[]).flatMap((file) =>
+          readFileSync(file, "utf8").split("\n").filter((l) => l.trim()).map((l) => (JSON.parse(l) as { dimensions?: { page?: string } }).dimensions?.page).filter((p): p is string => typeof p === "string")))]
+      : undefined;
+    console.log(buildTechnicalReport(store, { siteId, origin, runId: run.id, searchPages }));
   } finally {
     store.close();
   }
