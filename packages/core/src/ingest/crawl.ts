@@ -7,6 +7,8 @@ import { upsertPage, withTransaction, type Store } from "../db/store.js";
 import { normalizeUrl } from "../domain.js";
 import { parseJsonl } from "./jsonl.js";
 
+const INFORMATIONAL_CODES = ["NOT_HTML"];
+
 const CrawlLineSchema = z.object({
   run_id: z.string().min(1),
   url: z.string().url(),
@@ -52,7 +54,8 @@ export function ingestCrawlJsonl(store: Store, siteId: string, jsonl: string, js
   if (existing !== undefined) return { ...base, alreadyIngested: true };
 
   const fetchedTimes = rows.map((r) => r.fetched_at).sort();
-  const status = rows.some((r) => r.errors.length > 0) ? "partial" : "completed";
+  // NOT_HTML is informational: the URL was fetched, so it does not make the run partial.
+  const status = rows.some((r) => r.errors.some((e) => !INFORMATIONAL_CODES.includes(e.code))) ? "partial" : "completed";
 
   withTransaction(store, () => {
     store.db

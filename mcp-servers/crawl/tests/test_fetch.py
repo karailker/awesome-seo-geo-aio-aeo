@@ -60,6 +60,21 @@ def test_500_is_retried_then_reported_as_retryable(local_site):
     assert record["errors"][0] == {"code": "HTTP_ERROR", "message": "HTTP 500", "retryable": True}
 
 
+def test_crawl_run_counts_non_html_as_fetched_not_as_an_error(local_site, tmp_path):
+    # Given: an HTML page and a plain text file on the local site
+    urls = [local_site.url("/index.html"), local_site.url("/plain.txt")]
+
+    # When
+    with _client() as client:
+        result = crawl_pages(urls, tmp_path / "run.jsonl", tmp_path, client)
+
+    # Then: the text file is fetched and counted as not HTML; the run is completed
+    assert result["data"]["ok"] == 2
+    assert result["data"]["errors"] == 0
+    assert result["data"]["not_html"] == 1
+    assert result["data"]["status"] == "completed"
+
+
 def test_non_html_is_recorded_without_extraction(local_site):
     record = _page(local_site, "/plain.txt")
 

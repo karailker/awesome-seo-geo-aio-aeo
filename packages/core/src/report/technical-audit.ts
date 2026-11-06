@@ -44,11 +44,16 @@ const parseArray = <T>(raw: string | null): T[] => {
   }
 };
 
+// NOT_HTML is recorded on a URL that was fetched (for example a text file). It is not a failure.
+const INFORMATIONAL_CODES = ["NOT_HTML"];
 const codesOf = (row: Row): string[] => parseArray<{ code: string }>(row.errors).map((e) => e.code);
-const isRobotBlocked = (row: Row): boolean => codesOf(row).includes("ROBOTS_DISALLOWED");
-const isFetched = (row: Row): boolean => codesOf(row).length === 0;
+const failureCodes = (row: Row): string[] => codesOf(row).filter((c) => !INFORMATIONAL_CODES.includes(c));
+const isRobotBlocked = (row: Row): boolean => failureCodes(row).includes("ROBOTS_DISALLOWED");
+const isFetched = (row: Row): boolean => failureCodes(row).length === 0;
+const isNotHtml = (row: Row): boolean => codesOf(row).includes("NOT_HTML");
 const isErrored = (row: Row): boolean => !isFetched(row) && !isRobotBlocked(row);
-const is200 = (row: Row): boolean => isFetched(row) && row.status === 200;
+// HTML pages: fetched, status 200, and HTML. On-page checks apply only to these.
+const is200 = (row: Row): boolean => isFetched(row) && row.status === 200 && !isNotHtml(row);
 
 function listLines(items: Problem[]): string[] {
   const shown = items.slice(0, LIST_CAP).map((p) => `- ${p.url} — ${p.detail} [row ${p.rowId}]`);
@@ -64,7 +69,7 @@ export function buildTechnicalReport(store: Store, input: TechnicalInput): strin
   const ok = rows.filter(is200);
 
   const errorCounts = new Map<string, number>();
-  for (const row of errored) for (const code of codesOf(row)) errorCounts.set(code, (errorCounts.get(code) ?? 0) + 1);
+  for (const row of errored) for (const code of failureCodes(row)) errorCounts.set(code, (errorCounts.get(code) ?? 0) + 1);
   const sumOk = fetched.length + blocked.length + errored.length === rows.length;
 
   // Redirects: any fetched URL with at least one hop
@@ -105,7 +110,7 @@ export function buildTechnicalReport(store: Store, input: TechnicalInput): strin
     "- Measured from the crawl. Project-defined checks; not Google ranking factors.",
     "",
     "## Counts",
-    `- Fetched (no errors): ${fetched.length}, of which status 200: ${ok.length}.`,
+    `- Fetched (no failures): ${fetched.length}, of which HTML pages with status 200: ${ok.length}, of which not HTML: ${fetched.filter(isNotHtml).length}.`,
     `- Robots-blocked (not fetched): ${blocked.length}.`,
     `- Errors (not fetched): ${errored.length}.${errorCounts.size > 0 ? ` By code: ${[...errorCounts.entries()].map(([c, n]) => `${c} ${n}`).join(", ")}.` : ""}`,
     `- Check: fetched + robots-blocked + errors = ${fetched.length} + ${blocked.length} + ${errored.length} = ${rows.length} URLs in the run: ${sumOk ? "matches" : "DOES NOT MATCH"}.`,

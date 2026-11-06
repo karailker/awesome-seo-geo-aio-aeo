@@ -25,6 +25,7 @@ from crawl_server.sitemap import Fetcher
 MAX_REDIRECTS = 5
 RETRY_ATTEMPTS = 2  # retries after the first attempt, for 5xx and transport timeouts
 RETRY_BACKOFF_SECONDS = (2.0, 4.0)
+INFORMATIONAL_CODES = {"NOT_HTML"}  # recorded on the URL, but the URL still counts as fetched
 MAX_RETRY_AFTER_SECONDS = 60.0  # a server asking for longer is not waited for; the URL is recorded as RATE_LIMITED
 MAX_HTML_BYTES = 10 * 1024 * 1024
 REDIRECT_STATUSES = {301, 302, 303, 307, 308}
@@ -179,18 +180,22 @@ def crawl_pages(
     fetcher = Fetcher(client)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    counts = {"ok": 0, "robots_blocked": 0, "errors": 0}
+    counts = {"ok": 0, "robots_blocked": 0, "errors": 0, "not_html": 0}
     with output_path.open("w", encoding="utf-8") as handle:
         for url in urls:
             record = fetch_page(fetcher, url, want_raw=want_raw, render=render)
             _store_raw(record, run_id, data_dir)
             record = {"run_id": run_id, **record}
-            if any(e["code"] == "ROBOTS_DISALLOWED" for e in record["errors"]):
+            # NOT_HTML is informational: the URL was fetched (for example a text file). It is not a failure.
+            failures = [e for e in record["errors"] if e["code"] not in INFORMATIONAL_CODES]
+            if any(e["code"] == "ROBOTS_DISALLOWED" for e in failures):
                 counts["robots_blocked"] += 1
-            elif record["errors"]:
+            elif failures:
                 counts["errors"] += 1
             else:
                 counts["ok"] += 1
+                if any(e["code"] == "NOT_HTML" for e in record["errors"]):
+                    counts["not_html"] += 1
             handle.write(json.dumps(record, ensure_ascii=False) + "\n")
 
     status = "completed" if counts["errors"] == 0 and counts["robots_blocked"] == 0 else "partial"

@@ -65,10 +65,11 @@ describe("buildTechnicalReport", () => {
   it("counts fetched, robots-blocked and errored URLs so they add up to the run", () => {
     const out = report();
 
-    expect(section(out, "Counts")).toContain("- Fetched (no errors): 3, of which status 200: 3.");
+    expect(section(out, "Counts")).toContain("- Fetched (no failures): 4, of which HTML pages with status 200: 3, of which not HTML: 1.");
     expect(section(out, "Counts")).toContain("- Robots-blocked (not fetched): 1.");
-    expect(section(out, "Counts")).toContain("- Errors (not fetched): 2.");
+    expect(section(out, "Counts")).toContain("- Errors (not fetched): 1. By code: HTTP_ERROR 1.");
     expect(section(out, "Counts")).toContain("matches");
+    expect(section(out, "Counts")).not.toContain("NOT_HTML 1");
   });
 
   it("lists the redirected URL with its hop count and final status, citing its row", () => {
@@ -131,6 +132,15 @@ describe("buildTechnicalReport", () => {
 
   it("says Search Console coverage was not checked when no Search Console file is given", () => {
     expect(section(report(), "Coverage")).toContain("- Search Console pages not in this crawl run: not checked (no Search Console file given).");
+  });
+
+  it("keeps a run completed when its only non-HTML URL was fetched", () => {
+    const textOnly = record(`${ORIGIN}/readme.txt`, { run_id: "text-run", content_type: "text/plain", errors: [{ code: "NOT_HTML", message: "not HTML", retryable: false }] });
+    ingestCrawlJsonl(store, SITE_ID, textOnly, null);
+
+    const status = (store.sqlite.prepare("SELECT status FROM crawl_runs WHERE id = ?").get("text-run") as { status: string }).status;
+
+    expect(status).toBe("completed");
   });
 
   it("marks the run partial when any URL failed", () => {
