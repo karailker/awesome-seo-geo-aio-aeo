@@ -96,6 +96,6 @@ Crawl record fields (one JSON line per URL): `run_id`, `url`, `fetched_at`, `sta
 
 1. Confirm it fits an existing server and has one responsibility.
 2. Add input and output schemas (Zod in TypeScript, Pydantic or typed dicts in Python).
-3. Classify it as read or write. Write tools must go through the approval gate: add the action to `ACTION_RISK` in `packages/core/src/approval/engine.ts`, the mapping in `scripts/approval.ts`, and the matcher in `hooks/hooks.json`.
+3. Classify it as read or write. Write tools must go through the approval gate: add the action to `ACTION_RISK` in `packages/core/src/approval/engine.ts`, the tool-name mapping `TOOL_ACTIONS` in `packages/core/src/cli.ts`, and the matcher in `hooks/hooks.json`. The matcher uses the plugin tool names (`mcp__plugin_awesome-seo_<server>__<tool>`); a server declared outside the plugin gets a different name and is not gated.
 4. Add fixture-based tests. Live checks are fine when they are read-only.
 5. Add it to this file.

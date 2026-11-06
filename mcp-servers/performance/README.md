@@ -1,6 +1,6 @@
 # @karailker/awesome-seo-mcp-performance
 
-MCP server for PageSpeed Insights, CrUX, and local Lighthouse (lab and field kept separate). Part of the awesome-seo Claude Code plugin (version 0.1.0, MIT).
+MCP server for PageSpeed Insights, CrUX, and local Lighthouse (lab and field kept separate). Part of the awesome-seo Claude Code plugin (version 0.1.1, MIT).
 
 ## Run
 
@@ -8,7 +8,7 @@ MCP server for PageSpeed Insights, CrUX, and local Lighthouse (lab and field kep
 npx -y @karailker/awesome-seo-mcp-performance
 ```
 
-If a fresh install says "No matching version found", retry with `npx -y --prefer-online @karailker/awesome-seo-mcp-performance@0.1.0`.
+If a fresh install says "No matching version found", retry with `npx -y --prefer-online @karailker/awesome-seo-mcp-performance@0.1.1`.
 
 ## Tools
 

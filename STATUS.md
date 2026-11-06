@@ -1,79 +1,75 @@
 # STATUS
 
-Date: 2026-11-05. Phase: P10 complete. Next: P11 (evaluation). P9 deferred.
+Date: 2026-11-06. Phase: P10 complete. Next: P11 (evaluation). P9 deferred. Plugin 0.2.0 is distributed through the marketplace (`awesome-seo-marketplace`) and npm.
 
 ## Phases
 
 | Phase | State | What is in the repo |
 |---|---|---|
-| P0 Scaffold | done | Workspace, plugin manifests, stub servers, docs |
-| P1 Core and SQLite | done | Drizzle schema, migrations, store (WAL, foreign keys), Zod schemas, `db:migrate`, `db:seed` |
-| P2 Sitemap discovery | done | `crawl_discover_sitemap`, `sitemap:ingest`, `/sitemap-sync` |
-| P3 Search Console | done | `google_gsc_*`, GSC ingest, `seo:audit`, `/seo-audit` (search part) |
-| P4 Full crawler | done | `crawl_fetch_pages`, `crawl_extract_structured_data`, `crawl_check_access`, `crawl:ingest`, `/crawl-run` |
-| P5 Performance | done | `performance_psi_run` (with local fallback), `performance_crux_query`, `performance_lighthouse_local_run`, `/perf-audit` |
-| P6 GEO, AIO, AEO | done, two skills deferred | `geo:audit`, `/geo-audit`, `/aio-audit`, `/aeo-audit`, `visibility-analyst`; `entity-consistency` and `faq-quality` not built |
-| P7 Analytics | done | GA4 tools and ingest, Metrica tool and ingest, AI referral traffic, traffic section in `seo:audit` |
+| P0 Scaffold | done | Workspace, plugin manifests, docs |
+| P1 Core and SQLite | done | Drizzle schema, migrations 0000–0003, store (WAL, foreign keys), Zod schemas, `awesome-seo migrate`, `seed` |
+| P2 Sitemap discovery | done | `crawl_discover_sitemap`, `awesome-seo sitemap-ingest`, `/sitemap-sync` |
+| P3 Search Console | done | `google_gsc_*`, GSC ingest, `awesome-seo seo-audit`, `/seo-audit` (search part) |
+| P4 Full crawler | done | `crawl_fetch_pages`, `crawl_extract_structured_data`, `crawl_check_access`, `crawl-ingest`, `access-ingest`, `/crawl-run` |
+| P5 Performance | done | `performance_psi_run` (local fallback), `performance_crux_query`, `performance_lighthouse_local_run`, `/perf-audit` |
+| P6 GEO, AIO, AEO | done, two skills deferred | `awesome-seo geo-audit [--access]`, `/geo-audit`, `/aio-audit`, `/aeo-audit`, `visibility-analyst`; `entity-consistency` and `faq-quality` not built |
+| P7 Analytics | done | GA4 tools and ingest, Metrica tool and ingest, AI referral traffic, traffic section in `seo-audit` |
 | P8 Bing and Yandex Webmaster | done | Bing tools and ingest; Yandex Webmaster tools (incl. in-search samples); three-source reconciliation |
 | P9 Merchant Center | deferred | Code and tests exist. The site sells no products, so no live check is planned |
 | P10 Approval and write tools | done | Approval engine (migration 0003), PreToolUse gate, `approval` CLI, `/approve-action`, three write tools |
 | P11 Evaluation | next | Golden dataset, evaluator (precision and recall), evidence coverage check |
 | P12 Reporting and polish | not started | Scoring doc, `/connections-check`, README setup per credential |
 
-## Tests (2026-11-05)
+## Packages and distribution
 
-- core 62, google 22, yandex 18, bing 9, performance 19 (TypeScript, Vitest)
-- crawler 37 (Python, pytest)
-- `pnpm -r build`, `pnpm -r typecheck`, `claude plugin validate .`: pass (validate has warnings only: marketplace install advice and icon)
+| Package | Latest on npm | Notes |
+|---|---|---|
+| `@karailker/awesome-seo-core` | 0.2.1 | 0.2.2 prepared in the repo (access-ingest, cli tests, geo-audit cap warnings). Publish is pending. |
+| `@karailker/awesome-seo-mcp-performance` | 0.1.1 | 0.1.0 pinned core 0.1.0, which lacks `drizzle-orm` and crashed at start. 0.1.1 depends on core 0.2.0. |
+| `@karailker/awesome-seo-mcp-google` | 0.1.0 | Connects through the plugin |
+| `@karailker/awesome-seo-mcp-bing` | 0.1.0 | Connects through the plugin |
+| `@karailker/awesome-seo-mcp-yandex` | 0.1.0 | Connects through the plugin |
+
+- Plugin manifest `.claude-plugin/plugin.json` (0.2.0) declares the five MCP servers. The root `.mcp.json` was removed. A project-scope copy of the write servers used tool names that the approval hook does not match, so writes ran ungated in the repo directory.
+- The crawl server writes under `${CLAUDE_PROJECT_DIR}/data` (`AWESOME_SEO_DATA_DIR`). Takes effect after a Claude Code restart.
+- Hook: `hooks/scripts/validate-approval.sh` is executable in git (mode 100755) and is run through `bash` from `hooks/hooks.json`. Before this fix the marketplace clone ran it without execute permission, the launch failed with exit 126, and the write tool ran unguarded.
+- Verified 2026-11-06 in a headless session: an unapproved `bing_submit_url` call with the plugin tool name is blocked before it reaches Bing.
+- Marketplace: `.claude-plugin/marketplace.json` at the repo root (plugin source `./`). Installed from GitHub; the local-path install failed on WSL symlinks in `node_modules`.
+
+## Tests
+
+- 2026-11-06: core 73 (Vitest, 13 files, includes `src/cli.test.ts` with 8 CLI tests), performance 19. Typecheck passes.
+- 2026-11-05 (not re-run this session): google 22, yandex 18, bing 9; crawler 37 (pytest).
+- `claude plugin validate .` passes with warnings.
 
 ## Live checks done (read-only unless noted)
 
 - Search Console: sites, sitemaps, search analytics (page and query) on `sc-domain:bulmacalig.com`.
-- Search Console write: sitemap `sitemap-pages.xml` re-submitted through an approved proposal, inside a Claude Code session. Verified by `lastSubmitted`.
 - GA4 property 552874034: metadata, page and session-source reports. October 2026: 619 sessions, 14 from chatgpt.com.
 - Yandex Metrica counter 113337943: traffic sources, October 2026: 396 visits.
-- Yandex Webmaster: hosts, summary, popular queries, in-search history, sitemaps, quota, in-search samples (30 URLs).
+- Yandex Webmaster: hosts, summary, popular queries, in-search history, sitemaps, quota, in-search samples (30 URLs). The host reports `verified: true` in the API; the token used by the MCP server is not set there, so it could not be re-checked on 2026-11-06.
 - Bing Webmaster: site list, rank and traffic (31 days), page stats (8 rows), URL info, quota.
-- PageSpeed Insights (lab values), CrUX (field values for a high-traffic origin), local Lighthouse on `www.bulmacalig.com` (score 100).
-- Crawl: sitemap discovery and crawl of 5 URLs on `www.bulmacalig.com` (5 of 5 status 200).
-- Approval gate in a headless Claude Code session: unapproved call blocked; approved calls allowed.
+- PageSpeed Insights (lab), CrUX (field) and local Lighthouse on `www.bulmacalig.com`.
+- BulmacaLig crawl (`https://www.bulmacalig.com`, 2026-11-06): sitemap index with 3 children, discovery capped at 500 URLs, 500 of 500 fetched (status completed, 0 robots blocks, 0 errors). Crawl run `2026-11-06T163038Z-0504`.
+- BulmacaLig GEO report (core 0.2.1 + local 0.2.2 build): robots readable, llms.txt valid, 10 AI user agents allowed on the 2-URL sample. Warning shown: sitemap equals the URL cap (500).
 
 Live writes (each approved by the user for the test):
 - Google Search Console, `sitemap-pages.xml`: success, verified.
-- Bing SubmitUrl, `https://www.bulmacalig.com/kare`: call succeeded; the owner sees the submission in Bing (12:42 local time); quota 99 is consistent with acceptance. `GetUrlInfo` last crawl not updated yet (crawling is later). Acceptance is not confirmed by the API.
-- Yandex Webmaster add sitemap, `sitemap-pages.xml`: POST returned 405 (route closed; `OPTIONS` says `Allow: GET`). Yandex Webmaster was then read-only during a provider incident. Recorded as failure. Retry later with a new proposal.
-
-## npm publication (2026-11-05)
-
-Scope `@karailker`, MIT, public, version 0.1.0.
-
-| Package | Registry state (last check) |
-|---|---|
-| `@karailker/awesome-seo-core` | 0.1.0 live |
-| `@karailker/awesome-seo-mcp-performance` | 0.1.0 live |
-| `@karailker/awesome-seo-mcp-google` | 0.1.0 live; run via `npx` from a clean directory: 11 tools |
-| `@karailker/awesome-seo-mcp-bing` | 0.1.0 live; run via `npx` (`--prefer-online`): 6 tools |
-| `@karailker/awesome-seo-mcp-yandex` | 0.1.0 live; run via `npx`: 9 tools |
-
-All five packages are live at 0.1.0. A fresh `npx` may hit a cached "no matching version" error right after publishing; use `--prefer-online`.
-
-## Plugin distribution (2026-11-05)
-
-- Plugin 0.2.0 is self-contained: commands, hook, and skills call `npx -y -p @karailker/awesome-seo-core@0.2 awesome-seo <cmd>`. The repo scripts were removed. MCP servers start with `npx -y @karailker/awesome-seo-mcp-*` (live on npm). The crawler still runs from the plugin folder with `uv`.
-- The hook fails closed: exit 0 allows, exit 2 blocks, any other result of the check becomes a block. Tested with the packed core tarball through npx, including a broken CLI.
-- Marketplace: `.claude-plugin/marketplace.json` at the repo root (plugin source `./`). Validated. Install from a local copy failed on WSL symlinks in `node_modules`; a git clone has none, so the GitHub path is the real test.
-- Not yet live: `@karailker/awesome-seo-core@0.2.0` must be published. The hook and commands depend on it. Publish with `cd packages/core && corepack pnpm publish --access public --no-git-checks --otp <code>` (fresh code), then test `/plugin marketplace add karailker/awesome-seo-geo-aio-aeo` and `/plugin install awesome-seo --marketplace karailker/awesome-seo-geo-aio-aeo` in a clean Claude Code session.
+- Bing SubmitUrl, `https://www.bulmacalig.com/kare`: call succeeded; the owner sees the submission in Bing (12:42 local time). `GetUrlInfo` last crawl not checked since the Bing key is not set in the plugin's server environment. Acceptance is not confirmed by the API.
+- Yandex Webmaster add sitemap, `sitemap-pages.xml`: POST returned 405 (route closed; `OPTIONS` says `Allow: GET`). Recorded as failure. Retry later with a new proposal.
 
 ## Known gaps
 
-- Yandex write: not yet successful. Retry after the Yandex incident with a new proposal and approval.
-- Bing acceptance: re-check `GetUrlInfo` `LastCrawledDate` after 2026-11-05 09:42Z.
-- The first GSC execution log row (`5c772bcc`) keeps record-time values; its real submit time was 09:37:03.790Z (Search Console `lastSubmitted`).
-- The execution log records the time the call ran, provided by the write tool; the `approval record` command requires those times.
-- GA4 page report is one request (100 000 rows max, no paging).
+- **Bing and Yandex credentials**: the plugin's Bing and Yandex servers have no keys in their environment, so their live checks cannot run here. Set `BING_WEBMASTER_API_KEY`, `YANDEX_WEBMASTER_TOKEN` and `YANDEX_METRICA_*` for the plugin's servers, not only for the project.
+- **Yandex write**: not yet successful. Retry with a new proposal and approval.
+- **Bing acceptance**: check `GetUrlInfo` `LastCrawledDate` for `https://www.bulmacalig.com/kare` after 2026-11-05 09:42Z, once the key is available.
+- **JS-rendered content**: the crawler reads static HTML only. On BulmacaLig, `/sss` and the guide pages add `FAQPage` JSON-LD with JavaScript, so the audit reports 0 FAQ pages. The result is correct for static HTML, but the audit cannot see client-rendered schema. Closing this needs a rendered-DOM check (headless Chrome, which Lighthouse already uses locally).
+- **Sitemap size**: discovery stops at `url_cap` (500). BulmacaLig's sitemap indexes list far more URLs, so a 500-URL audit is a sample. Raising the cap raises crawl time (about 1 request per second per host).
+- **Long crawl calls**: a 500-URL `crawl_fetch_pages` call exceeds the MCP call timeout and is moved to the background. The result arrives as a task notification.
+- **`access-ingest` duplicates `geo-audit --access`**: both store the same access report. The commands use `geo-audit --access`. `access-ingest` remains as a standalone helper; remove it if no caller needs it.
 - Search Console: one request per call (25 000 rows max, no paging).
-- `scripts/*.ts` run through Node type stripping and are not typechecked.
-- The seed origin is `https://www.bulmacalig.com`. Search Console property is `sc-domain:bulmacalig.com`. No `site_properties` mapping yet.
+- GA4 page report is one request (100 000 rows max, no paging).
+- The first GSC execution log row (`5c772bcc`) keeps record-time values; its real submit time was 09:37:03.790Z (Search Console `lastSubmitted`).
 - Pages removed from a sitemap are not marked stale.
 - Yandex per-URL data is a snapshot (in-search samples); there is no date range for it.
 - Crawler `AWESOME_SEO_CONTACT_URL` is unset, so the User-Agent carries a placeholder. Set it before a larger crawl.
@@ -81,14 +77,14 @@ All five packages are live at 0.1.0. A fresh `npx` may hit a cached "no matching
 
 ## Open decisions
 
-1. Distribution of the plugin. The MCP servers need a build (`pnpm -r build`) and the crawler needs `uv sync`. Neither is in git (`dist/`, `.venv/` are ignored), so a marketplace install from git would not start the servers. Options: (a) commit build output for releases, (b) publish each MCP server to npm and reference it with `npx` in `.mcp.json`, (c) document the build step and keep local `--plugin-dir` installs. See README.
-2. npm publication. Recommended only after decision 1 (b). The current packages are `private: true`. Publishing is outward-facing and needs the owner's npm account and the package scope.
-3. Rotate the secrets pasted in chat during this project: Yandex client secret and tokens, Bing API key, PageSpeed and CrUX keys.
+1. Rotate the secrets pasted in chat during this project: Yandex client secret and tokens, Bing API key, PageSpeed and CrUX keys.
+2. Whether to keep `access-ingest` (see gaps).
+3. Whether to add a rendered-DOM check for JS-only schema (headless Chrome), which changes the crawl path.
 
 ## Credentials and local files (not in the repo)
 
 - `~/.config/awesome-seo/gsc-service-account.json` (service account key, mode 600)
-- `~/.config/awesome-seo/performance.env`, `yandex.env`, `bing.env` (mode 600)
+- `~/.config/awesome-seo/performance.env`, `yandex.env`, `bing.env` (mode 600). These are read by the local scripts; the plugin's servers take their keys from the environment.
 - `~/Downloads`: the OAuth client JSON (`client_secret_2_...json`) is unused and remains there.
 
 ## Toolchain

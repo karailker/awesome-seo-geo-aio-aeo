@@ -46,10 +46,10 @@ Each skill is `skills/<domain>/<name>/SKILL.md` with frontmatter (`name`, `descr
 
 | Command | Runs | Status |
 |---|---|---|
-| `/sitemap-sync` | `crawl_discover_sitemap`, then `pnpm sitemap:ingest` | built |
-| `/seo-audit` | Search Console, GA4, Bing, Yandex, sitemap; `pnpm seo:audit` | built |
-| `/crawl-run` | `crawl_fetch_pages`, then `pnpm crawl:ingest` | built |
-| `/geo-audit` | crawl access, `pnpm geo:audit` (all GEO, AIO, AEO sections) | built |
+| `/sitemap-sync` | `crawl_discover_sitemap`, then `awesome-seo sitemap-ingest` | built |
+| `/seo-audit` | Search Console, GA4, Bing, Yandex, sitemap; `awesome-seo seo-audit` | built |
+| `/crawl-run` | `crawl_fetch_pages`, then `awesome-seo crawl-ingest` | built |
+| `/geo-audit` | `crawl_check_access` saved to `data/access/`, then `awesome-seo geo-audit --access` (all GEO, AIO, AEO sections) | built |
 | `/aio-audit` | same report; AIO sections | built |
 | `/aeo-audit` | same report; AEO sections | built |
 | `/perf-audit` | PSI, CrUX, local fallback | built |

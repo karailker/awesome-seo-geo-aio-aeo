@@ -53,9 +53,10 @@ Risk levels: `gsc_submit_sitemap`, `yandex_webmaster_add_sitemap`, `bing_submit_
 ## Hooks
 
 - `hooks/hooks.json` registers a PreToolUse hook on the three write tool names.
-- `hooks/scripts/validate-approval.sh` runs `node scripts/approval.ts check-hook`. The check reads the tool name and input from stdin, finds the matching proposal in SQLite, and exits 0 (allow) or 2 (block, with the reason on stderr).
+- `hooks/hooks.json` runs the script through `bash`, so the hook does not depend on the file's execute bit (it is also committed as executable).
+- `hooks/scripts/validate-approval.sh` runs `npx -y -p @karailker/awesome-seo-core@0.2 awesome-seo approval check-hook` (or `AWESOME_SEO_CLI` in tests). The check reads the tool name and input from stdin, finds the matching proposal in SQLite, and exits 0 (allow) or 2 (block, with the reason on stderr).
 - Fail closed: an unknown tool, malformed input, a missing node, or a database error blocks the call.
-- Tested: hook-level tests run the real script (6 cases). A headless Claude Code session confirmed a blocked call and an allowed call.
+- Tested: hook-level tests run the real script (7 cases in `packages/core/src/approval/hook.test.ts`). A headless Claude Code session confirmed a blocked call and an allowed call.
 
 ## Crawler and fetch policy
 

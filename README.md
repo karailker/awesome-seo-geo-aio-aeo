@@ -4,7 +4,7 @@ A Claude Code plugin that audits one website across SEO, GEO (generative engine 
 
 Local-first: data stays in a SQLite file in your project folder. Write actions to search engines (sitemap submit, URL submit) need an approved proposal, and a hook blocks them until one exists.
 
-**Status (2026-11-05):** version 0.2.0. Phases P0–P8 and P10 are done. P9 (Merchant Center) is deferred because the site sells no products. P11 (evaluation) is next. See `STATUS.md` for live checks, known gaps, and open decisions.
+**Status (2026-11-06):** plugin version 0.2.0. Phases P0–P8 and P10 are done. P9 (Merchant Center) is deferred because the site sells no products. P11 (evaluation) is next. See `STATUS.md` for live checks, known gaps, and open decisions.
 
 ## Install as a Claude Code plugin
 
@@ -84,6 +84,7 @@ The CLI is published as `@karailker/awesome-seo-core` and runs with `npx`:
 |---|---|
 | `migrate`, `seed` | Database schema and the single site |
 | `sitemap-ingest`, `crawl-ingest` | Store sitemap and crawl JSONL |
+| `access-ingest` | Store a saved `crawl_check_access` result (`--origin`, then the JSON file). `geo-audit --access` stores the same result and is the path the commands use |
 | `seo-audit`, `geo-audit` | Markdown reports (inputs: `--gsc`, `--ga4`, `--metrica`, `--bing`, `--yandex`, `--access`) |
 | `approval list\|propose\|approve\|reject\|record` | Write approval flow |
 
@@ -103,14 +104,14 @@ Layout:
 - `packages/core`: shared TypeScript: SQLite store (the only writer), migrations, ingest, reports, approval engine, and the `awesome-seo` CLI.
 - `mcp-servers/google`, `yandex`, `bing`, `performance`: TypeScript MCP servers (npm packages `@karailker/awesome-seo-mcp-*`).
 - `mcp-servers/crawl`: Python crawler (FastMCP), run with `uv`.
-- `.claude-plugin/`: plugin and marketplace manifests. `.mcp.json`: MCP servers.
+- `.claude-plugin/`: plugin and marketplace manifests. The plugin's MCP servers are declared in `plugin.json`. There is no root `.mcp.json`; a project-scope copy of the write servers would bypass the approval hook.
 - `commands/`, `agents/`, `skills/`, `hooks/`: plugin content (the PreToolUse approval gate is in `hooks/`).
 - `knowledge/`: reference lists (AI referrer hosts).
 - `docs/`: architecture, data model, MCP tools, agents and skills, security and approval, roadmap.
 
 ## Publishing
 
-The core and MCP packages are published under `@karailker` (version 0.1.0 for the MCP servers, 0.2.0 for core). Publish per package from its directory (`corepack pnpm publish --access public --no-git-checks`).
+The packages are published under `@karailker`. Latest on npm: core 0.2.1 (0.2.2 when published), `awesome-seo-mcp-performance` 0.1.1, and `awesome-seo-mcp-google`, `-bing`, `-yandex` 0.1.0. Publish per package from its directory with a fresh OTP: `corepack pnpm publish --access public --no-git-checks --otp <code>`. Do not paste the OTP into chat or commit it.
 
 ## Security
 

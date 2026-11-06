@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: **Current phase: P11 (not started)**. Done: P0–P8, P10 (P9 deferred: no products; P10 live-tested, with a Yandex write blocked by a provider outage). Last change: 2026-11-05. Details per phase below; the current repo state is in `STATUS.md`.
+Status: **Current phase: P11 (not started)**. Done: P0–P8, P10 (P9 deferred: no products; P10 live-tested, with a Yandex write blocked by a provider outage). Last change: 2026-11-06. Details per phase below; the current repo state is in `STATUS.md`.
 
 Update the status line when a phase is complete. Phases are sequential unless noted.
 
@@ -8,7 +8,7 @@ Update the status line when a phase is complete. Phases are sequential unless no
 
 Deliverables:
 - Root `package.json`, `pnpm-workspace.yaml`, `tsconfig.base.json`, `vitest.workspace.ts`
-- `.claude-plugin/plugin.json`, `.mcp.json` (entries for all MCP servers, even if stubs)
+- `.claude-plugin/plugin.json` (entries for all MCP servers, even if stubs; the plugin's servers live here, not in a root `.mcp.json`)
 - `mcp-servers/crawl/pyproject.toml` (uv) with FastMCP
 - Stub MCP servers for google, yandex, bing, performance, crawl, each exposing `*_health` and `*_capabilities`
 - `packages/core` with an empty exported module and one test
@@ -99,7 +99,7 @@ Done when:
 
 ## P6: GEO, AIO, AEO ✅ (two deliverable skills deferred)
 
-Verification notes (2026-11-05): `pnpm geo:audit` run end to end on the live crawl of `www.bulmacalig.com` (5 URLs) with a live `crawl_check_access` result (10 AI user agents, all allowed; llms.txt valid). Core tests (8) cover measured derivation, idempotency, robots-unknown handling, access ingest, and the report sections. Deferred: `geo/entity-consistency` and `aeo/faq-quality` skills and their checks (not implemented in this version; the report says so).
+Verification notes (2026-11-06): `geo-audit` run end to end on the live crawl of `www.bulmacalig.com` (500 of 500 URLs, status completed) with a live `crawl_check_access` result (10 AI user agents, all allowed on the 2-URL sample; llms.txt valid). The report warns that the sitemap equals the URL cap (500). Core tests cover measured derivation, idempotency, robots-unknown handling, access ingest, the report sections, and the CLI (`src/cli.test.ts`: migrate, `access-ingest`, `geo-audit --access`, usage and unseeded-site errors). Known limits, all open: JS-only FAQ schema is not visible to the static crawl; discovery stops at `url_cap`. Deferred: `geo/entity-consistency` and `aeo/faq-quality` skills and their checks (not implemented in this version; the report says so).
 
 Deliverables:
 - `visibility-analyst` agent
