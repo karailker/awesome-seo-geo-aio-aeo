@@ -5,5 +5,28 @@
   "license": "MIT",
   "author": {
     "name": "Ilker Kara"
+  },
+  "mcpServers": {
+    "google": {
+      "command": "npx",
+      "args": ["-y", "@karailker/awesome-seo-mcp-google"]
+    },
+    "yandex": {
+      "command": "npx",
+      "args": ["-y", "@karailker/awesome-seo-mcp-yandex"]
+    },
+    "bing": {
+      "command": "npx",
+      "args": ["-y", "@karailker/awesome-seo-mcp-bing"]
+    },
+    "performance": {
+      "command": "npx",
+      "args": ["-y", "@karailker/awesome-seo-mcp-performance"]
+    },
+    "crawl": {
+      "command": "uv",
+      "args": ["run", "--directory", "${CLAUDE_PLUGIN_ROOT}/mcp-servers/crawl", "crawl-server"],
+      "env": {"AWESOME_SEO_DATA_DIR": "${CLAUDE_PROJECT_DIR}/data"}
+    }
   }
 }
