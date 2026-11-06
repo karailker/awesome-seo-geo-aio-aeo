@@ -9,7 +9,7 @@
       "name": "awesome-seo",
       "source": "./",
       "description": "SEO, GEO, AIO, and AEO audits: sitemap discovery, crawl, Search Console, GA4, Bing and Yandex Webmaster, PageSpeed and CrUX, evidence-backed reports, and an approval gate for write actions.",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "license": "MIT"
     }
   ]

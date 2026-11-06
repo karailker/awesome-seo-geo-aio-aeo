@@ -10,7 +10,7 @@ Date: 2026-11-06. Phase: P10 complete. Next: P11 (evaluation). P9 deferred. Plug
 | P1 Core and SQLite | done | Drizzle schema, migrations 0000–0003, store (WAL, foreign keys), Zod schemas, `awesome-seo migrate`, `seed` |
 | P2 Sitemap discovery | done | `crawl_discover_sitemap`, `awesome-seo sitemap-ingest`, `/sitemap-sync` |
 | P3 Search Console | done | `google_gsc_*`, GSC ingest, `awesome-seo seo-audit`, `/seo-audit` (search part) |
-| P4 Full crawler | done | `crawl_fetch_pages`, `crawl_extract_structured_data`, `crawl_check_access`, `crawl-ingest`, `access-ingest`, `/crawl-run` |
+| P4 Full crawler | done | `crawl_fetch_pages` (opt-in `render`), `crawl_extract_structured_data`, `crawl_check_access`, `crawl-ingest`, `access-ingest`, `technical-audit`, `/crawl-run`, `/technical-audit` |
 | P5 Performance | done | `performance_psi_run` (local fallback), `performance_crux_query`, `performance_lighthouse_local_run`, `/perf-audit` |
 | P6 GEO, AIO, AEO | done, two skills deferred | `awesome-seo geo-audit [--access]`, `/geo-audit`, `/aio-audit`, `/aeo-audit`, `visibility-analyst`; `entity-consistency` and `faq-quality` not built |
 | P7 Analytics | done | GA4 tools and ingest, Metrica tool and ingest, AI referral traffic, traffic section in `seo-audit` |
@@ -24,7 +24,7 @@ Date: 2026-11-06. Phase: P10 complete. Next: P11 (evaluation). P9 deferred. Plug
 
 | Package | Latest on npm | Notes |
 |---|---|---|
-| `@karailker/awesome-seo-core` | 0.2.1 | 0.2.2 prepared in the repo (access-ingest, cli tests, geo-audit cap warnings). Publish is pending. |
+| `@karailker/awesome-seo-core` | 0.2.2 (0.2.3 prepared, publish pending) | 0.2.3 adds the technical-audit report, the @graph JSON-LD fix, and source-aware scope and missing-data lines in the SEO report. |
 | `@karailker/awesome-seo-mcp-performance` | 0.1.1 | 0.1.0 pinned core 0.1.0, which lacks `drizzle-orm` and crashed at start. 0.1.1 depends on core 0.2.0. |
 | `@karailker/awesome-seo-mcp-google` | 0.1.0 | Connects through the plugin |
 | `@karailker/awesome-seo-mcp-bing` | 0.1.0 | Connects through the plugin |
@@ -39,7 +39,7 @@ Date: 2026-11-06. Phase: P10 complete. Next: P11 (evaluation). P9 deferred. Plug
 ## Tests
 
 - 2026-11-06: core 73 (Vitest, 13 files, includes `src/cli.test.ts` with 8 CLI tests), performance 19. Typecheck passes.
-- 2026-11-05 (not re-run this session): google 22, yandex 18, bing 9; crawler 37 (pytest).
+- 2026-11-06 (before 0.2.3): core 85 (Vitest, 14 files; includes `src/cli.test.ts` and `src/report/technical-audit.test.ts`), performance 19, yandex 20, bing 9, google 22, crawl 46 (pytest). Typecheck and `claude plugin validate .` pass. Structural lint over 31 skill, command and agent files passes.
 - `claude plugin validate .` passes with warnings.
 
 ## Live checks done (read-only unless noted)
