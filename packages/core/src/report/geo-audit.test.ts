@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -140,6 +141,26 @@ describe("buildGeoReport", () => {
     expect(report).toContain("- Sitemap: 12 URLs equals the URL cap (12). The sitemap may be truncated, so findings cover only the discovered URLs.");
   });
 
+  it("does not count a product page without a byline as missing an author or a date", () => {
+    // Given: a product page with a Product node and no author or date
+    const productRun = JSON.stringify({
+      run_id: "product-run", fetched_at: "2026-11-05T10:00:00.000Z", url: "https://example.com/urun", status: 200,
+      final_url: "https://example.com/urun", redirect_chain: [], content_type: "text/html", title: "Urun",
+      meta_description: null, canonical: "https://example.com/urun", lang: "tr", hreflang: [],
+      headings: [{ level: 1, text: "Urun" }], word_count: 400, content_hash: "sha256:y",
+      structured_data: [{ syntax: "json-ld", type: "Product", item: { "@context": "https://schema.org", "@type": "Product", name: "Urun" } }],
+      jsonld_syntax_errors: 0, robots_allowed: true, raw_html_path: null, errors: [],
+    });
+    ingestCrawlJsonl(store, SITE_ID, productRun, null);
+    deriveCrawlObservations(store, SITE_ID, "product-run");
+
+    // When / Then: no author or date observation is written for it
+    const count = (metric: string) =>
+      (store.sqlite.prepare("SELECT COUNT(*) AS n FROM observations WHERE source = 'crawl' AND metric = ? AND entity_id = ?").get(metric, "https://example.com/urun") as { n: number }).n;
+    expect(count("has_author")).toBe(0);
+    expect(count("has_date")).toBe(0);
+  });
+
   it("reads author, date and FAQPage signals from nodes inside a JSON-LD @graph", () => {
     // Given: one page whose author, date and FAQPage are nested in "@graph" (the layout BulmacaLig uses)
     const graphRun = JSON.stringify({
@@ -148,7 +169,7 @@ describe("buildGeoReport", () => {
       meta_description: null, canonical: "https://example.com/faq", lang: "tr", hreflang: [],
       headings: [{ level: 1, text: "SSS" }], word_count: 400, content_hash: "sha256:x",
       structured_data: [{ syntax: "json-ld", type: null, item: { "@context": "https://schema.org", "@graph": [
-        { "@type": "WebApplication", author: { "@id": "https://example.com/#org" }, datePublished: "2026-01-01" },
+        { "@type": "Article", author: { "@id": "https://example.com/#org" }, datePublished: "2026-01-01" },
         { "@type": "FAQPage", mainEntity: [] },
       ] } }],
       jsonld_syntax_errors: 0, robots_allowed: true, raw_html_path: null, errors: [],
@@ -172,5 +193,30 @@ describe("buildGeoReport", () => {
 
     expect(report).toContain("- Pages with a crawl record: 9");
     expect(report).toContain("- Pages with FAQPage markup: 0 of 9.");
+  });
+});
+
+describe("re-deriving after a rule change", () => {
+  it("removes an author value stored by an earlier derivation when the page is no longer an article", () => {
+    // Given: a product page whose author observation was stored by an earlier derivation
+    const productRun = JSON.stringify({
+      run_id: "stale-run", fetched_at: "2026-11-05T10:00:00.000Z", url: "https://example.com/p", status: 200,
+      final_url: "https://example.com/p", redirect_chain: [], content_type: "text/html", title: "P",
+      meta_description: null, canonical: "https://example.com/p", lang: "tr", hreflang: [],
+      headings: [{ level: 1, text: "P" }], word_count: 400, content_hash: "sha256:z",
+      structured_data: [{ syntax: "json-ld", type: "Product", item: { "@context": "https://schema.org", "@type": "Product", name: "P" } }],
+      jsonld_syntax_errors: 0, robots_allowed: true, raw_html_path: null, errors: [],
+    });
+    ingestCrawlJsonl(store, SITE_ID, productRun, null);
+    store.sqlite.prepare(
+      "INSERT INTO observations (id, site_id, source, entity_type, entity_id, metric, value, collected_at, freshness, dimensions_json, provenance_json) VALUES (?, ?, 'crawl', 'page', ?, 'has_author', 0, '2026-11-05T10:00:00.000Z', 'snapshot', '{}', '{}')",
+    ).run(createHash("sha256").update([SITE_ID, "crawl", "has_author", "page", "https://example.com/p", "stale-run"].join("|")).digest("hex"), SITE_ID, "https://example.com/p");
+
+    // When: the page is derived again under the current rules
+    deriveCrawlObservations(store, SITE_ID, "stale-run");
+
+    // Then: the stale has_author value is gone
+    const left = store.sqlite.prepare("SELECT COUNT(*) AS n FROM observations WHERE source = 'crawl' AND metric = 'has_author' AND entity_id = ?").get("https://example.com/p") as { n: number };
+    expect(left.n).toBe(0);
   });
 });

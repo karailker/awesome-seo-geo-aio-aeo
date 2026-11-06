@@ -50,6 +50,14 @@ export function expandNodes(items: Item[]): Item[] {
   return out;
 }
 
+// Author and date signals apply to article-like pages only. A product or a tool page has no byline; counting it
+// as missing would report every product page.
+const ARTICLE_TYPES = ["Article", "NewsArticle", "BlogPosting"];
+
+export function isArticlePage(items: Item[]): boolean {
+  return items.some((i) => i.type?.split(",").some((t) => ARTICLE_TYPES.includes(t)) ?? false);
+}
+
 export function missingRecommended(items: Item[]): number {
   let missing = 0;
   for (const it of items) {
@@ -102,9 +110,9 @@ export function deriveCrawlObservations(store: Store, siteId: string, runId: str
         h1_count: row.status === 200 ? h1 : null,
         heading_skip: row.status === 200 ? skip : null,
         structured_items: row.status === 200 ? items.length : null,
-        has_author: row.status === 200 ? (nodes.some((i) => "author" in i.item) ? 1 : 0) : null,
+        has_author: row.status === 200 && isArticlePage(nodes) ? (nodes.some((i) => "author" in i.item) ? 1 : 0) : null,
         has_date:
-          row.status === 200
+          row.status === 200 && isArticlePage(nodes)
             ? nodes.some((i) => "datePublished" in i.item || "dateModified" in i.item)
               ? 1
               : 0
@@ -115,11 +123,16 @@ export function deriveCrawlObservations(store: Store, siteId: string, runId: str
         canonical_missing: row.status === 200 ? (row.canonical ? 0 : 1) : null,
       };
       for (const [metric, value] of Object.entries(values)) {
-        if (value === null || value === undefined) continue;
+        const observationId = id(siteId, "crawl", metric, "page", row.url, runId);
+        // Not applicable or unknown now: remove a value an earlier derivation stored (a rule may have narrowed).
+        if (value === null || value === undefined) {
+          store.sqlite.prepare("DELETE FROM observations WHERE id = ?").run(observationId);
+          continue;
+        }
         store.db
           .insert(observations)
           .values({
-            id: id(siteId, "crawl", metric, "page", row.url, runId),
+            id: observationId,
             siteId,
             source: "crawl",
             entityType: "page",
