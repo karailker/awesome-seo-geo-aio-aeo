@@ -24,7 +24,7 @@ Date: 2026-11-06. Phase: P10 complete. Next: P11 (evaluation). P9 deferred. Plug
 
 | Package | Latest on npm | Notes |
 |---|---|---|
-| `@karailker/awesome-seo-core` | 0.2.2 (0.2.3 prepared, publish pending) | 0.2.3 adds the technical-audit report, the @graph JSON-LD fix, and source-aware scope and missing-data lines in the SEO report. |
+| `@karailker/awesome-seo-core` | 0.2.3 (0.2.4 prepared, publish pending) | 0.2.4: GEO author and date checks apply to article pages only, stale values are removed on re-derivation, technical-audit lists Search Console pages not crawled (`--gsc`), sitemap-ingest reports `created`. |
 | `@karailker/awesome-seo-mcp-performance` | 0.1.1 | 0.1.0 pinned core 0.1.0, which lacks `drizzle-orm` and crashed at start. 0.1.1 depends on core 0.2.0. |
 | `@karailker/awesome-seo-mcp-google` | 0.1.0 | Connects through the plugin |
 | `@karailker/awesome-seo-mcp-bing` | 0.1.0 | Connects through the plugin |
@@ -39,7 +39,7 @@ Date: 2026-11-06. Phase: P10 complete. Next: P11 (evaluation). P9 deferred. Plug
 ## Tests
 
 - 2026-11-06: core 73 (Vitest, 13 files, includes `src/cli.test.ts` with 8 CLI tests), performance 19. Typecheck passes.
-- 2026-11-06 (before 0.2.3): core 85 (Vitest, 14 files; includes `src/cli.test.ts` and `src/report/technical-audit.test.ts`), performance 19, yandex 20, bing 9, google 22, crawl 46 (pytest). Typecheck and `claude plugin validate .` pass. Structural lint over 31 skill, command and agent files passes.
+- 2026-11-06 (before the 0.2.4 release): core 90 (Vitest, 14 files), performance 19, yandex 20, bing 9, google 22, crawl 48 (pytest). Typecheck, build and `claude plugin validate .` pass. Packed core 0.2.4 installed in a clean directory and smoke-tested.
 - `claude plugin validate .` passes with warnings.
 
 ## Live checks done (read-only unless noted)
