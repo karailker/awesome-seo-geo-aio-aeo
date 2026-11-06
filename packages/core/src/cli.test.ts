@@ -121,6 +121,25 @@ describe("awesome-seo CLI", () => {
     expect(r.stdout).not.toContain("AI crawler access: not checked.");
   });
 
+  it("geo-audit reports the run with the most URLs by default, not the most recent one", () => {
+    // Given: the 9-URL fixture run, and a newer 2-URL run for the same site
+    ingestCrawlJsonl(store, "s1", CRAWL_FIXTURE, null);
+    const bigRunId = JSON.parse(CRAWL_FIXTURE.split("\n")[0] as string).run_id as string;
+    const smallRun = CRAWL_FIXTURE.split("\n").slice(0, 2).map((line) => {
+      const row = JSON.parse(line);
+      return JSON.stringify({ ...row, run_id: "small-run", fetched_at: "2099-01-01T00:00:00.000Z" });
+    }).join("\n");
+    ingestCrawlJsonl(store, "s1", smallRun, null);
+
+    // When: no --run is given
+    const r = cli(["geo-audit", "--origin", ORIGIN]);
+
+    // Then
+    expect(r.status).toBe(0);
+    expect(r.stdout).toContain(`Crawl run: ${bigRunId} (9 URL(s)`);
+    expect(r.stdout).not.toContain("Crawl run: small-run");
+  });
+
   it("geo-audit without a crawl run fails with guidance to run the crawl first", () => {
     // Given: a seeded site with no crawl run
 

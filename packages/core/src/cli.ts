@@ -169,7 +169,7 @@ function cmdGeoAudit(args: string[]): void {
     const siteId = siteIdFor(store, origin);
     const run = values.run
       ? (store.sqlite.prepare("SELECT id FROM crawl_runs WHERE id = ? AND site_id = ?").get(values.run, siteId) as { id: string } | undefined)
-      : (store.sqlite.prepare("SELECT id FROM crawl_runs WHERE site_id = ? ORDER BY started_at DESC LIMIT 1").get(siteId) as { id: string } | undefined);
+      : (store.sqlite.prepare("SELECT id FROM crawl_runs WHERE site_id = ? ORDER BY url_count DESC, started_at DESC LIMIT 1").get(siteId) as { id: string } | undefined);
     if (!run) fail("No crawl run found for this site. Run /crawl-run first.");
     if (values.access) ingestAccessReport(store, siteId, readFileSync(values.access as string, "utf8"));
     deriveCrawlObservations(store, siteId, run.id);
