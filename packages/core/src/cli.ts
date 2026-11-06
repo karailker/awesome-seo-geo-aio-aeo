@@ -106,6 +106,22 @@ function cmdIngest(kind: "sitemap" | "crawl", args: string[]): void {
   }
 }
 
+// Input: the JSON result of crawl_check_access, saved to a file.
+function cmdAccessIngest(args: string[]): void {
+  const { values, positionals } = parse({ options: { origin: { type: "string" } } }, args);
+  const file = positionals[0];
+  if (!values.origin || !file) fail("Usage: awesome-seo access-ingest --origin https://example.com <access.json>");
+  const origin = originOf(values.origin as string);
+  const store = openStore(dbPath());
+  try {
+    const site = siteIdFor(store, origin);
+    const text = readFileSync(file, "utf8");
+    out({ ok: true, db: dbPath(), origin, file, ...ingestAccessReport(store, site, text) });
+  } finally {
+    store.close();
+  }
+}
+
 // ---- reports
 function cmdSeoAudit(args: string[]): void {
   const { values } = parse(
@@ -281,11 +297,12 @@ try {
     case "seed": cmdSeed(rest); break;
     case "sitemap-ingest": cmdIngest("sitemap", rest); break;
     case "crawl-ingest": cmdIngest("crawl", rest); break;
+    case "access-ingest": cmdAccessIngest(rest); break;
     case "seo-audit": cmdSeoAudit(rest); break;
     case "geo-audit": cmdGeoAudit(rest); break;
     case "approval": cmdApproval(rest); break;
     default:
-      fail("usage: awesome-seo <migrate|seed|sitemap-ingest|crawl-ingest|seo-audit|geo-audit|approval> [options]");
+      fail("usage: awesome-seo <migrate|seed|sitemap-ingest|crawl-ingest|access-ingest|seo-audit|geo-audit|approval> [options]");
   }
 } catch (err) {
   console.error(`Error: ${(err as Error).message}`);
