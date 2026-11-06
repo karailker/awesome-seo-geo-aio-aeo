@@ -28,7 +28,7 @@ Date: 2026-11-06. Phase: P10 complete. Next: P11 (evaluation). P9 deferred. Plug
 | `@karailker/awesome-seo-mcp-performance` | 0.1.1 | 0.1.0 pinned core 0.1.0, which lacks `drizzle-orm` and crashed at start. 0.1.1 depends on core 0.2.0. |
 | `@karailker/awesome-seo-mcp-google` | 0.1.0 | Connects through the plugin |
 | `@karailker/awesome-seo-mcp-bing` | 0.1.0 | Connects through the plugin |
-| `@karailker/awesome-seo-mcp-yandex` | 0.1.0 | Connects through the plugin |
+| `@karailker/awesome-seo-mcp-yandex` | 0.1.0 (0.1.1 prepared, publish pending) | 0.1.1 fixes the host ownership read: every host looked unverified and every response carried the warning. |
 
 - Plugin manifest `.claude-plugin/plugin.json` (0.2.0) declares the five MCP servers. The root `.mcp.json` was removed. A project-scope copy of the write servers used tool names that the approval hook does not match, so writes ran ungated in the repo directory.
 - The crawl server writes under `${CLAUDE_PROJECT_DIR}/data` (`AWESOME_SEO_DATA_DIR`). Takes effect after a Claude Code restart.
@@ -47,7 +47,7 @@ Date: 2026-11-06. Phase: P10 complete. Next: P11 (evaluation). P9 deferred. Plug
 - Search Console: sites, sitemaps, search analytics (page and query) on `sc-domain:bulmacalig.com`.
 - GA4 property 552874034: metadata, page and session-source reports. October 2026: 619 sessions, 14 from chatgpt.com.
 - Yandex Metrica counter 113337943: traffic sources, October 2026: 396 visits.
-- Yandex Webmaster: hosts, summary, popular queries, in-search history, sitemaps, quota, in-search samples (30 URLs). The host reports `verified: true` in the API; the token used by the MCP server is not set there, so it could not be re-checked on 2026-11-06.
+- Yandex Webmaster (2026-11-06): all three hosts `verified: true` after DNS verification (`yandex-verification` TXT on `bulmacalig.com`). Host summary: SQI 0, 29 searchable pages, 461 excluded. Earlier `verified: false` readings came from a plugin bug (fixed in 0.1.1).
 - Bing Webmaster: site list, rank and traffic (31 days), page stats (8 rows), URL info, quota.
 - PageSpeed Insights (lab), CrUX (field) and local Lighthouse on `www.bulmacalig.com`.
 - BulmacaLig crawl (`https://www.bulmacalig.com`, 2026-11-06): sitemap index with 3 children, discovery capped at 500 URLs, 500 of 500 fetched (status completed, 0 robots blocks, 0 errors). Crawl run `2026-11-06T163038Z-0504`.
@@ -60,10 +60,10 @@ Live writes (each approved by the user for the test):
 
 ## Known gaps
 
-- **Bing and Yandex credentials**: the plugin's Bing and Yandex servers have no keys in their environment, so their live checks cannot run here. Set `BING_WEBMASTER_API_KEY`, `YANDEX_WEBMASTER_TOKEN` and `YANDEX_METRICA_*` for the plugin's servers, not only for the project.
-- **Yandex write**: not yet successful. Retry with a new proposal and approval.
-- **Bing acceptance**: check `GetUrlInfo` `LastCrawledDate` for `https://www.bulmacalig.com/kare` after 2026-11-05 09:42Z, once the key is available.
-- **JS-rendered content**: the crawler reads static HTML only. On BulmacaLig, `/sss` and the guide pages add `FAQPage` JSON-LD with JavaScript, so the audit reports 0 FAQ pages. The result is correct for static HTML, but the audit cannot see client-rendered schema. Closing this needs a rendered-DOM check (headless Chrome, which Lighthouse already uses locally).
+- **Credentials**: plugin servers read keys from the shell environment at Claude Code start. `~/.bashrc` loads `~/.config/awesome-seo/*.env`. Verified 2026-11-06: Bing, Yandex, Google, PageSpeed and CrUX `true`.
+- **Yandex write**: pending approval. Proposal `094007e9-a790-40bc-95ba-8e33a6eb7210` (`sitemap-pages.xml` on `https:www.bulmacalig.com:443`, expires 2026-11-07 17:16Z).
+- **Bing acceptance**: not confirmed. `GetUrlInfo` for `https://www.bulmacalig.com/kare` still shows `LastCrawledDate` 2026-10-09 on 2026-11-06 (submit was 2026-11-05). Re-check later.
+- **JS-rendered content**: the crawler reads static HTML by default. `render=true` (`crawl_fetch_pages`, `crawl_extract_structured_data`) loads the page in the system Chrome and extracts the DOM after scripts ran (`b8e0f42`). Checked live: `/sss` has `FAQPage` only with render. Active in the installed plugin after an update and a Claude Code restart. Chrome also requests the page's assets; the per-host limit does not cover those. Off by default.
 - **Sitemap size**: discovery stops at `url_cap` (500). BulmacaLig's sitemap indexes list far more URLs, so a 500-URL audit is a sample. Raising the cap raises crawl time (about 1 request per second per host).
 - **Long crawl calls**: a 500-URL `crawl_fetch_pages` call exceeds the MCP call timeout and is moved to the background. The result arrives as a task notification.
 - **`access-ingest` duplicates `geo-audit --access`**: both store the same access report. The commands use `geo-audit --access`. `access-ingest` remains as a standalone helper; remove it if no caller needs it.
@@ -84,7 +84,7 @@ Live writes (each approved by the user for the test):
 ## Credentials and local files (not in the repo)
 
 - `~/.config/awesome-seo/gsc-service-account.json` (service account key, mode 600)
-- `~/.config/awesome-seo/performance.env`, `yandex.env`, `bing.env` (mode 600). These are read by the local scripts; the plugin's servers take their keys from the environment.
+- `~/.config/awesome-seo/performance.env`, `yandex.env`, `bing.env` (mode 600). Loaded into the shell by `~/.bashrc` (snippet marked `awesome-seo plugin credentials`); the plugin's servers read them from the environment.
 - `~/Downloads`: the OAuth client JSON (`client_secret_2_...json`) is unused and remains there.
 
 ## Toolchain
