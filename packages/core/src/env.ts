@@ -57,6 +57,12 @@ export function loadProjectEnv(envFile: string | undefined, target: NodeJS.Proce
 
   const projectDir = dirname(envFile);
   const values = parseEnvFile(text);
+  // The project file is authoritative for the server names: a name it does not define is removed, so a key
+  // exported by the shell for another site cannot reach this project.
+  const defined = new Set(Object.keys(values).map((n) => ALIASES[n] ?? n));
+  for (const name of SERVER_ENV_NAMES) {
+    if (!defined.has(name)) delete target[name];
+  }
   for (const [name, raw] of Object.entries(values)) {
     const key = ALIASES[name] ?? name;
     if (!(SERVER_ENV_NAMES as readonly string[]).includes(key) || !raw) continue;

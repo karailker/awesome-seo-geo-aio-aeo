@@ -39,6 +39,20 @@ describe("loadProjectEnv", () => {
     expect(target.BING_WEBMASTER_API_KEY).toBe("project-key");
   });
 
+  it("removes a server key the shell exported when the project file does not define it", () => {
+    // Given: the shell holds a Yandex token for another site; this project's .env has no Yandex entry
+    const file = writeEnv("BING_WEBMASTER_API_KEY=project-bing\n");
+    const target: NodeJS.ProcessEnv = { YANDEX_WEBMASTER_TOKEN: "other-site-token", CRUX_API_KEY: "other-site-crux" };
+
+    // When
+    loadProjectEnv(file, target);
+
+    // Then: the other site's Yandex and CrUX values do not reach this project
+    expect(target.YANDEX_WEBMASTER_TOKEN).toBeUndefined();
+    expect(target.CRUX_API_KEY).toBeUndefined();
+    expect(target.BING_WEBMASTER_API_KEY).toBe("project-bing");
+  });
+
   it("maps GOOGLE_APPLICATION_CREDENTIALS to the key-file name the server reads", () => {
     const file = writeEnv("GOOGLE_APPLICATION_CREDENTIALS=sa.json\n");
     const target: NodeJS.ProcessEnv = {};
