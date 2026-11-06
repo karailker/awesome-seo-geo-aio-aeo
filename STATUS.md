@@ -47,7 +47,7 @@ Date: 2026-11-06. Phase: P10 complete. Next: P11 (evaluation). P9 deferred. Plug
 - Search Console: sites, sitemaps, search analytics (page and query) on `sc-domain:bulmacalig.com`.
 - GA4 property 552874034: metadata, page and session-source reports. October 2026: 619 sessions, 14 from chatgpt.com.
 - Yandex Metrica counter 113337943: traffic sources, October 2026: 396 visits.
-- Yandex Webmaster (2026-11-06): all three hosts `verified: true` after DNS verification (`yandex-verification` TXT on `bulmacalig.com`). Host summary: SQI 0, 29 searchable pages, 461 excluded. Earlier `verified: false` readings came from a plugin bug (fixed in 0.1.1).
+- Yandex Webmaster (2026-11-06): all three hosts `verified: true` after DNS verification (`yandex-verification` TXT on `bulmacalig.com`). Host summary: SQI 0, 29 searchable pages, 461 excluded. Yandex lists `sitemap-sozluk-1.xml` with 19,614 URLs, while our crawl caps at 500. Earlier `verified: false` readings came from a plugin bug (fixed in 0.1.1).
 - Bing Webmaster: site list, rank and traffic (31 days), page stats (8 rows), URL info, quota.
 - PageSpeed Insights (lab), CrUX (field) and local Lighthouse on `www.bulmacalig.com`.
 - BulmacaLig crawl (`https://www.bulmacalig.com`, 2026-11-06): sitemap index with 3 children, discovery capped at 500 URLs, 500 of 500 fetched (status completed, 0 robots blocks, 0 errors). Crawl run `2026-11-06T163038Z-0504`.
@@ -61,7 +61,7 @@ Live writes (each approved by the user for the test):
 ## Known gaps
 
 - **Credentials**: plugin servers read keys from the shell environment at Claude Code start. `~/.bashrc` loads `~/.config/awesome-seo/*.env`. Verified 2026-11-06: Bing, Yandex, Google, PageSpeed and CrUX `true`.
-- **Yandex write**: pending approval. Proposal `094007e9-a790-40bc-95ba-8e33a6eb7210` (`sitemap-pages.xml` on `https:www.bulmacalig.com:443`, expires 2026-11-07 17:16Z).
+- **Yandex write**: closed for now. Yandex Webmaster write endpoints are disabled by the provider after an attack; sitemap POST returns 405 (`Allow: GET`). Proposal `094007e9-a790-40bc-95ba-8e33a6eb7210` was approved and recorded as `failed` (2026-11-06 17:25Z). `sitemap-pages.xml` is already registered on the host (source WEBMASTER, 31 URLs, 0 errors), so no add is needed. Do not send new Yandex write requests until the provider re-enables them.
 - **Bing acceptance**: not confirmed. `GetUrlInfo` for `https://www.bulmacalig.com/kare` still shows `LastCrawledDate` 2026-10-09 on 2026-11-06 (submit was 2026-11-05). Re-check later.
 - **JS-rendered content**: the crawler reads static HTML by default. `render=true` (`crawl_fetch_pages`, `crawl_extract_structured_data`) loads the page in the system Chrome and extracts the DOM after scripts ran (`b8e0f42`). Checked live: `/sss` has `FAQPage` only with render. Active in the installed plugin after an update and a Claude Code restart. Chrome also requests the page's assets; the per-host limit does not cover those. Off by default.
 - **Sitemap size**: discovery stops at `url_cap` (500). BulmacaLig's sitemap indexes list far more URLs, so a 500-URL audit is a sample. Raising the cap raises crawl time (about 1 request per second per host).
