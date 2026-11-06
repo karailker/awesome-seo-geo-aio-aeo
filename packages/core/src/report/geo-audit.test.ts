@@ -140,6 +140,31 @@ describe("buildGeoReport", () => {
     expect(report).toContain("- Sitemap: 12 URLs equals the URL cap (12). The sitemap may be truncated, so findings cover only the discovered URLs.");
   });
 
+  it("reads author, date and FAQPage signals from nodes inside a JSON-LD @graph", () => {
+    // Given: one page whose author, date and FAQPage are nested in "@graph" (the layout BulmacaLig uses)
+    const graphRun = JSON.stringify({
+      run_id: "graph-run", fetched_at: "2026-11-05T10:00:00.000Z", url: "https://example.com/faq", status: 200,
+      final_url: "https://example.com/faq", redirect_chain: [], content_type: "text/html", title: "FAQ",
+      meta_description: null, canonical: "https://example.com/faq", lang: "tr", hreflang: [],
+      headings: [{ level: 1, text: "SSS" }], word_count: 400, content_hash: "sha256:x",
+      structured_data: [{ syntax: "json-ld", type: null, item: { "@context": "https://schema.org", "@graph": [
+        { "@type": "WebApplication", author: { "@id": "https://example.com/#org" }, datePublished: "2026-01-01" },
+        { "@type": "FAQPage", mainEntity: [] },
+      ] } }],
+      jsonld_syntax_errors: 0, robots_allowed: true, raw_html_path: null, errors: [],
+    });
+    ingestCrawlJsonl(store, SITE_ID, graphRun, null);
+    deriveCrawlObservations(store, SITE_ID, "graph-run");
+
+    // When / Then: the page is read as having an author, a date and FAQPage
+    const value = (metric: string) =>
+      (store.sqlite.prepare("SELECT value FROM observations WHERE source = 'crawl' AND metric = ? AND entity_id = ?").get(metric, "https://example.com/faq") as { value: number }).value;
+    expect(value("has_author")).toBe(1);
+    expect(value("has_date")).toBe(1);
+    expect(value("has_faqpage")).toBe(1);
+    expect(value("structured_items")).toBe(1); // the count stays the number of top-level blocks
+  });
+
   it("reports the measured page counts from the run", () => {
     deriveCrawlObservations(store, SITE_ID, runId);
 

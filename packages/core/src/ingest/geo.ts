@@ -30,6 +30,26 @@ function jsonLdItems(raw: unknown): Item[] {
   }
 }
 
+// A JSON-LD block may wrap its nodes in "@graph". The extractor records the wrapper with type null, so the nodes
+// inside it are expanded here to be checked like top-level items. The wrapper itself stays in the list.
+export function expandNodes(items: Item[]): Item[] {
+  const out: Item[] = [];
+  for (const it of items) {
+    out.push(it);
+    const graph = it.item["@graph"];
+    if (!Array.isArray(graph)) continue;
+    for (const node of graph) {
+      if (node === null || typeof node !== "object" || Array.isArray(node)) continue;
+      const obj = node as Record<string, unknown>;
+      const t = obj["@type"];
+      const type =
+        typeof t === "string" ? t : Array.isArray(t) ? t.filter((x): x is string => typeof x === "string").join(",") : null;
+      out.push({ syntax: it.syntax, type, item: obj });
+    }
+  }
+  return out;
+}
+
 export function missingRecommended(items: Item[]): number {
   let missing = 0;
   for (const it of items) {
@@ -72,6 +92,7 @@ export function deriveCrawlObservations(store: Store, siteId: string, runId: str
     for (const row of rows) {
       const headings = JSON.parse(row.headings_json ?? "[]") as { level: number }[];
       const items = jsonLdItems(row.structured_data_json);
+      const nodes = expandNodes(items);
       const h1 = headings.filter((h) => h.level === 1).length;
       const skip = headings.some((h, i) => i > 0 && h.level - (headings[i - 1]?.level ?? h.level) > 1) ? 1 : 0;
       const values: Record<string, number | null> = {
@@ -81,15 +102,15 @@ export function deriveCrawlObservations(store: Store, siteId: string, runId: str
         h1_count: row.status === 200 ? h1 : null,
         heading_skip: row.status === 200 ? skip : null,
         structured_items: row.status === 200 ? items.length : null,
-        has_author: row.status === 200 ? (items.some((i) => "author" in i.item) ? 1 : 0) : null,
+        has_author: row.status === 200 ? (nodes.some((i) => "author" in i.item) ? 1 : 0) : null,
         has_date:
           row.status === 200
-            ? items.some((i) => "datePublished" in i.item || "dateModified" in i.item)
+            ? nodes.some((i) => "datePublished" in i.item || "dateModified" in i.item)
               ? 1
               : 0
             : null,
-        has_faqpage: row.status === 200 ? (hasJsonLdType(items, "FAQPage") ? 1 : 0) : null,
-        missing_recommended_props: row.status === 200 ? missingRecommended(items) : null,
+        has_faqpage: row.status === 200 ? (hasJsonLdType(nodes, "FAQPage") ? 1 : 0) : null,
+        missing_recommended_props: row.status === 200 ? missingRecommended(nodes) : null,
         jsonld_syntax_errors: row.status === 200 ? row.jsonld_syntax_errors : null,
         canonical_missing: row.status === 200 ? (row.canonical ? 0 : 1) : null,
       };
