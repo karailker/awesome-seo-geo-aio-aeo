@@ -80,12 +80,23 @@ describe("ingestSitemapJsonl", () => {
     expect(row?.last_seen_at).toBe("2026-11-12T10:00:00+00:00");
   });
 
+  it("reports zero new URLs when the same sitemap is ingested again", () => {
+    ingestSitemapJsonl(store, SITE_ID, FIXTURE);
+
+    const again = ingestSitemapJsonl(store, SITE_ID, FIXTURE);
+
+    expect(again.ingested).toBe(3);
+    expect(again.created).toBe(0);
+    expect(pageRows()).toHaveLength(3);
+  });
+
   it("skips invalid lines and reports them without failing the run", () => {
     const withBadLines = `not json\n${FIXTURE}{"run_id":"x"}\n`;
 
     const result = ingestSitemapJsonl(store, SITE_ID, withBadLines);
 
     expect(result.ingested).toBe(3);
+    expect(result.created).toBe(3);
     expect(result.skipped).toBe(2);
     expect(result.errors[0]).toMatch(/^line 1: not valid JSON/);
     expect(pageRows()).toHaveLength(3);

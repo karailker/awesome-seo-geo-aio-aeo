@@ -2,6 +2,7 @@
 // One transaction per run. Re-ingesting the same JSONL changes nothing.
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
+import { normalizeUrl } from "../domain.js";
 import { upsertPage, withTransaction, type Store } from "../db/store.js";
 import { parseJsonl } from "./jsonl.js";
 
@@ -15,13 +16,18 @@ const SitemapLineSchema = z.object({
 
 export type SitemapIngestResult = {
   lines: number;
-  ingested: number;
+  ingested: number; // rows written (new or refreshed); a repeat of the same sitemap refreshes them
+  created: number; // URLs not seen before for this site
   skipped: number;
   errors: string[]; // first few line errors, for the report
 };
 
 export function ingestSitemapJsonl(store: Store, siteId: string, jsonl: string): SitemapIngestResult {
   const { lines, rows, skipped, errors } = parseJsonl(jsonl, SitemapLineSchema);
+  const known = new Set(
+    (store.sqlite.prepare("SELECT url FROM pages WHERE site_id = ?").all(siteId) as { url: string }[]).map((r) => r.url),
+  );
+  const created = new Set(rows.map((r) => normalizeUrl(r.url)).filter((u) => !known.has(u))).size;
 
   withTransaction(store, () => {
     for (const row of rows) {
@@ -36,5 +42,5 @@ export function ingestSitemapJsonl(store: Store, siteId: string, jsonl: string):
       });
     }
   });
-  return { lines, ingested: rows.length, skipped, errors };
+  return { lines, ingested: rows.length, created, skipped, errors };
 }
