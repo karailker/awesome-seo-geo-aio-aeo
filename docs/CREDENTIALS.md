@@ -1,10 +1,12 @@
 # Credentials
 
-The plugin's MCP servers read their credentials from the environment that Claude Code had when it started. They do not read `.env` files. Three rules follow:
+The plugin's MCP servers read the project's `.env` file directly. The plugin sets `AWESOME_SEO_ENV_FILE` to `${CLAUDE_PROJECT_DIR}/.env`, and each server loads the variables it uses from that file at startup. Three rules follow:
 
-1. Set the variables in the shell that starts Claude Code, or start Claude Code with a project launcher that sets them (see below).
-2. Never commit secrets. Keep key files in mode 600 outside the repository.
-3. Check with `/connections-check` after any change. It shows only true or false per credential.
+1. Put a project's credentials in its own `.env`, mode 600, gitignored. Copy `.env.example` (names only) and fill in values.
+2. The project file takes precedence over exported shell variables, so one site's `.env` never uses another site's keys. You do not need `~/.bashrc` exports for plugin credentials.
+3. Check with `/connections-check` after any change. It shows only true or false per credential. A warning is printed if the `.env` is readable by others.
+
+Key files can be given as a path relative to the project (for example `./keys/sa.json`) or with `~/`.
 
 ## Variables
 
@@ -31,12 +33,12 @@ One service account covers Search Console, GA4 and Merchant.
    - Merchant Center: add it as a user of the account with read access.
 4. Set `GOOGLE_SERVICE_ACCOUNT_KEY_FILE` to the key path. Google CLI (gcloud) is not required for the plugin. Do not register the service account in gcloud unless you need it for something else.
 
-## Project launcher (one project, its own credentials)
+## Project launcher (optional, older setups)
 
-For a site with its own credentials, keep them in that project's `.env` (mode 600, gitignored) and start Claude Code through a launcher that loads it and maps the names. The launcher pattern is in the erolav project (`bin/claude-erolav`): it loads `.env`, sets `GOOGLE_SERVICE_ACCOUNT_KEY_FILE` from the project's key path, and unsets other sites' Yandex and CrUX variables.
+The `.env` file is read by the servers themselves now, so a launcher is not needed. The launcher pattern is kept for reference: it loads `.env` in the shell and starts Claude Code. The launcher pattern is in the erolav project (`bin/claude-erolav`): it loads `.env`, sets `GOOGLE_SERVICE_ACCOUNT_KEY_FILE` from the project's key path, and unsets other sites' Yandex and CrUX variables.
 
 Start Claude Code from a real terminal, not from a non-interactive shell. Sessions started any other way use the shell's variables, which may belong to another site.
 
-## Shell setup for a single site
+## Shell setup (not needed)
 
-Add the exports to `~/.bashrc` only when all work uses one site. Source the key file path and the other variables, then start Claude Code from a new terminal.
+The servers read the project `.env`. Shell exports are only a fallback when a project has no `.env`.
