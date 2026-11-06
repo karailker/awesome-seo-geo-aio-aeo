@@ -25,12 +25,24 @@ function token(env: Env): string {
 // Unverified hosts can return data, but it may be partial. Say so every time.
 const VERIFY_NOTE = "Host ownership is not verified in Yandex Webmaster: data may be partial or empty.";
 
+// Ownership comes from the host list: the API returns `verified` as a boolean per host. A host that is not
+// listed, or a failed lookup, keeps the note (the conservative answer).
+async function ownershipWarnings(fetchImpl: typeof fetch, t: string, uid: number, hostId: string): Promise<string[]> {
+  try {
+    const body = (await webmasterGet(fetchImpl, t, `/user/${uid}/hosts`)) as { hosts?: { host_id: string; verified?: boolean }[] };
+    const host = (body.hosts ?? []).find((h) => h.host_id === hostId);
+    return host?.verified === true ? [] : [VERIFY_NOTE];
+  } catch {
+    return [VERIFY_NOTE];
+  }
+}
+
 export async function listHosts(env: Env = process.env, fetchImpl: typeof fetch = fetch) {
   try {
     const t = token(env);
     const uid = await userId(fetchImpl, t);
-    const body = (await webmasterGet(fetchImpl, t, `/user/${uid}/hosts`)) as { hosts?: { host_id: string; ascii_host_url: string; verified?: { verified?: boolean } }[] };
-    return ok((body.hosts ?? []).map((h) => ({ hostId: h.host_id, url: h.ascii_host_url, verified: h.verified?.verified === true })));
+    const body = (await webmasterGet(fetchImpl, t, `/user/${uid}/hosts`)) as { hosts?: { host_id: string; ascii_host_url: string; verified?: boolean }[] };
+    return ok((body.hosts ?? []).map((h) => ({ hostId: h.host_id, url: h.ascii_host_url, verified: h.verified === true })));
   } catch (err) {
     return fail(err);
   }
@@ -42,7 +54,7 @@ export async function hostSummary(input: { host_id: string }, env: Env = process
     const t = token(env);
     const uid = await userId(fetchImpl, t);
     const body = (await webmasterGet(fetchImpl, t, `${hostPath(uid, input.host_id)}/summary`)) as Record<string, unknown>;
-    return ok(body, [VERIFY_NOTE]);
+    return ok(body, await ownershipWarnings(fetchImpl, t, uid, input.host_id));
   } catch (err) {
     return fail(err);
   }
@@ -58,7 +70,7 @@ export async function searchQueries(input: { host_id: string; limit: number }, e
       count?: number;
       queries?: { query_text: string; indicators: Record<string, number> }[];
     };
-    return ok({ count: body.count ?? 0, queries: (body.queries ?? []).map((x) => ({ query: x.query_text, indicators: x.indicators })) }, [VERIFY_NOTE]);
+    return ok({ count: body.count ?? 0, queries: (body.queries ?? []).map((x) => ({ query: x.query_text, indicators: x.indicators })) }, await ownershipWarnings(fetchImpl, t, uid, input.host_id));
   } catch (err) {
     return fail(err);
   }
@@ -79,7 +91,7 @@ export async function indexing(input: { host_id: string }, env: Env = process.en
         sitemaps: (sitemaps.sitemaps ?? []).map((s) => ({ url: s.sitemap_url, errors: s.errors_count ?? 0 })),
         recrawlQuota: { daily: quota.daily_quota ?? null, remainder: quota.quota_remainder ?? null },
       },
-      [VERIFY_NOTE],
+      await ownershipWarnings(fetchImpl, t, uid, input.host_id),
     );
   } catch (err) {
     return fail(err);
@@ -106,7 +118,7 @@ export async function inSearchUrls(input: { host_id: string; output_path?: strin
       mkdirSync(dirname(outputPath), { recursive: true });
       writeFileSync(outputPath, lines.map((l) => `${l}\n`).join(""), "utf8");
     }
-    return ok({ hostId: input.host_id, count: samples.length, samples, outputPath }, [VERIFY_NOTE]);
+    return ok({ hostId: input.host_id, count: samples.length, samples, outputPath }, await ownershipWarnings(fetchImpl, t, uid, input.host_id));
   } catch (err) {
     return fail(err);
   }
@@ -124,7 +136,7 @@ export async function addSitemap(input: { host_id: string; sitemap_url: string }
     const startedAt = new Date().toISOString();
     await webmasterPost(fetchImpl, t, `${hostPath(uid, input.host_id)}/sitemaps`, { url: input.sitemap_url });
     const finishedAt = new Date().toISOString();
-    return ok({ hostId: input.host_id, sitemapUrl: input.sitemap_url, submitted: true, startedAt, finishedAt }, [VERIFY_NOTE, "Verify with yandex_webmaster_indexing (sitemaps)."]);
+    return ok({ hostId: input.host_id, sitemapUrl: input.sitemap_url, submitted: true, startedAt, finishedAt }, [...(await ownershipWarnings(fetchImpl, t, uid, input.host_id)), "Verify with yandex_webmaster_indexing (sitemaps)."]);
   } catch (err) {
     return { ...fail(err), startedAt, finishedAt: new Date().toISOString() };
   }

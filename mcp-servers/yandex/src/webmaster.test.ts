@@ -5,7 +5,7 @@ import { addSitemap, hostSummary, indexing, inSearchUrls, listHosts, searchQueri
 const rec = JSON.parse(readFileSync(new URL("../tests/fixtures/webmaster-live.json", import.meta.url), "utf8"));
 const HOST = "https:www.bulmacalig.com:443";
 const env = { YANDEX_WEBMASTER_TOKEN: "tok-value-for-tests" } as NodeJS.ProcessEnv;
-const HOSTS = { hosts: [{ host_id: HOST, ascii_host_url: "https://www.bulmacalig.com/", verified: { verified: false } }] };
+const HOSTS = { hosts: [{ host_id: HOST, ascii_host_url: "https://www.bulmacalig.com/", verified: false }] };
 
 // Routes the recorded responses by path. Anything else is a 404.
 function routed(overrides: Record<string, { status: number; body: unknown }> = {}) {
@@ -47,6 +47,24 @@ describe("Yandex Webmaster tools", () => {
     const r = await hostSummary({ host_id: HOST }, env, impl);
 
     expect(r.data).toMatchObject({ searchable_pages_count: 29, excluded_pages_count: 461 });
+    expect(r.warnings[0]).toContain("not verified");
+  });
+
+  it("reports a verified host without the ownership warning", async () => {
+    const hostsVerified = { hosts: [{ host_id: HOST, ascii_host_url: "https://www.bulmacalig.com/", verified: true }] };
+    const { impl } = routed({ [`/user/${rec.user_id}/hosts`]: { status: 200, body: hostsVerified } });
+
+    const r = await hostSummary({ host_id: HOST }, env, impl);
+
+    expect(r.ok).toBe(true);
+    expect(r.warnings).toEqual([]);
+  });
+
+  it("keeps the ownership warning when the host list cannot be read", async () => {
+    const { impl } = routed({ [`/user/${rec.user_id}/hosts`]: { status: 500, body: {} } });
+
+    const r = await hostSummary({ host_id: HOST }, env, impl);
+
     expect(r.warnings[0]).toContain("not verified");
   });
 
