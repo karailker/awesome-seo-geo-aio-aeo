@@ -124,6 +124,22 @@ describe("buildGeoReport", () => {
     expect(report).toContain("- Crawl covers 9 of 12 sitemap URL(s) (URL cap 500). Findings describe the fetched pages only.");
   });
 
+  it("warns that the sitemap may be truncated when its URL count equals the URL cap", () => {
+    // Given: 12 sitemap URLs ingested and the site cap is 12 (discovery stopped at the cap)
+    store.sqlite.prepare("UPDATE sites SET url_cap = 12").run();
+    const sitemapLines = Array.from({ length: 12 }, (_, i) =>
+      JSON.stringify({ run_id: "sm-1", collected_at: "2026-11-05T09:00:00.000Z", url: `https://example.com/p${i}`, lastmod: null, sitemap_url: "https://example.com/sitemap.xml" }),
+    ).join("\n");
+    ingestSitemapJsonl(store, SITE_ID, sitemapLines);
+    deriveCrawlObservations(store, SITE_ID, runId);
+
+    // When
+    const report = buildGeoReport(store, { siteId: SITE_ID, origin: ORIGIN, runId });
+
+    // Then
+    expect(report).toContain("- Sitemap: 12 URLs equals the URL cap (12). The sitemap may be truncated, so findings cover only the discovered URLs.");
+  });
+
   it("reports the measured page counts from the run", () => {
     deriveCrawlObservations(store, SITE_ID, runId);
 

@@ -177,6 +177,9 @@ export function buildGeoReport(store: Store, input: GeoReportInput): string {
     "## Missing data",
     ...(pageCount === 0 ? ["- No crawl records for this run."] : []),
     ...(partialCrawl ? [`- Crawl covers ${runRow.n} of ${sitemapCount} sitemap URL(s) (URL cap ${urlCap}). Findings describe the fetched pages only.`] : []),
+    ...(sitemapCount > 0 && urlCap > 0 && sitemapCount >= urlCap
+      ? [`- Sitemap: ${sitemapCount} URLs equals the URL cap (${urlCap}). The sitemap may be truncated, so findings cover only the discovered URLs.`]
+      : []),
     ...(accessChecked ? [] : ["- AI crawler access and llms.txt: not checked."]),
     "",
     "## Limitations",
