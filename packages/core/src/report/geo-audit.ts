@@ -68,6 +68,12 @@ export function buildGeoReport(store: Store, input: GeoReportInput): string {
     .prepare("SELECT url_count AS n, status AS status, started_at AS started FROM crawl_runs WHERE id = ?")
     .get(input.runId) as { n: number; status: string; started: string } | undefined;
 
+  const sitemapCount = (store.sqlite
+    .prepare("SELECT COUNT(*) AS n FROM pages WHERE site_id = ? AND source = 'sitemap'")
+    .get(input.siteId) as { n: number }).n;
+  const urlCap = (store.sqlite.prepare("SELECT url_cap AS cap FROM sites WHERE id = ?").get(input.siteId) as { cap: number } | undefined)?.cap ?? 0;
+  const partialCrawl = runRow !== undefined && sitemapCount > runRow.n;
+
   const accessAgents = sites.filter((s) => s.metric === "ai_blocked_urls");
   const robotsRow = sites.find((s) => s.metric === "robots_readable");
   const llms = sites.find((s) => s.metric === "llms_txt_valid");
@@ -170,6 +176,7 @@ export function buildGeoReport(store: Store, input: GeoReportInput): string {
     "",
     "## Missing data",
     ...(pageCount === 0 ? ["- No crawl records for this run."] : []),
+    ...(partialCrawl ? [`- Crawl covers ${runRow.n} of ${sitemapCount} sitemap URL(s) (URL cap ${urlCap}). Findings describe the fetched pages only.`] : []),
     ...(accessChecked ? [] : ["- AI crawler access and llms.txt: not checked."]),
     "",
     "## Limitations",

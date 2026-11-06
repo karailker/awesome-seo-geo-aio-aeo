@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { openStore, upsertSite, type Store } from "../db/store.js";
 import { ingestCrawlJsonl } from "../ingest/crawl.js";
+import { ingestSitemapJsonl } from "../ingest/sitemap.js";
 import { deriveCrawlObservations, ingestAccessReport } from "../ingest/geo.js";
 import { buildGeoReport } from "./geo-audit.js";
 
@@ -106,6 +107,21 @@ describe("buildGeoReport", () => {
     expect(report).toContain("AI crawler access: not checked.");
     expect(report).toContain("- AI crawler access and llms.txt: not checked.");
     expect(report).not.toContain("AI crawler GPTBot is blocked");
+  });
+
+  it("says the crawl covers fewer URLs than the sitemap when the run was capped", () => {
+    // Given: the sitemap lists 12 URLs, but the run fetched only 9
+    const sitemapLines = Array.from({ length: 12 }, (_, i) =>
+      JSON.stringify({ run_id: "sm-1", collected_at: "2026-11-05T09:00:00.000Z", url: `https://example.com/p${i}`, lastmod: null, sitemap_url: "https://example.com/sitemap.xml" }),
+    ).join("\n");
+    ingestSitemapJsonl(store, SITE_ID, sitemapLines);
+    deriveCrawlObservations(store, SITE_ID, runId);
+
+    // When
+    const report = buildGeoReport(store, { siteId: SITE_ID, origin: ORIGIN, runId });
+
+    // Then
+    expect(report).toContain("- Crawl covers 9 of 12 sitemap URL(s) (URL cap 500). Findings describe the fetched pages only.");
   });
 
   it("reports the measured page counts from the run", () => {
