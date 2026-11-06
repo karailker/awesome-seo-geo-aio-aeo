@@ -220,3 +220,26 @@ describe("re-deriving after a rule change", () => {
     expect(left.n).toBe(0);
   });
 });
+
+describe("access results stored more than once", () => {
+  it("lists each AI crawler once, using the most recently ingested access result", () => {
+    // Given: a crawl run and two access results for the same site (40 and 9 sampled URLs in the fixture shape)
+    deriveCrawlObservations(store, SITE_ID, runId);
+    ingestAccessReport(store, SITE_ID, ACCESS);
+    const newer = JSON.parse(ACCESS);
+    newer.data.sampleSize = 5;
+    for (const agent of newer.data.agents) {
+      agent.blocked = 0;
+      agent.blocked_urls = [];
+    }
+    ingestAccessReport(store, SITE_ID, JSON.stringify(newer));
+
+    // When
+    const report = buildGeoReport(store, { siteId: SITE_ID, origin: ORIGIN, runId });
+
+    // Then: GPTBot appears once, with the newer sample size
+    const gpt = report.split("\n").filter((l) => l.startsWith("- GPTBot:"));
+    expect(gpt).toEqual(["- GPTBot: blocked 0 of 5"]);
+    expect(report.match(/- GPTBot:/g)?.length).toBe(1);
+  });
+});

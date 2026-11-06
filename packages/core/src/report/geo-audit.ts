@@ -74,9 +74,15 @@ export function buildGeoReport(store: Store, input: GeoReportInput): string {
   const urlCap = (store.sqlite.prepare("SELECT url_cap AS cap FROM sites WHERE id = ?").get(input.siteId) as { cap: number } | undefined)?.cap ?? 0;
   const partialCrawl = runRow !== undefined && sitemapCount > runRow.n;
 
-  const accessAgents = sites.filter((s) => s.metric === "ai_blocked_urls");
-  const robotsRow = sites.find((s) => s.metric === "robots_readable");
-  const llms = sites.find((s) => s.metric === "llms_txt_valid");
+  // Every ingested access result is stored. Only the most recently ingested one is reported, so a second run
+  // does not list each AI crawler twice.
+  const latestAccess = (store.sqlite
+    .prepare("SELECT json_extract(dimensions_json, '$.access_id') AS id FROM observations WHERE source = 'crawl' AND entity_type = 'site' AND metric = 'robots_readable' ORDER BY rowid DESC LIMIT 1")
+    .get() as { id: string | null } | undefined)?.id ?? null;
+  const inLatestAccess = (o: Obs) => latestAccess === null || (JSON.parse(o.dims ?? "{}") as { access_id?: string }).access_id === latestAccess;
+  const accessAgents = sites.filter((s) => s.metric === "ai_blocked_urls" && inLatestAccess(s));
+  const robotsRow = sites.find((s) => s.metric === "robots_readable" && inLatestAccess(s));
+  const llms = sites.find((s) => s.metric === "llms_txt_valid" && inLatestAccess(s));
   const accessChecked = accessAgents.length > 0 || robotsRow !== undefined;
 
   // Findings
