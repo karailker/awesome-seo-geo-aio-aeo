@@ -30,7 +30,7 @@
     "crawl": {
       "command": "uv",
       "args": ["run", "--directory", "${CLAUDE_PLUGIN_ROOT}/mcp-servers/crawl", "crawl-server"],
-      "env": {"AWESOME_SEO_DATA_DIR": "${CLAUDE_PROJECT_DIR}/data"}
+      "env": {"AWESOME_SEO_DATA_DIR": "${CLAUDE_PROJECT_DIR}/data", "AWESOME_SEO_ENV_FILE": "${CLAUDE_PROJECT_DIR}/.env"}
     }
   }
 }

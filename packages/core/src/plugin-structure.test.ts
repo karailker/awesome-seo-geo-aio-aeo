@@ -96,12 +96,13 @@ describe("plugin manifests and hook", () => {
     expect(marketplace.plugins[0].version).toBe(plugin.version);
   });
 
-  it("declares the five servers, each reading the project .env except the crawler", () => {
+  it("declares the five servers, each reading the project .env", () => {
     expect(Object.keys(plugin.mcpServers).sort()).toEqual(["bing", "crawl", "google", "performance", "yandex"]);
     for (const name of ["google", "yandex", "bing", "performance"]) {
       expect(plugin.mcpServers[name].env.AWESOME_SEO_ENV_FILE).toBe("${CLAUDE_PROJECT_DIR}/.env");
     }
     expect(plugin.mcpServers.crawl.env.AWESOME_SEO_DATA_DIR).toBe("${CLAUDE_PROJECT_DIR}/data");
+    expect(plugin.mcpServers.crawl.env.AWESOME_SEO_ENV_FILE).toBe("${CLAUDE_PROJECT_DIR}/.env");
   });
 
   it("gates every write tool and only write tools", () => {

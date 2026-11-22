@@ -16,6 +16,7 @@ import httpx
 from mcp.server.fastmcp import FastMCP
 
 from crawl_server.access import check_access
+from crawl_server.env import load_project_env
 from crawl_server.fetch import crawl_pages, fetch_single
 from crawl_server.render import RENDER_WARNING
 from crawl_server.sitemap import DATA_DIR_ENV, DEFAULT_URL_CAP, MAX_URL_CAP, discover_sitemap, resolve_output_path
@@ -180,6 +181,7 @@ def crawl_check_access(site_root: str, sample_urls: list[str]) -> dict[str, Any]
 
 
 def main() -> None:
+    load_project_env()  # contact URL and Chrome path from the project .env
     mcp.run(transport="stdio")
 
 
