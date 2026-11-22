@@ -32,7 +32,6 @@ function cli(args: string[]) {
   return spawnSync("node", [CLI, ...args], { env: { ...process.env, AWESOME_SEO_DB: dbPath }, encoding: "utf8" });
 }
 
-const accessRowCount = () => (store.sqlite.prepare("SELECT COUNT(*) AS n FROM observations WHERE metric IN ('robots_readable','llms_txt_valid','ai_blocked_urls')").get() as { n: number }).n;
 
 describe("awesome-seo CLI", () => {
   it("migrates an empty database to the current schema version", () => {
@@ -45,67 +44,6 @@ describe("awesome-seo CLI", () => {
     // Then
     expect(r.status).toBe(0);
     expect(JSON.parse(r.stdout)).toMatchObject({ ok: true, schemaVersion: 4 });
-  });
-
-  it("access-ingest stores robots, llms.txt and per-agent block counts for a seeded site", () => {
-    // Given: a seeded site and an access report
-
-    // When
-    const r = cli(["access-ingest", "--origin", ORIGIN, ACCESS_FIXTURE]);
-
-    // Then
-    expect(r.status).toBe(0);
-    expect(JSON.parse(r.stdout)).toMatchObject({ ok: true, origin: ORIGIN, observations: 12 });
-    expect(accessRowCount()).toBe(12);
-  });
-
-  it("access-ingest is idempotent: ingesting the same report twice keeps the same rows", () => {
-    // Given: the report was already ingested once
-    expect(cli(["access-ingest", "--origin", ORIGIN, ACCESS_FIXTURE]).status).toBe(0);
-
-    // When
-    const r = cli(["access-ingest", "--origin", ORIGIN, ACCESS_FIXTURE]);
-
-    // Then
-    expect(r.status).toBe(0);
-    expect(accessRowCount()).toBe(12);
-  });
-
-  it("access-ingest prints usage when the origin or the file is missing", () => {
-    // Given: no origin
-
-    // When
-    const r = cli(["access-ingest", ACCESS_FIXTURE]);
-
-    // Then
-    expect(r.status).toBe(1);
-    expect(r.stderr).toContain("Usage: awesome-seo access-ingest --origin");
-  });
-
-  it("access-ingest refuses a site that was never seeded", () => {
-    // Given: an origin with no site row
-
-    // When
-    const r = cli(["access-ingest", "--origin", "https://other.example", ACCESS_FIXTURE]);
-
-    // Then
-    expect(r.status).toBe(1);
-    expect(r.stderr).toContain("No seeded site for https://other.example");
-    expect(accessRowCount()).toBe(0);
-  });
-
-  it("access-ingest rejects a file that is not an access report and stores nothing", () => {
-    // Given: a JSON file with the wrong shape
-    const bad = join(dir, "bad.json");
-    writeFileSync(bad, JSON.stringify({ hello: "world" }));
-
-    // When
-    const r = cli(["access-ingest", "--origin", ORIGIN, bad]);
-
-    // Then
-    expect(r.status).toBe(1);
-    expect(r.stderr).toContain("Error:");
-    expect(accessRowCount()).toBe(0);
   });
 
   it("geo-audit with --access reports crawler access as checked", () => {
@@ -214,6 +152,30 @@ describe("awesome-seo CLI", () => {
     expect(r.stdout).toContain("- Added: 1. Removed: 1. lastmod changed: 0.");
     expect(r.stdout).toContain("https://example.com/c — in the newer snapshot only");
     expect(r.stdout).toContain("https://example.com/b — in the older snapshot only");
+  });
+
+  it("geo-audit --access twice keeps the same stored access rows (idempotent)", () => {
+    ingestCrawlJsonl(store, "s1", CRAWL_FIXTURE, null);
+    expect(cli(["geo-audit", "--origin", ORIGIN, "--access", ACCESS_FIXTURE]).status).toBe(0);
+    const rows = () => (store.sqlite.prepare("SELECT COUNT(*) AS n FROM observations WHERE metric IN ('robots_readable','llms_txt_valid','ai_blocked_urls')").get() as { n: number }).n;
+    const first = rows();
+
+    expect(cli(["geo-audit", "--origin", ORIGIN, "--access", ACCESS_FIXTURE]).status).toBe(0);
+
+    expect(first).toBe(12);
+    expect(rows()).toBe(first);
+  });
+
+  it("geo-audit --access rejects a file that is not an access report and stores nothing", () => {
+    ingestCrawlJsonl(store, "s1", CRAWL_FIXTURE, null);
+    const bad = join(dir, "bad.json");
+    writeFileSync(bad, JSON.stringify({ hello: "world" }));
+
+    const r = cli(["geo-audit", "--origin", ORIGIN, "--access", bad]);
+
+    expect(r.status).toBe(1);
+    expect(r.stderr).toContain("Error:");
+    expect((store.sqlite.prepare("SELECT COUNT(*) AS n FROM observations WHERE metric = 'ai_blocked_urls'").get() as { n: number }).n).toBe(0);
   });
 
   it("geo-audit without a crawl run fails with guidance to run the crawl first", () => {
