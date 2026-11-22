@@ -82,6 +82,7 @@ type Row = {
   structured_data_json: string | null;
   robots_allowed: number | null;
   canonical: string | null;
+  errors_json: string | null;
   jsonld_syntax_errors: number | null;
   fetched_at: string;
 };
@@ -90,7 +91,7 @@ export function deriveCrawlObservations(store: Store, siteId: string, runId: str
   const rows = store.sqlite
     .prepare(
       `SELECT r.id, p.url, r.status, r.word_count, r.headings_json, r.structured_data_json,
-              r.robots_allowed, r.canonical, r.jsonld_syntax_errors, r.fetched_at
+              r.robots_allowed, r.canonical, r.jsonld_syntax_errors, r.fetched_at, r.errors_json
        FROM crawl_results r JOIN pages p ON p.id = r.page_id WHERE r.run_id = ?`,
     )
     .all(runId) as Row[];
@@ -103,24 +104,30 @@ export function deriveCrawlObservations(store: Store, siteId: string, runId: str
       const nodes = expandNodes(items);
       const h1 = headings.filter((h) => h.level === 1).length;
       const skip = headings.some((h, i) => i > 0 && h.level - (headings[i - 1]?.level ?? h.level) > 1) ? 1 : 0;
+      // HTML-derived measurements apply to HTML pages only: a fetched text or PDF file has no headings or word count.
+      const notHtml = (JSON.parse(row.errors_json ?? "[]") as { code: string }[]).some((e) => e.code === "NOT_HTML");
+      const html = row.status === 200 && !notHtml;
+      // A page whose static HTML has no text is usually rendered by JavaScript. Its text and heading checks would be wrong.
+      const textEmpty = html && !row.word_count;
       const values: Record<string, number | null> = {
         robots_blocked: row.robots_allowed === null ? null : row.robots_allowed === 0 ? 1 : 0, // null: unknown
         http_error: row.status !== null && row.status >= 400 ? 1 : 0,
-        word_count: row.status === 200 ? row.word_count : null,
-        h1_count: row.status === 200 ? h1 : null,
-        heading_skip: row.status === 200 ? skip : null,
-        structured_items: row.status === 200 ? items.length : null,
-        has_author: row.status === 200 && isArticlePage(nodes) ? (nodes.some((i) => "author" in i.item) ? 1 : 0) : null,
+        word_count: html && !textEmpty ? row.word_count : null,
+        h1_count: html && !textEmpty ? h1 : null,
+        heading_skip: html && !textEmpty ? skip : null,
+        structured_items: html ? items.length : null,
+        has_author: html && isArticlePage(nodes) ? (nodes.some((i) => "author" in i.item) ? 1 : 0) : null,
         has_date:
-          row.status === 200 && isArticlePage(nodes)
+          html && isArticlePage(nodes)
             ? nodes.some((i) => "datePublished" in i.item || "dateModified" in i.item)
               ? 1
               : 0
             : null,
-        has_faqpage: row.status === 200 ? (hasJsonLdType(nodes, "FAQPage") ? 1 : 0) : null,
-        missing_recommended_props: row.status === 200 ? missingRecommended(nodes) : null,
-        jsonld_syntax_errors: row.status === 200 ? row.jsonld_syntax_errors : null,
-        canonical_missing: row.status === 200 ? (row.canonical ? 0 : 1) : null,
+        static_text_empty: html ? (textEmpty ? 1 : 0) : null, // 1: no text in the static HTML, likely rendered by JavaScript
+        has_faqpage: html ? (hasJsonLdType(nodes, "FAQPage") ? 1 : 0) : null,
+        missing_recommended_props: html ? missingRecommended(nodes) : null,
+        jsonld_syntax_errors: html ? row.jsonld_syntax_errors : null,
+        canonical_missing: html ? (row.canonical ? 0 : 1) : null,
       };
       for (const [metric, value] of Object.entries(values)) {
         const observationId = id(siteId, "crawl", metric, "page", row.url, runId);

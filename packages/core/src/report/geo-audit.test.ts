@@ -95,6 +95,7 @@ describe("buildGeoReport", () => {
     expect(report).toContain("AI crawler GPTBot is blocked on 9 of 9 sampled URLs");
     expect(report).toMatch(/### 1 page\(s\) with invalid JSON-LD[\s\S]*Basis: measured/);
     expect(report).toMatch(/### \d+ page\(s\) under 300 words[\s\S]*Basis: inferred/);
+    expect(report).toMatch(/### \d+ page\(s\) under 300 words\n- Severity: low\. Confidence: low\. Basis: inferred\./);
     expect(report).toContain("Syntax errors (JSON-LD does not parse):\n- https://example.com/bad-jsonld.html");
     expect(report).toContain("## Evidence check");
     expect(report).toMatch(/Dropped: 0\./);
@@ -241,5 +242,44 @@ describe("access results stored more than once", () => {
     const gpt = report.split("\n").filter((l) => l.startsWith("- GPTBot:"));
     expect(gpt).toEqual(["- GPTBot: blocked 0 of 5"]);
     expect(report.match(/- GPTBot:/g)?.length).toBe(1);
+  });
+});
+
+
+describe("pages with no extractable text in the static HTML", () => {
+  const shell = (url: string, over: Record<string, unknown> = {}) => JSON.stringify({
+    run_id: "shell-run", fetched_at: "2026-11-05T10:00:00.000Z", url, status: 200, final_url: url, redirect_chain: [],
+    content_type: "text/html", title: "T", meta_description: null, canonical: url, lang: "tr", hreflang: [],
+    headings: [], word_count: 0, content_hash: "sha256:s", structured_data: [], jsonld_syntax_errors: 0,
+    robots_allowed: true, raw_html_path: null, errors: [], ...over,
+  });
+  const good = shell("https://example.com/ok", { headings: [{ level: 1, text: "H" }], word_count: 500 });
+  const txt = shell("https://example.com/agents.md", { content_type: "text/plain", errors: [{ code: "NOT_HTML", message: "not HTML", retryable: false }] });
+  const run = [shell("https://example.com/app"), good, txt].join("\n");
+
+  it("does not report a JavaScript-rendered shell as thin content or as missing an H1, and says so in Missing data", () => {
+    // Given: one page with no text and no headings in the static HTML, one normal page, one non-HTML file
+    ingestCrawlJsonl(store, SITE_ID, run, null);
+    deriveCrawlObservations(store, SITE_ID, "shell-run");
+
+    // When
+    const report = buildGeoReport(store, { siteId: SITE_ID, origin: ORIGIN, runId: "shell-run" });
+
+    // Then: no thin-content or H1 finding, and the gap is listed
+    expect(report).not.toContain("under 300 words");
+    expect(report).not.toContain("without exactly one H1");
+    const missing = report.slice(report.indexOf("## Missing data"), report.indexOf("## Limitations"));
+    expect(missing).toContain("- 1 page(s) returned no text in the static HTML (likely rendered by JavaScript)");
+    expect(missing).toContain("render=true");
+  });
+
+  it("leaves a non-HTML file out of every HTML-derived measurement", () => {
+    ingestCrawlJsonl(store, SITE_ID, run, null);
+    deriveCrawlObservations(store, SITE_ID, "shell-run");
+
+    const rows = store.sqlite.prepare(
+      "SELECT COUNT(*) AS n FROM observations WHERE source = 'crawl' AND entity_id = ? AND metric IN ('h1_count','word_count','heading_skip','has_faqpage','canonical_missing')",
+    ).get("https://example.com/agents.md") as { n: number };
+    expect(rows.n).toBe(0);
   });
 });

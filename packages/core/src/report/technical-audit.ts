@@ -15,6 +15,7 @@ type Row = {
   canonical: string | null;
   hreflang: string | null;
   headings: string | null;
+  words: number | null;
   errors: string | null;
 };
 
@@ -27,7 +28,7 @@ function rowsFor(store: Store, runId: string): Row[] {
   return store.sqlite
     .prepare(
       `SELECT r.id AS id, p.url AS url, r.status AS status, r.final_url AS finalUrl, r.redirect_chain_json AS redirect,
-              r.title AS title, r.canonical AS canonical, r.hreflang_json AS hreflang, r.headings_json AS headings,
+              r.title AS title, r.canonical AS canonical, r.hreflang_json AS hreflang, r.headings_json AS headings, r.word_count AS words,
               r.errors_json AS errors
        FROM crawl_results r JOIN pages p ON p.id = r.page_id WHERE r.run_id = ? ORDER BY p.url`,
     )
@@ -92,7 +93,9 @@ export function buildTechnicalReport(store: Store, input: TechnicalInput): strin
   const alternateTotal = hreflangPages.reduce((n, x) => n + x.alternates.length, 0);
 
   // Headings: no h1 on a fetched 200 page
-  const noH1 = ok.filter((r) => !parseArray<{ level: number }>(r.headings).some((h) => h.level === 1));
+  // A page with no text in the static HTML is usually rendered by JavaScript; its headings are unknown, not missing.
+  const noText = ok.filter((r) => !r.words);
+  const noH1 = ok.filter((r) => r.words && !parseArray<{ level: number }>(r.headings).some((h) => h.level === 1));
 
   const crawled = new Set(rows.map((r) => r.url));
   const notCrawled = [...new Set(input.searchPages ?? [])].filter((u) => !crawled.has(u)).sort();
@@ -160,6 +163,12 @@ export function buildTechnicalReport(store: Store, input: TechnicalInput): strin
     "## Missing data",
     ...(robotsUnknown.length > 0
       ? [`- Robots status unknown for ${robotsUnknown.length} URL(s) (ROBOTS_UNAVAILABLE). Access is unknown; these are not treated as allowed or blocked.`]
+      : []),
+    ...(noText.length > 0
+      ? [`- ${noText.length} page(s) returned no text in the static HTML (likely rendered by JavaScript). Their headings are unknown, so they are not counted as missing an h1. Crawl them again with render=true.`]
+      : []),
+    ...(input.searchPages && notCrawled.length > 0
+      ? [`- ${notCrawled.length} Search Console page(s) were not crawled, so their status, redirects and canonical are unknown.`]
       : []),
     ...(notHtml.length > 0 ? [`- ${notHtml.length} URL(s) are not HTML (NOT_HTML): no on-page fields for them.`] : []),
     ...(extractFailed.length > 0 ? [`- ${extractFailed.length} URL(s) failed extraction (EXTRACT_FAILED): no on-page fields for them.`] : []),

@@ -134,6 +134,22 @@ describe("buildTechnicalReport", () => {
     expect(section(report(), "Coverage")).toContain("- Search Console pages not in this crawl run: not checked (no Search Console file given).");
   });
 
+  it("does not report a page with no static text as missing an h1, and lists it under Missing data", () => {
+    const shell = record(`${ORIGIN}/app`, { run_id: "shell-run", word_count: 0, headings: [] });
+    ingestCrawlJsonl(store, SITE_ID, shell, null);
+
+    const out = buildTechnicalReport(store, { siteId: SITE_ID, origin: ORIGIN, runId: "shell-run" });
+
+    expect(section(out, "Headings")).toContain("- 200 pages with no h1: 0.");
+    expect(section(out, "Missing data")).toContain("- 1 page(s) returned no text in the static HTML (likely rendered by JavaScript)");
+  });
+
+  it("lists the number of Search Console pages that were not crawled under Missing data", () => {
+    const out = buildTechnicalReport(store, { siteId: SITE_ID, origin: ORIGIN, runId: RUN, searchPages: [`${ORIGIN}/gone-1`, `${ORIGIN}/gone-2`] });
+
+    expect(section(out, "Missing data")).toContain("- 2 Search Console page(s) were not crawled, so their status, redirects and canonical are unknown.");
+  });
+
   it("keeps a run completed when its only non-HTML URL was fetched", () => {
     const textOnly = record(`${ORIGIN}/readme.txt`, { run_id: "text-run", content_type: "text/plain", errors: [{ code: "NOT_HTML", message: "not HTML", retryable: false }] });
     ingestCrawlJsonl(store, SITE_ID, textOnly, null);

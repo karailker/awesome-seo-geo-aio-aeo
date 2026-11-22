@@ -85,6 +85,8 @@ export function buildGeoReport(store: Store, input: GeoReportInput): string {
   const llms = sites.find((s) => s.metric === "llms_txt_valid" && inLatestAccess(s));
   const accessChecked = accessAgents.length > 0 || robotsRow !== undefined;
 
+  const emptyTextPages = new Set(pick(pages, "static_text_empty", (v) => v === 1).map((p) => p.entityId)).size;
+
   // Findings
   const thin = pick(pages, "word_count", (v) => v < THIN_CONTENT_WORDS);
   const noAuthor = pick(pages, "has_author", (v) => v === 0);
@@ -97,7 +99,7 @@ export function buildGeoReport(store: Store, input: GeoReportInput): string {
 
   const candidates: Finding[] = [];
   if (thin.length) candidates.push(finding("geo-thin-content", `${new Set(thin.map((t) => t.entityId)).size} page(s) under ${THIN_CONTENT_WORDS} words`, "low",
-    "Word count is a proxy for citable content depth. Project threshold; the count itself is measured.", thin, "inferred", "medium"));
+    "Word count is a proxy for citable content depth. Project threshold; the count itself is measured.", thin, "inferred", "low"));
   if (noAuthor.length) candidates.push(finding("geo-no-author-signal", "Pages without an author in structured data", "low",
     "No JSON-LD item on the page has an author property. Presence check.", noAuthor, "measured"));
   if (noDate.length) candidates.push(finding("geo-no-date-signal", "Pages without a date in structured data", "low",
@@ -185,6 +187,9 @@ export function buildGeoReport(store: Store, input: GeoReportInput): string {
     ...(partialCrawl ? [`- Crawl covers ${runRow.n} of ${sitemapCount} sitemap URL(s) (URL cap ${urlCap}). Findings describe the fetched pages only.`] : []),
     ...(sitemapCount > 0 && urlCap > 0 && sitemapCount >= urlCap
       ? [`- Sitemap: ${sitemapCount} URLs equals the URL cap (${urlCap}). The sitemap may be truncated, so findings cover only the discovered URLs.`]
+      : []),
+    ...(emptyTextPages > 0
+      ? [`- ${emptyTextPages} page(s) returned no text in the static HTML (likely rendered by JavaScript). They are left out of the word count, H1 and heading checks. Crawl them again with render=true to include them.`]
       : []),
     ...(accessChecked ? [] : ["- AI crawler access and llms.txt: not checked."]),
     "",
