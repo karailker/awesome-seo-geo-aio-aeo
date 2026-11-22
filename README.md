@@ -101,6 +101,8 @@ corepack pnpm -r test         # Vitest
 cd mcp-servers/crawl && uv sync && uv run pytest
 ```
 
+One command checks everything: `corepack pnpm verify` (build, typecheck, all tests including the plugin structure checks, and the crawler tests). Before a release run `corepack pnpm release:check`: it checks versions, npm state, packed dependencies, the tag and the git state, and prints the publish commands without an OTP.
+
 Repo scripts: `pnpm db:migrate`, `pnpm db:seed`, `pnpm sitemap:ingest`, `pnpm crawl:ingest`, `pnpm seo:audit`, `pnpm geo:audit`, `pnpm approval` (they run `packages/core/dist/cli.js`).
 
 Layout:

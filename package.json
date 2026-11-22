@@ -16,6 +16,8 @@
     "crawl:ingest": "node packages/core/dist/cli.js crawl-ingest",
     "seo:audit": "node packages/core/dist/cli.js seo-audit",
     "geo:audit": "node packages/core/dist/cli.js geo-audit",
-    "approval": "node packages/core/dist/cli.js approval"
+    "approval": "node packages/core/dist/cli.js approval",
+    "verify": "corepack pnpm -r build && corepack pnpm -r typecheck && corepack pnpm -r test && cd mcp-servers/crawl && uv run pytest -q",
+    "release:check": "node scripts/release-check.mjs"
   }
 }
