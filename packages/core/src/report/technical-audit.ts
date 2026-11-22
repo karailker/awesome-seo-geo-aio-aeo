@@ -70,7 +70,14 @@ function listLines(items: Problem[]): string[] {
   return shown.length > 0 ? shown : ["- none"];
 }
 
+// A counted fact for summaries. Only non-zero facts are returned. Severities are project-defined.
+export type TechnicalFact = { id: string; title: string; count: number; severity: "info" | "low" | "medium" };
+
 export function buildTechnicalReport(store: Store, input: TechnicalInput): string {
+  return buildTechnicalAudit(store, input).report;
+}
+
+export function buildTechnicalAudit(store: Store, input: TechnicalInput): { report: string; facts: TechnicalFact[] } {
   const runIds = [input.runId, ...(input.extraRunIds ?? [])];
   const rows = rowsFor(store, runIds);
   const fetched = rows.filter(isFetched);
@@ -205,5 +212,16 @@ export function buildTechnicalReport(store: Store, input: TechnicalInput): strin
     `- ${blocked.length} URL(s) were robots-blocked and not fetched. They are not counted as missing.`,
     "",
   ];
-  return lines.join("\n");
+  const facts: TechnicalFact[] = [
+    { id: "technical-status-problems", title: "URL(s) returned an error status", count: statusProblems.length, severity: "medium" as const },
+    { id: "technical-search-pages-not-crawled", title: "Search Console page(s) were not crawled", count: input.searchPages ? notCrawled.length : 0, severity: "medium" as const },
+    { id: "technical-canonical-missing", title: "page(s) have no canonical", count: canonicalMissing.length, severity: "low" as const },
+    { id: "technical-canonical-differs", title: "page(s) have a canonical that differs from the final URL", count: canonicalMismatch.length, severity: "low" as const },
+    { id: "technical-titles-shared", title: "title(s) are shared by more than one URL", count: shared.length, severity: "low" as const },
+    { id: "technical-title-missing", title: "page(s) have no title", count: titleMissing.length, severity: "low" as const },
+    { id: "technical-no-h1", title: "page(s) have no h1", count: noH1.length, severity: "low" as const },
+    { id: "technical-static-text-empty", title: "page(s) returned no static text (likely rendered by JavaScript)", count: noText.length, severity: "info" as const },
+    { id: "technical-redirects", title: "URL(s) redirect", count: redirected.length, severity: "info" as const },
+  ].filter((f) => f.count > 0);
+  return { report: lines.join("\n"), facts };
 }

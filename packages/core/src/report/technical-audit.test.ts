@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { openStore, upsertSite, type Store } from "../db/store.js";
 import { ingestCrawlJsonl } from "../ingest/crawl.js";
-import { buildTechnicalReport } from "./technical-audit.js";
+import { buildTechnicalAudit, buildTechnicalReport } from "./technical-audit.js";
 
 const SITE_ID = "site-1";
 const ORIGIN = "https://example.com";
@@ -205,5 +205,20 @@ describe("buildTechnicalReport", () => {
 
   it("marks the run partial when any URL failed", () => {
     expect(report()).toContain("- URLs in the run: 6. Run status: partial (some URLs failed).");
+  });
+});
+
+
+describe("buildTechnicalAudit", () => {
+  it("returns the report and the counted facts with a severity, for summaries", () => {
+    const audit = buildTechnicalAudit(store, { siteId: SITE_ID, origin: ORIGIN, runId: RUN, searchPages: [`${ORIGIN}/gone-1`] });
+
+    expect(audit.report).toBe(buildTechnicalReport(store, { siteId: SITE_ID, origin: ORIGIN, runId: RUN, searchPages: [`${ORIGIN}/gone-1`] }));
+    const byId = Object.fromEntries(audit.facts.map((f) => [f.id, f]));
+    expect(byId["technical-status-problems"]).toMatchObject({ count: 1, severity: "medium" });
+    expect(byId["technical-canonical-missing"]).toMatchObject({ count: 1, severity: "low" });
+    expect(byId["technical-titles-shared"]).toMatchObject({ count: 1 });
+    expect(byId["technical-search-pages-not-crawled"]).toMatchObject({ count: 1, severity: "medium" });
+    expect(audit.facts.every((f) => f.count > 0)).toBe(true);
   });
 });

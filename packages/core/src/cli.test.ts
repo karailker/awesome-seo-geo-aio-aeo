@@ -178,6 +178,93 @@ describe("awesome-seo CLI", () => {
     expect((store.sqlite.prepare("SELECT COUNT(*) AS n FROM observations WHERE metric = 'ai_blocked_urls'").get() as { n: number }).n).toBe(0);
   });
 
+  it("config --init writes a template and config prints the resolved sources", () => {
+    const file = join(dir, "awesome-seo.json");
+
+    const init = cli(["config", "--init", "--origin", "https://www.example.com", "--file", file]);
+    const show = cli(["config", "--file", file]);
+
+    expect(init.status).toBe(0);
+    expect(show.status).toBe(0);
+    const resolved = JSON.parse(show.stdout) as { origin: string; sitemap: string; sources: { gsc: { property: string }; ga4: { enabled: boolean } } };
+    expect(resolved.origin).toBe("https://www.example.com");
+    expect(resolved.sitemap).toBe("https://www.example.com/sitemap.xml");
+    expect(resolved.sources.gsc.property).toBe("sc-domain:example.com");
+    expect(resolved.sources.ga4.enabled).toBe(false);
+  });
+
+  it("config says how to create the file when it is missing, and names the bad key when it is invalid", () => {
+    const missing = cli(["config", "--file", join(dir, "nope.json")]);
+    const bad = join(dir, "bad.json");
+    writeFileSync(bad, JSON.stringify({ origin: "https://example.com", ga4: { propertyId: "abc" } }));
+    const invalid = cli(["config", "--file", bad]);
+
+    expect(missing.status).toBe(1);
+    expect(missing.stderr).toContain("awesome-seo config --init --origin");
+    expect(invalid.status).toBe(1);
+    expect(invalid.stderr).toContain("ga4.propertyId");
+  });
+
+  it("audit prints one report: needs attention, missing data and the three reports", () => {
+    ingestCrawlJsonl(store, "s1", CRAWL_FIXTURE, null);
+    const gsc = resolve(__dirname, "../tests/fixtures/gsc/period-run.jsonl");
+
+    const r = cli(["audit", "--origin", ORIGIN, "--mode", "quick", "--start", "2026-10-01", "--end", "2026-10-31", "--gsc", gsc, "--access", ACCESS_FIXTURE]);
+
+    expect(r.status).toBe(0);
+    expect(r.stdout).toContain("# Site audit: https://example.com");
+    expect(r.stdout).toContain("- Mode: quick.");
+    expect(r.stdout).toContain("## Needs attention");
+    expect(r.stdout).toContain("# Technical audit:");
+    expect(r.stdout).toContain("# GEO / AIO / AEO audit:");
+    expect(r.stdout).toContain("# SEO audit:");
+  });
+
+  it("audit without a period still reports the crawl and says the search part is missing", () => {
+    ingestCrawlJsonl(store, "s1", CRAWL_FIXTURE, null);
+
+    const r = cli(["audit", "--origin", ORIGIN]);
+
+    expect(r.status).toBe(0);
+    expect(r.stdout).toContain("- Mode: deep.");
+    expect(r.stdout).toContain("no period given, so the search part was not built");
+  });
+
+  it("audit rejects an unknown mode and a missing crawl run", () => {
+    expect(cli(["audit", "--origin", ORIGIN, "--mode", "fast"]).stderr).toContain("--mode must be quick or deep");
+    expect(cli(["audit", "--origin", ORIGIN]).stderr).toContain("No crawl run found for this site");
+  });
+
+  it("render-urls lists the text-less pages of a run and crawl-merge folds a rendered crawl into it", () => {
+    // Given: a base run with one JavaScript shell
+    const base = JSON.parse(CRAWL_FIXTURE.split("\n")[0] as string);
+    const shell = { ...base, run_id: "base-run", url: "https://example.com/app", final_url: "https://example.com/app", word_count: 0, headings: [], rendered: false, errors: [], status: 200 };
+    const ok = { ...base, run_id: "base-run", url: "https://example.com/ok", final_url: "https://example.com/ok", word_count: 300, rendered: false, errors: [], status: 200 };
+    const baseFile = join(dir, "base.jsonl");
+    writeFileSync(baseFile, [shell, ok].map((r) => JSON.stringify(r)).join("\n"));
+    ingestCrawlJsonl(store, "s1", readFileSync(baseFile, "utf8"), null);
+    const urlsFile = join(dir, "render-input.jsonl");
+
+    // When: the render candidates are listed
+    const list = cli(["render-urls", "--origin", ORIGIN, "--run", "base-run", "--out", urlsFile]);
+
+    // Then: only the shell is listed
+    expect(list.status).toBe(0);
+    expect(JSON.parse(list.stdout)).toMatchObject({ ok: true, toRender: 1 });
+    expect(readFileSync(urlsFile, "utf8").trim().split("\n").map((l) => JSON.parse(l).url)).toEqual(["https://example.com/app"]);
+
+    // And: a rendered crawl of it is merged into the base under a new run id
+    const patchFile = join(dir, "patch.jsonl");
+    writeFileSync(patchFile, JSON.stringify({ ...shell, run_id: "patch", word_count: 700, headings: [{ level: 1, text: "H" }], rendered: true }));
+    const mergedFile = join(dir, "merged.jsonl");
+    const merge = cli(["crawl-merge", "--base", baseFile, "--patch", patchFile, "--out", mergedFile, "--run-id", "base-run-rendered"]);
+
+    expect(merge.status).toBe(0);
+    const merged = readFileSync(mergedFile, "utf8").trim().split("\n").map((l) => JSON.parse(l));
+    expect(merged.map((m) => m.run_id)).toEqual(["base-run-rendered", "base-run-rendered"]);
+    expect(merged.find((m) => m.url.endsWith("/app"))).toMatchObject({ word_count: 700, rendered: true });
+  });
+
   it("geo-audit without a crawl run fails with guidance to run the crawl first", () => {
     // Given: a seeded site with no crawl run
 

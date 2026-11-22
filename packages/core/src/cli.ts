@@ -8,6 +8,7 @@ import { parseArgs, type ParseArgsConfig } from "node:util";
 import {
   ACTION_TYPES,
   buildCrawlDiff,
+  buildFullAudit,
   buildTechnicalReport,
   approveProposal,
   buildGeoReport,
@@ -24,9 +25,13 @@ import {
   ingestMetricaJsonl,
   ingestSitemapJsonl,
   ingestYandexWebmasterJsonl,
+  initConfig,
+  mergeCrawl,
   readSearchPages,
+  resolveConfig,
   renderSitemapDiff,
   uncrawledUrls,
+  urlsNeedingRender,
   normalizeUrl,
   openStore,
   recordExecution,
@@ -114,6 +119,19 @@ function cmdIngest(kind: "sitemap" | "crawl", args: string[]): void {
 }
 
 // ---- reports
+// Loads the search-source files given on the command line into the store (idempotent).
+type FeedValues = { gsc?: string[]; ga4?: string[]; metrica?: string[]; bing?: string[]; yandex?: string[] };
+function feedSearchInputs(store: Store, siteId: string, origin: string, values: FeedValues): void {
+  const feed: [string[] | undefined, (s: string, text: string) => unknown][] = [
+    [values.gsc, (s, t) => ingestGscJsonl(store, s, t)],
+    [values.ga4, (s, t) => ingestGa4Jsonl(store, s, origin, t)],
+    [values.metrica, (s, t) => ingestMetricaJsonl(store, s, t)],
+    [values.bing, (s, t) => ingestBingJsonl(store, s, t)],
+    [values.yandex, (s, t) => ingestYandexWebmasterJsonl(store, s, t)],
+  ];
+  for (const [files, ingest] of feed) for (const f of files ?? []) ingest(siteId, readFileSync(f, "utf8"));
+}
+
 function cmdSeoAudit(args: string[]): void {
   const { values } = parse(
     {
@@ -137,14 +155,7 @@ function cmdSeoAudit(args: string[]): void {
   const store = openStore(dbPath());
   try {
     const siteId = siteIdFor(store, origin);
-    const feed: [string[] | undefined, (s: string, text: string) => unknown][] = [
-      [values.gsc as string[] | undefined, (s, t) => ingestGscJsonl(store, s, t)],
-      [values.ga4 as string[] | undefined, (s, t) => ingestGa4Jsonl(store, s, origin, t)],
-      [values.metrica as string[] | undefined, (s, t) => ingestMetricaJsonl(store, s, t)],
-      [values.bing as string[] | undefined, (s, t) => ingestBingJsonl(store, s, t)],
-      [values.yandex as string[] | undefined, (s, t) => ingestYandexWebmasterJsonl(store, s, t)],
-    ];
-    for (const [files, ingest] of feed) for (const f of files ?? []) ingest(siteId, readFileSync(f, "utf8"));
+    feedSearchInputs(store, siteId, origin, values as FeedValues);
     console.log(buildSeoAuditReport(store, { siteId, origin, periodStart: values.start as string, periodEnd: values.end as string }));
   } finally {
     store.close();
@@ -173,6 +184,105 @@ function cmdTechnicalAudit(args: string[]): void {
   } finally {
     store.close();
   }
+}
+
+// One report for the whole site: technical, GEO / AIO / AEO and SEO, with one ranked list and one Missing data list.
+function cmdAudit(args: string[]): void {
+  const { values } = parse(
+    {
+      options: {
+        origin: { type: "string" }, mode: { type: "string" }, start: { type: "string" }, end: { type: "string" },
+        run: { type: "string", multiple: true }, access: { type: "string" },
+        gsc: { type: "string", multiple: true }, ga4: { type: "string", multiple: true }, metrica: { type: "string", multiple: true },
+        bing: { type: "string", multiple: true }, yandex: { type: "string", multiple: true },
+      },
+    },
+    args,
+  );
+  if (!values.origin) fail("Usage: awesome-seo audit --origin https://example.com [--mode quick|deep] [--start YYYY-MM-DD --end YYYY-MM-DD] [--run <run_id> ...] [--access file.json] [--gsc f] [--ga4 f] [--metrica f] [--bing f] [--yandex f]");
+  const mode = (values.mode as string | undefined) ?? "deep";
+  if (mode !== "quick" && mode !== "deep") fail("--mode must be quick or deep");
+  const start = values.start as string | undefined;
+  const end = values.end as string | undefined;
+  if ((start || end) && (!start || !end || !DATE.test(start) || !DATE.test(end))) fail("--start and --end must both be given as YYYY-MM-DD");
+  const origin = originOf(values.origin as string);
+  const store = openStore(dbPath());
+  try {
+    const siteId = siteIdFor(store, origin);
+    const requested = (values.run as string[] | undefined) ?? [];
+    for (const id of requested) {
+      if (!store.sqlite.prepare("SELECT 1 FROM crawl_runs WHERE id = ? AND site_id = ?").get(id, siteId)) fail(`Crawl run not found for this site: ${id}`);
+    }
+    const main = requested.length > 0
+      ? { id: requested[0] as string }
+      : (store.sqlite.prepare("SELECT id FROM crawl_runs WHERE site_id = ? ORDER BY url_count DESC, started_at DESC LIMIT 1").get(siteId) as { id: string } | undefined);
+    if (!main) fail("No crawl run found for this site. Run /crawl-run first.");
+    if (values.access) ingestAccessReport(store, siteId, readFileSync(values.access as string, "utf8"));
+    deriveCrawlObservations(store, siteId, main.id);
+    feedSearchInputs(store, siteId, origin, values as FeedValues);
+    const gsc = (values.gsc as string[] | undefined) ?? [];
+    const searchPages = gsc.length > 0 ? readSearchPages(gsc.map((f) => readFileSync(f, "utf8"))) : undefined;
+    console.log(buildFullAudit(store, { siteId, origin, runId: main.id, extraRunIds: requested.slice(1), mode, periodStart: start, periodEnd: end, searchPages }).report);
+  } finally {
+    store.close();
+  }
+}
+
+// Pages of a crawl run that returned no text in the static HTML, written as crawl input for a render=true crawl.
+function cmdRenderUrls(args: string[]): void {
+  const { values } = parse({ options: { origin: { type: "string" }, run: { type: "string" }, out: { type: "string" } } }, args);
+  if (!values.origin) fail("Usage: awesome-seo render-urls --origin https://example.com [--run <run_id>] [--out data/snapshots/render-urls.jsonl]");
+  const origin = originOf(values.origin as string);
+  const outFile = (values.out as string | undefined) ?? "data/snapshots/render-urls.jsonl";
+  const store = openStore(dbPath());
+  try {
+    const siteId = siteIdFor(store, origin);
+    const run = values.run
+      ? (store.sqlite.prepare("SELECT id FROM crawl_runs WHERE id = ? AND site_id = ?").get(values.run, siteId) as { id: string } | undefined)
+      : (store.sqlite.prepare("SELECT id FROM crawl_runs WHERE site_id = ? ORDER BY url_count DESC, started_at DESC LIMIT 1").get(siteId) as { id: string } | undefined);
+    if (!run) fail("No crawl run found for this site. Run /crawl-run first.");
+    const urls = urlsNeedingRender(store, siteId, run.id);
+    mkdirSync(dirname(outFile), { recursive: true });
+    writeFileSync(outFile, urls.map((url) => `${JSON.stringify({ url, source: "render" })}\n`).join(""), "utf8");
+    out({ ok: true, origin, run: run.id, file: outFile, toRender: urls.length });
+  } finally {
+    store.close();
+  }
+}
+
+// Folds a rendered crawl (the patch) into a base crawl file; the result is one new run to ingest.
+function cmdCrawlMerge(args: string[]): void {
+  const { values } = parse({ options: { base: { type: "string" }, patch: { type: "string" }, out: { type: "string" }, "run-id": { type: "string" } } }, args);
+  if (!values.base || !values.patch || !values.out || !values["run-id"]) fail("Usage: awesome-seo crawl-merge --base <run.jsonl> --patch <rendered.jsonl> --out <merged.jsonl> --run-id <new_run_id>");
+  const merged = mergeCrawl(readFileSync(values.base as string, "utf8"), readFileSync(values.patch as string, "utf8"), values["run-id"] as string);
+  mkdirSync(dirname(values.out as string), { recursive: true });
+  writeFileSync(values.out as string, `${merged}\n`, "utf8");
+  out({ ok: true, file: values.out, runId: values["run-id"], records: merged.split("\n").length });
+}
+
+// Project configuration (awesome-seo.json): identifiers of the sources, never secrets.
+function cmdConfig(args: string[]): void {
+  const { values } = parse({ options: { file: { type: "string" }, init: { type: "boolean" }, origin: { type: "string" } } }, args);
+  const file = (values.file as string | undefined) ?? "awesome-seo.json";
+  if (values.init) {
+    if (!values.origin) fail("Usage: awesome-seo config --init --origin https://example.com [--file awesome-seo.json]");
+    initConfig(file, originOf(values.origin as string));
+    out({ ok: true, file, created: true });
+    return;
+  }
+  let text: string;
+  try {
+    text = readFileSync(file, "utf8");
+  } catch {
+    fail(`No ${file} found. Create it with: awesome-seo config --init --origin https://example.com`);
+  }
+  let raw: unknown;
+  try {
+    raw = JSON.parse(text);
+  } catch {
+    fail(`${file} is not valid JSON.`);
+  }
+  out(resolveConfig(raw));
 }
 
 // Change report: two crawl runs of the site (default: the two most recent), or two sitemap snapshot files.
@@ -365,9 +475,13 @@ try {
     case "technical-audit": cmdTechnicalAudit(rest); break;
     case "gsc-urls": cmdGscUrls(rest); break;
     case "diff": cmdDiff(rest); break;
+    case "config": cmdConfig(rest); break;
+    case "audit": cmdAudit(rest); break;
+    case "render-urls": cmdRenderUrls(rest); break;
+    case "crawl-merge": cmdCrawlMerge(rest); break;
     case "approval": cmdApproval(rest); break;
     default:
-      fail("usage: awesome-seo <migrate|seed|sitemap-ingest|crawl-ingest|gsc-urls|diff|seo-audit|geo-audit|technical-audit|approval> [options]");
+      fail("usage: awesome-seo <migrate|seed|sitemap-ingest|crawl-ingest|gsc-urls|render-urls|crawl-merge|diff|config|audit|seo-audit|geo-audit|technical-audit|approval> [options]");
   }
 } catch (err) {
   console.error(`Error: ${(err as Error).message}`);

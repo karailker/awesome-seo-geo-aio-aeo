@@ -22,8 +22,11 @@ export * from "./analysis/reconcile.js";
 export * from "./report/seo-audit.js";
 export * from "./report/technical-audit.js";
 export * from "./report/diff.js";
+export * from "./report/full-audit.js";
 export * from "./env.js";
 export * from "./gsc-urls.js";
+export * from "./config.js";
+export * from "./crawl-merge.js";
 export * from "./paths.js";
 export * from "./mcp.js";
 
