@@ -32,6 +32,9 @@ export async function listProducts(getClient: MerchantClientProvider, input: { a
 }
 
 // Issues grouped by code. Each group lists the products (ID, offer ID, URL) it affects, so the report can cite them.
+// Pages read when listing issues (page_size products each). A catalogue larger than this is reported as partial.
+export const MAX_PAGES = 20;
+
 export function groupIssues(products: MerchantProduct[]) {
   const groups = new Map<string, { code: string; severity: string; description: string | null; products: { name: string; offerId: string; title: string | null; link: string | null }[] }>();
   for (const p of products) {
@@ -49,10 +52,19 @@ export async function listProductIssues(getClient: MerchantClientProvider, input
   try {
     if (input.page_size < 1 || input.page_size > MERCHANT_MAX_PAGE) throw new GscError("INVALID_INPUT", `page_size must be 1 to ${MERCHANT_MAX_PAGE}`, false);
     const acct = account(input, env);
-    const page = await (await getClient()).listProducts(acct, input.page_size);
-    const groups = groupIssues(page.products);
-    const warnings = page.nextPageToken ? [`Only the first ${page.products.length} products were read; more pages exist.`] : [];
-    return ok({ account: acct, productsRead: page.products.length, issueGroups: groups }, warnings);
+    // Follow nextPageToken so the groups cover the whole catalogue, up to MAX_PAGES pages.
+    const client = await getClient();
+    const products: MerchantProduct[] = [];
+    let token: string | undefined;
+    let pages = 0;
+    do {
+      const page = await client.listProducts(acct, input.page_size, token);
+      products.push(...page.products);
+      token = page.nextPageToken;
+      pages += 1;
+    } while (token && pages < MAX_PAGES);
+    const warnings = token ? [`Stopped after ${pages} pages (${products.length} products); more pages exist, so the issue groups are partial.`] : [];
+    return ok({ account: acct, productsRead: products.length, issueGroups: groupIssues(products) }, warnings);
   } catch (err) {
     return fail(err);
   }

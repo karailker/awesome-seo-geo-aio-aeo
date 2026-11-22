@@ -4,6 +4,7 @@ import { generateKeyPairSync } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { TokenProvider, type ServiceAccount } from "../gsc/auth.js";
 import { MERCHANT_SCOPE, MerchantClient } from "./api.js";
+import { MAX_PAGES } from "./tools.js";
 import { groupIssues, listProductIssues, listProducts } from "./tools.js";
 
 const { privateKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
@@ -71,6 +72,43 @@ describe("Merchant live response shape", () => {
     const group = (result as { data: { issueGroups: { code: string; products: { offerId: string }[] }[] } }).data.issueGroups[0];
     expect(group?.code).toBe("weapons_policy");
     expect(group?.products.map((p) => p.offerId)).toEqual(["A", "B"]);
+  });
+});
+
+describe("Merchant pagination", () => {
+  const product = (n: number) => ({
+    name: `accounts/1/products/p${n}`, offerId: `o${n}`, productAttributes: { title: `T${n}`, link: `https://shop.example/${n}` },
+    productStatus: { itemLevelIssues: [{ code: "policy", severity: "DISAPPROVED" }] },
+  });
+
+  it("reads every page of products when listing issues and reports the total read", async () => {
+    // Given: three pages of two products each, linked by nextPageToken
+    const seen: string[] = [];
+    const c = client((url) => {
+      seen.push(url);
+      const token = new URL(url).searchParams.get("pageToken");
+      if (token === null) return json({ products: [product(1), product(2)], nextPageToken: "t2" });
+      if (token === "t2") return json({ products: [product(3), product(4)], nextPageToken: "t3" });
+      return json({ products: [product(5), product(6)] });
+    });
+
+    // When
+    const result = (await listProductIssues(async () => c, { account: ACCOUNT, page_size: 2 }, env)) as { data: { productsRead: number; issueGroups: { products: unknown[] }[] }; warnings: string[] };
+
+    // Then
+    expect(seen).toHaveLength(3);
+    expect(result.data.productsRead).toBe(6);
+    expect(result.data.issueGroups[0]?.products).toHaveLength(6);
+    expect(result.warnings).toEqual([]);
+  });
+
+  it("stops at the page limit and says the result is partial", async () => {
+    const c = client(() => json({ products: [product(1)], nextPageToken: "more" }));
+
+    const result = (await listProductIssues(async () => c, { account: ACCOUNT, page_size: 1 }, env)) as { data: { productsRead: number }; warnings: string[] };
+
+    expect(result.data.productsRead).toBe(MAX_PAGES);
+    expect(result.warnings[0]).toContain("Stopped after");
   });
 });
 

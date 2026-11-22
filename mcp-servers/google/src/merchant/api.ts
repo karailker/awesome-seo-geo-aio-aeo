@@ -25,11 +25,12 @@ export class MerchantClient {
     private readonly fetchImpl: typeof fetch,
   ) {}
 
-  async listProducts(account: string, pageSize: number): Promise<{ products: MerchantProduct[]; nextPageToken?: string }> {
+  async listProducts(account: string, pageSize: number, pageToken?: string): Promise<{ products: MerchantProduct[]; nextPageToken?: string }> {
     const token = await this.tokens.getToken();
     let res: Response;
     try {
-      res = await this.fetchImpl(`${BASE}/accounts/${account}/products?pageSize=${pageSize}`, {
+      const query = new URLSearchParams({ pageSize: String(pageSize), ...(pageToken ? { pageToken } : {}) });
+      res = await this.fetchImpl(`${BASE}/accounts/${account}/products?${query}`, {
         headers: { authorization: `Bearer ${token}` },
         signal: AbortSignal.timeout(TIMEOUT_MS),
       });

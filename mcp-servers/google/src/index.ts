@@ -19,7 +19,7 @@ const CONFIG: StubServerConfig = {
   prefix: "google",
   name: "google",
   version: "0.0.1",
-  credentialVars: [KEY_VAR, "GOOGLE_MERCHANT_OAUTH_TOKEN_FILE"],
+  credentialVars: [KEY_VAR],
   tools: [
     { name: "google_health", access: "read", credentials: [] },
     { name: "google_capabilities", access: "read", credentials: [] },
