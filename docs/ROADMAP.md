@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: **Current phase: P11 (not started)**. Done: P0–P8, P10 (P9 deferred: no products; P10 live-tested, with a Yandex write blocked by a provider outage). Last change: 2026-11-06. Details per phase below; the current repo state is in `STATUS.md`.
+Status: **Current phase: P12 (in progress)**. Done: P0–P11 (P9 read-only part done and verified on the erolav Merchant account; P10 live-tested, with a Yandex write blocked by a provider outage). Added in P12 so far: `/connections-check`, `awesome-seo.json` project settings, `awesome-seo audit`, `/site-check` and `/site-audit`. Last change: 2026-11-23. Details per phase below; the current repo state is in `STATUS.md`.
 
 Update the status line when a phase is complete. Phases are sequential unless noted.
 
@@ -161,7 +161,7 @@ Done when:
 - Expired proposals cannot execute (tested)
 - Execution result is verified and logged
 
-## P11: Evaluation
+## P11: Evaluation ✅
 
 Deliverables:
 - Golden dataset: a test site with known issues and expected findings, stored under `tests/evaluation/`

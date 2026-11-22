@@ -1,6 +1,6 @@
 # STATUS
 
-Date: 2026-11-06. Phase: P10 complete. Next: P11 (evaluation). P9 deferred. Plugin 0.2.0 is distributed through the marketplace (`awesome-seo-marketplace`) and npm.
+Date: 2026-11-23. Phase: P12 in progress (P0–P11 done). Plugin 0.2.4 is published; the work after it (below) is committed and waits for a release. Plugin is distributed through the marketplace (`awesome-seo-marketplace`) and npm.
 
 ## Phases
 
@@ -18,7 +18,7 @@ Date: 2026-11-06. Phase: P10 complete. Next: P11 (evaluation). P9 deferred. Plug
 | P9 Merchant Center | done (read-only) | `google_merchant_list_products`, `google_merchant_list_product_issues`, `/ecommerce-audit`. Verified live on the erolav Merchant account (234 products). The bulmacalig site sells no products, so its service account has no Merchant access |
 | P10 Approval and write tools | done | Approval engine (migration 0003), PreToolUse gate, `approval` CLI, `/approve-action`, three write tools |
 | P11 Evaluation | done | `corepack pnpm evaluate`: golden dataset (`packages/core/tests/evaluation/golden.json`), precision and recall per finding category, evidence coverage and reproducibility checks. See `docs/EVALUATION.md` |
-| P12 Reporting and polish | not started | Scoring doc, `/connections-check`, README setup per credential |
+| P12 Reporting and polish | in progress | Done: `/connections-check`, `awesome-seo.json` + `awesome-seo config`, `awesome-seo audit`, `/site-check` (quick) and `/site-audit` (deep), `render-urls`, `crawl-merge`, `diff`, `gsc-urls`. Open: scoring doc (`docs/SCORING.md`), opportunity scoring, README setup per credential review |
 
 ## Packages and distribution
 
@@ -40,6 +40,7 @@ Date: 2026-11-06. Phase: P10 complete. Next: P11 (evaluation). P9 deferred. Plug
 
 - 2026-11-06: core 73 (Vitest, 13 files, includes `src/cli.test.ts` with 8 CLI tests), performance 19. Typecheck passes.
 - 2026-11-06 (before the 0.2.4 release): core 90 (Vitest, 14 files), performance 19, yandex 20, bing 9, google 22, crawl 48 (pytest). Typecheck, build and `claude plugin validate .` pass. Packed core 0.2.4 installed in a clean directory and smoke-tested.
+- 2026-11-23: core 217 (Vitest), google 28, yandex 20, bing 9, performance 19, crawl 53 (pytest), evaluation 14. `corepack pnpm verify`, `corepack pnpm evaluate` and `claude plugin validate .` pass. `/site-check` and `/site-audit` are covered by structure tests (every tool, CLI command and path they name exists) and the `audit` CLI by tests; the commands themselves have not yet been run end to end inside Claude Code.
 - `claude plugin validate .` passes with warnings.
 
 ## Live checks done (read-only unless noted)

@@ -50,13 +50,15 @@ npx -y -p @karailker/awesome-seo-core@0.2 awesome-seo seed --origin https://www.
 
 Use the origin your sitemap and search consoles use (for example `www`). Hosts are not merged.
 
-Then, in Claude Code: `/sitemap-sync`, `/crawl-run`, `/seo-audit <origin> <start> <end>`, `/geo-audit`, `/aio-audit`, `/aeo-audit`, `/perf-audit`, `/approve-action`.
+Then, in Claude Code, one command is enough: `/site-check` (quick sample) or `/site-audit` (full, deep). They use every connected source and skip the ones without credentials, reporting them as missing. The single-purpose commands remain: `/sitemap-sync`, `/crawl-run`, `/seo-audit <origin> <start> <end>`, `/geo-audit`, `/aio-audit`, `/aeo-audit`, `/perf-audit`, `/approve-action`.
 
 ## Commands
 
 | Command | What it does |
 |---|---|
 | `/sitemap-sync` | Discovers sitemap URLs and stores them |
+| `/site-check` | Quick check of the whole site: connections, a 50-URL sample crawl, search, traffic, performance, one combined report. No tool choice needed |
+| `/site-audit` | Full deep audit: every connected source, full crawl, rendering of script-built pages, Search Console URLs, change since the last run, performance sample, evidence-auditor check |
 | `/crawl-run` | Crawls discovered URLs (robots.txt on every hop, 1 request per second per host) and stores the results |
 | `/seo-audit` | Search Console, GA4, Bing, Yandex, and sitemap reconciliation, with traffic and AI referral sections |
 | `/geo-audit`, `/aio-audit`, `/aeo-audit` | GEO, AIO, and AEO checks: citation readiness, AI crawler access, llms.txt, structured data validation |
@@ -89,6 +91,10 @@ The CLI is published as `@karailker/awesome-seo-core` and runs with `npx`:
 | `seo-audit`, `geo-audit` | Markdown reports (inputs: `--gsc`, `--ga4`, `--metrica`, `--bing`, `--yandex`, `--access`) |
 | `technical-audit` | Markdown technical report for one or more crawl runs (`--origin`, optional repeated `--run`, optional `--gsc`) |
 | `gsc-urls` | Search Console pages no crawl run fetched, written as crawl input |
+| `render-urls`, `crawl-merge` | Pages with no static text, and folding a rendered crawl of them into a run |
+| `diff` | Change report between two crawl runs or two sitemap snapshots |
+| `audit` | One report for the whole site (`--mode quick\|deep`): ranked Needs attention list, one Missing data list, technical, GEO and SEO reports |
+| `config` | Validate the project settings file `awesome-seo.json` (source identifiers, no secrets) or write a template |
 | `approval list\|propose\|approve\|reject\|record` | Write approval flow |
 
 ## Development

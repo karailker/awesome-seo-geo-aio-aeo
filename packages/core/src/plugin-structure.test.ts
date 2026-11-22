@@ -39,7 +39,7 @@ const cliCommands = (): Set<string> => new Set([...read("packages/core/src/cli.t
 describe("plugin content", () => {
   it("finds the skills, commands and agents it checks", () => {
     expect(SKILLS.length).toBeGreaterThanOrEqual(16);
-    expect(COMMANDS.length).toBeGreaterThanOrEqual(11);
+    expect(COMMANDS.length).toBeGreaterThanOrEqual(13);
     expect(AGENTS.length).toBe(5);
   });
 

@@ -26,7 +26,7 @@ Each skill is `skills/<domain>/<name>/SKILL.md` with frontmatter (`name`, `descr
 | `seo/query-analysis` | built | Striking-distance queries (position 8–20, 100+ impressions). Project thresholds. |
 | `seo/sitemap-reconciliation` | built | Sitemap vs Search Console, Bing, and Yandex snapshot. |
 | `seo/indexation-analysis` | built (tool only) | Uses `google_gsc_inspect_url` for a sample. Results are not stored yet. |
-| `seo/technical-audit` | written; report not built | Needs a crawl report section. |
+| `seo/technical-audit` | built | `awesome-seo technical-audit`. |
 | `geo/citation-readiness` | built | Thin content, author and date presence (JSON-LD). |
 | `geo/entity-consistency` | not built | Deferred from P6. |
 | `aio/crawler-access` | built | AI user agents on samples; llms.txt. |
@@ -56,4 +56,6 @@ Each skill is `skills/<domain>/<name>/SKILL.md` with frontmatter (`name`, `descr
 | `/perf-audit` | PSI, CrUX, local fallback | built |
 | `/ecommerce-audit` | Merchant issues | built |
 | `/approve-action` | list, approve, reject, execute, verify, record | built |
-| `/connections-check` | status check for every connection | not built (P12) |
+| `/connections-check` | status check for every connection | built |
+| `/site-check` | quick general check: all sources, 50-URL sample, `awesome-seo audit --mode quick` | built |
+| `/site-audit` | full general audit: all sources, full crawl, render, GSC URLs, diff, `awesome-seo audit --mode deep`, then `evidence-auditor` | built |
