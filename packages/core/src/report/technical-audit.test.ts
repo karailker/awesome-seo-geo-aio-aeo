@@ -160,6 +160,15 @@ describe("buildTechnicalReport", () => {
     expect(section(out, "Missing data")).toContain("- 2 Search Console page(s) were not crawled, so their status, redirects and canonical are unknown.");
   });
 
+  it("does not mention robots-blocked URLs under Missing data when there are none", () => {
+    const clean = record(`${ORIGIN}/fine`, { run_id: "clean-run" });
+    ingestCrawlJsonl(store, SITE_ID, clean, null);
+
+    const out = buildTechnicalReport(store, { siteId: SITE_ID, origin: ORIGIN, runId: "clean-run" });
+
+    expect(section(out, "Missing data")).not.toContain("robots-blocked");
+  });
+
   it("keeps a run completed when its only non-HTML URL was fetched", () => {
     const textOnly = record(`${ORIGIN}/readme.txt`, { run_id: "text-run", content_type: "text/plain", errors: [{ code: "NOT_HTML", message: "not HTML", retryable: false }] });
     ingestCrawlJsonl(store, SITE_ID, textOnly, null);

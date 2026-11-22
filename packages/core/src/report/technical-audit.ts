@@ -209,7 +209,7 @@ export function buildTechnicalAudit(store: Store, input: TechnicalInput): { repo
       : []),
     ...(notHtml.length > 0 ? [`- ${notHtml.length} URL(s) are not HTML (NOT_HTML): no on-page fields for them.`] : []),
     ...(extractFailed.length > 0 ? [`- ${extractFailed.length} URL(s) failed extraction (EXTRACT_FAILED): no on-page fields for them.`] : []),
-    `- ${blocked.length} URL(s) were robots-blocked and not fetched. They are not counted as missing.`,
+    ...(blocked.length > 0 ? [`- ${blocked.length} URL(s) were robots-blocked and not fetched. They are not counted as missing.`] : []),
     "",
   ];
   const facts: TechnicalFact[] = [
