@@ -29,6 +29,13 @@
       "when": 1793871196351,
       "tag": "0003_hard_micromacro",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1795383937105,
+      "tag": "0004_giant_longshot",
+      "breakpoints": true
     }
   ]
 }

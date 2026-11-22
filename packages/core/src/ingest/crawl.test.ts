@@ -42,6 +42,20 @@ describe("ingestCrawlJsonl", () => {
     expect(run).toEqual({ status: "partial", url_count: 8, jsonl_path: "data/crawl/run.jsonl" });
   });
 
+  it("stores whether a page was rendered in a browser; records without the field stay unknown", () => {
+    const base = JSON.parse(RUN.split("\n")[0] as string);
+    const rendered = JSON.stringify({ ...base, run_id: "render-run", url: "https://example.com/r", rendered: true });
+    const stat = JSON.stringify({ ...base, run_id: "render-run", url: "https://example.com/s", rendered: false });
+    const old = JSON.stringify({ ...base, run_id: "render-run", url: "https://example.com/o", rendered: undefined });
+
+    ingestCrawlJsonl(store, SITE_ID, [rendered, stat, old].join("\n"), null);
+
+    const byUrl = Object.fromEntries(
+      (store.sqlite.prepare("SELECT p.url AS url, r.rendered AS rendered FROM crawl_results r JOIN pages p ON p.id = r.page_id WHERE r.run_id = 'render-run'").all() as { url: string; rendered: number | null }[]).map((r) => [r.url, r.rendered]),
+    );
+    expect(byUrl).toEqual({ "https://example.com/r": 1, "https://example.com/s": 0, "https://example.com/o": null });
+  });
+
   it("maps robots, status, and extracted fields into crawl_results", () => {
     ingestCrawlJsonl(store, SITE_ID, RUN, null);
 

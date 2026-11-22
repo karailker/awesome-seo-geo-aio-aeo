@@ -1,0 +1,1 @@
+ALTER TABLE `crawl_results` ADD `rendered` integer;

@@ -144,6 +144,16 @@ describe("buildTechnicalReport", () => {
     expect(section(out, "Missing data")).toContain("- 1 page(s) returned no text in the static HTML (likely rendered by JavaScript)");
   });
 
+  it("does not call a rendered page without text a static shell, and states how many pages were rendered", () => {
+    const rendered = record(`${ORIGIN}/app`, { run_id: "render-run", word_count: 0, headings: [], rendered: true });
+    ingestCrawlJsonl(store, SITE_ID, rendered, null);
+
+    const out = buildTechnicalReport(store, { siteId: SITE_ID, origin: ORIGIN, runId: "render-run" });
+
+    expect(section(out, "Missing data")).not.toContain("returned no text in the static HTML");
+    expect(section(out, "Scope")).toContain("- Pages rendered in a browser: 1 of 1.");
+  });
+
   it("lists the number of Search Console pages that were not crawled under Missing data", () => {
     const out = buildTechnicalReport(store, { siteId: SITE_ID, origin: ORIGIN, runId: RUN, searchPages: [`${ORIGIN}/gone-1`, `${ORIGIN}/gone-2`] });
 
@@ -157,6 +167,40 @@ describe("buildTechnicalReport", () => {
     const status = (store.sqlite.prepare("SELECT status FROM crawl_runs WHERE id = ?").get("text-run") as { status: string }).status;
 
     expect(status).toBe("completed");
+  });
+
+  it("lists the URLs that returned an error with status, code and row id", () => {
+    const sec = section(report(), "Status problems");
+
+    expect(sec).toContain("- URLs with an error status: 1.");
+    expect(sec).toMatch(/- https:\/\/example\.com\/broken — 500 HTTP_ERROR \[row [0-9a-f-]{36}\]/);
+  });
+
+  it("combines crawl runs: a Search Console page crawled in another run is checked, and its 404 after a redirect is listed", () => {
+    // Given: a second run that crawled a Search Console URL which redirects and ends in 404
+    const second = record(`${ORIGIN}/category/old`, {
+      run_id: "gsc-run", status: 404, final_url: `${ORIGIN}/category/old-final`, title: null, canonical: null, headings: [], word_count: null,
+      redirect_chain: [{ from: `${ORIGIN}/category/old`, status: 301, to: `${ORIGIN}/category/old-final` }],
+      errors: [{ code: "NOT_FOUND", message: "HTTP 404", retryable: false }],
+    });
+    ingestCrawlJsonl(store, SITE_ID, second, null);
+
+    // When: both runs are reported, with two Search Console pages
+    const out = buildTechnicalReport(store, {
+      siteId: SITE_ID, origin: ORIGIN, runId: RUN, extraRunIds: ["gsc-run"],
+      searchPages: [`${ORIGIN}/category/old`, `${ORIGIN}/product/gone`],
+    });
+
+    // Then
+    expect(section(out, "Coverage")).toContain("- Search Console pages not in this crawl run: 1.");
+    expect(section(out, "Status problems")).toMatch(/category\/old — 404 NOT_FOUND, after 1 redirect hop\(s\) to https:\/\/example\.com\/category\/old-final/);
+    expect(section(out, "Scope")).toContain("gsc-run");
+  });
+
+  it("treats a Search Console URL with a fragment as the same page", () => {
+    const out = buildTechnicalReport(store, { siteId: SITE_ID, origin: ORIGIN, runId: RUN, searchPages: [`${ORIGIN}/clean#reviews`] });
+
+    expect(section(out, "Coverage")).toContain("- Search Console pages not in this crawl run: 0.");
   });
 
   it("marks the run partial when any URL failed", () => {

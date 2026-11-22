@@ -2,16 +2,19 @@
 // `awesome-seo` CLI: database, ingest, reports, and the approval gate. Used by the plugin's commands and hook
 // (via npx) and by the repo's pnpm scripts. The database path defaults to ./data/awesome-seo.sqlite
 // (override with AWESOME_SEO_DB), so run it from the project directory.
-import { readFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname } from "node:path";
 import { parseArgs, type ParseArgsConfig } from "node:util";
 import {
   ACTION_TYPES,
+  buildCrawlDiff,
   buildTechnicalReport,
   approveProposal,
   buildGeoReport,
   buildSeoAuditReport,
   createProposal,
   deriveCrawlObservations,
+  diffSitemaps,
   findExecutable,
   ingestAccessReport,
   ingestBingJsonl,
@@ -21,6 +24,9 @@ import {
   ingestMetricaJsonl,
   ingestSitemapJsonl,
   ingestYandexWebmasterJsonl,
+  readSearchPages,
+  renderSitemapDiff,
+  uncrawledUrls,
   normalizeUrl,
   openStore,
   recordExecution,
@@ -162,22 +168,72 @@ function cmdSeoAudit(args: string[]): void {
 }
 
 function cmdTechnicalAudit(args: string[]): void {
-  const { values } = parse({ options: { origin: { type: "string" }, run: { type: "string" }, gsc: { type: "string", multiple: true } } }, args);
-  if (!values.origin) fail("Usage: awesome-seo technical-audit --origin https://example.com [--run <run_id>] [--gsc <file.jsonl>]");
+  const { values } = parse({ options: { origin: { type: "string" }, run: { type: "string", multiple: true }, gsc: { type: "string", multiple: true } } }, args);
+  if (!values.origin) fail("Usage: awesome-seo technical-audit --origin https://example.com [--run <run_id> ...] [--gsc <file.jsonl> ...]");
   const origin = originOf(values.origin as string);
   const store = openStore(dbPath());
   try {
     const siteId = siteIdFor(store, origin);
-    const run = values.run
-      ? (store.sqlite.prepare("SELECT id FROM crawl_runs WHERE id = ? AND site_id = ?").get(values.run, siteId) as { id: string } | undefined)
+    // --run may be repeated: the first run is the main one, the others are reported together with it.
+    const requested = (values.run as string[] | undefined) ?? [];
+    for (const id of requested) {
+      if (!store.sqlite.prepare("SELECT 1 FROM crawl_runs WHERE id = ? AND site_id = ?").get(id, siteId)) fail(`Crawl run not found for this site: ${id}`);
+    }
+    const main = requested.length > 0
+      ? { id: requested[0] as string }
       : (store.sqlite.prepare("SELECT id FROM crawl_runs WHERE site_id = ? ORDER BY url_count DESC, started_at DESC LIMIT 1").get(siteId) as { id: string } | undefined);
-    if (!run) fail("No crawl run found for this site. Run /crawl-run first.");
-    // Search Console page URLs from the given JSONL files (the gsc tool output); used only for the coverage check.
-    const searchPages = values.gsc
-      ? [...new Set((values.gsc as string[]).flatMap((file) =>
-          readFileSync(file, "utf8").split("\n").filter((l) => l.trim()).map((l) => (JSON.parse(l) as { dimensions?: { page?: string } }).dimensions?.page).filter((p): p is string => typeof p === "string")))]
-      : undefined;
-    console.log(buildTechnicalReport(store, { siteId, origin, runId: run.id, searchPages }));
+    if (!main) fail("No crawl run found for this site. Run /crawl-run first.");
+    // Search Console page URLs from the given JSONL files (the gsc tool output); used for the coverage check.
+    const searchPages = values.gsc ? readSearchPages((values.gsc as string[]).map((file) => readFileSync(file, "utf8"))) : undefined;
+    console.log(buildTechnicalReport(store, { siteId, origin, runId: main.id, extraRunIds: requested.slice(1), searchPages }));
+  } finally {
+    store.close();
+  }
+}
+
+// Change report: two crawl runs of the site (default: the two most recent), or two sitemap snapshot files.
+function cmdDiff(args: string[]): void {
+  const { values } = parse({ options: { origin: { type: "string" }, from: { type: "string" }, to: { type: "string" }, "sitemap-old": { type: "string" }, "sitemap-new": { type: "string" } } }, args);
+  if (!values.origin) fail("Usage: awesome-seo diff --origin https://example.com [--from <run_id> --to <run_id>] | [--sitemap-old <file.jsonl> --sitemap-new <file.jsonl>]");
+  const origin = originOf(values.origin as string);
+  if (values["sitemap-old"] || values["sitemap-new"]) {
+    if (!values["sitemap-old"] || !values["sitemap-new"]) fail("Give both --sitemap-old and --sitemap-new.");
+    const older = values["sitemap-old"] as string;
+    const newer = values["sitemap-new"] as string;
+    console.log(renderSitemapDiff(origin, diffSitemaps(readFileSync(older, "utf8"), readFileSync(newer, "utf8")), older, newer));
+    return;
+  }
+  const store = openStore(dbPath());
+  try {
+    const siteId = siteIdFor(store, origin);
+    const recent = store.sqlite.prepare("SELECT id FROM crawl_runs WHERE site_id = ? ORDER BY started_at DESC LIMIT 2").all(siteId) as { id: string }[];
+    const toRunId = (values.to as string | undefined) ?? recent[0]?.id;
+    const fromRunId = (values.from as string | undefined) ?? recent[1]?.id;
+    if (!toRunId || !fromRunId) fail("Need two crawl runs to compare. Crawl the site again, or pass --from and --to.");
+    for (const id of [fromRunId, toRunId]) {
+      if (!store.sqlite.prepare("SELECT 1 FROM crawl_runs WHERE id = ? AND site_id = ?").get(id, siteId)) fail(`Crawl run not found for this site: ${id}`);
+    }
+    console.log(buildCrawlDiff(store, { siteId, origin, fromRunId, toRunId }));
+  } finally {
+    store.close();
+  }
+}
+
+// Search Console pages that no crawl run fetched, written as crawl input (one {"url": ...} line each).
+function cmdGscUrls(args: string[]): void {
+  const { values } = parse({ options: { origin: { type: "string" }, gsc: { type: "string", multiple: true }, out: { type: "string" } } }, args);
+  const files = (values.gsc as string[] | undefined) ?? [];
+  if (!values.origin || files.length === 0) fail("Usage: awesome-seo gsc-urls --origin https://example.com --gsc <pages.jsonl> [--gsc <more.jsonl>] [--out data/snapshots/gsc-urls.jsonl]");
+  const origin = originOf(values.origin as string);
+  const outFile = (values.out as string | undefined) ?? "data/snapshots/gsc-urls.jsonl";
+  const store = openStore(dbPath());
+  try {
+    const siteId = siteIdFor(store, origin);
+    const pages = readSearchPages(files.map((file) => readFileSync(file, "utf8")));
+    const toCrawl = uncrawledUrls(store, siteId, pages);
+    mkdirSync(dirname(outFile), { recursive: true });
+    writeFileSync(outFile, toCrawl.map((url) => `${JSON.stringify({ url, source: "gsc" })}\n`).join(""), "utf8");
+    out({ ok: true, origin, file: outFile, searchPages: pages.length, alreadyCrawled: pages.length - toCrawl.length, toCrawl: toCrawl.length });
   } finally {
     store.close();
   }
@@ -324,9 +380,11 @@ try {
     case "seo-audit": cmdSeoAudit(rest); break;
     case "geo-audit": cmdGeoAudit(rest); break;
     case "technical-audit": cmdTechnicalAudit(rest); break;
+    case "gsc-urls": cmdGscUrls(rest); break;
+    case "diff": cmdDiff(rest); break;
     case "approval": cmdApproval(rest); break;
     default:
-      fail("usage: awesome-seo <migrate|seed|sitemap-ingest|crawl-ingest|access-ingest|seo-audit|geo-audit|technical-audit|approval> [options]");
+      fail("usage: awesome-seo <migrate|seed|sitemap-ingest|crawl-ingest|access-ingest|gsc-urls|diff|seo-audit|geo-audit|technical-audit|approval> [options]");
   }
 } catch (err) {
   console.error(`Error: ${(err as Error).message}`);

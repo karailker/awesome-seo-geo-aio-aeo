@@ -44,7 +44,7 @@ describe("awesome-seo CLI", () => {
 
     // Then
     expect(r.status).toBe(0);
-    expect(JSON.parse(r.stdout)).toMatchObject({ ok: true, schemaVersion: 3 });
+    expect(JSON.parse(r.stdout)).toMatchObject({ ok: true, schemaVersion: 4 });
   });
 
   it("access-ingest stores robots, llms.txt and per-agent block counts for a seeded site", () => {
@@ -138,6 +138,82 @@ describe("awesome-seo CLI", () => {
     expect(r.status).toBe(0);
     expect(r.stdout).toContain(`Crawl run: ${bigRunId} (9 URL(s)`);
     expect(r.stdout).not.toContain("Crawl run: small-run");
+  });
+
+  it("gsc-urls writes the Search Console pages no crawl run fetched as crawl input", () => {
+    // Given: a crawl run of the fixture site and a Search Console file with a crawled page, an uncrawled page and a www page
+    ingestCrawlJsonl(store, "s1", CRAWL_FIXTURE, null);
+    const gsc = join(dir, "pages.jsonl");
+    const row = (page: string) => JSON.stringify({ run_id: "g", collected_at: "2026-11-05T00:00:00Z", site: "sc-domain:example.com", period_start: "2026-11-01", period_end: "2026-11-05", dimensions: { page }, clicks: 1, impressions: 5, ctr: 0.2, position: 3 });
+    writeFileSync(gsc, [row("https://example.com/index.html"), row("https://example.com/gone"), row("https://www.example.com/x")].join("\n"));
+    const out = join(dir, "out", "gsc-urls.jsonl");
+
+    // When
+    const r = cli(["gsc-urls", "--origin", ORIGIN, "--gsc", gsc, "--out", out]);
+
+    // Then: only the two uncrawled URLs are written, one JSON line each with a url field
+    expect(r.status).toBe(0);
+    expect(JSON.parse(r.stdout)).toMatchObject({ ok: true, searchPages: 3, alreadyCrawled: 1, toCrawl: 2 });
+    const lines = readFileSync(out, "utf8").trim().split("\n").map((l) => JSON.parse(l) as { url: string });
+    expect(lines.map((l) => l.url)).toEqual(["https://example.com/gone", "https://www.example.com/x"]);
+  });
+
+  it("gsc-urls prints usage when no Search Console file is given", () => {
+    const r = cli(["gsc-urls", "--origin", ORIGIN]);
+
+    expect(r.status).toBe(1);
+    expect(r.stderr).toContain("Usage: awesome-seo gsc-urls");
+  });
+
+  it("technical-audit reports several runs when --run is repeated", () => {
+    ingestCrawlJsonl(store, "s1", CRAWL_FIXTURE, null);
+    const runA = JSON.parse(CRAWL_FIXTURE.split("\n")[0] as string).run_id as string;
+    const extra = JSON.stringify({ ...JSON.parse(CRAWL_FIXTURE.split("\n")[0] as string), run_id: "extra-run", url: "https://example.com/extra-page", final_url: "https://example.com/extra-page", canonical: "https://example.com/extra-page" });
+    ingestCrawlJsonl(store, "s1", extra, null);
+
+    const r = cli(["technical-audit", "--origin", ORIGIN, "--run", runA, "--run", "extra-run"]);
+
+    expect(r.status).toBe(0);
+    expect(r.stdout).toContain(`- Crawl runs: ${runA}, extra-run`);
+    expect(r.stdout).toContain("https://example.com/extra-page");
+  });
+
+  it("diff compares the two most recent crawl runs by default and lists what changed", () => {
+    const base = JSON.parse(CRAWL_FIXTURE.split("\n")[0] as string);
+    const older = JSON.stringify({ ...base, run_id: "older", fetched_at: "2026-11-01T10:00:00.000Z", url: "https://example.com/p", final_url: "https://example.com/p", content_hash: "sha256:one" });
+    const newer = JSON.stringify({ ...base, run_id: "newer", fetched_at: "2026-11-08T10:00:00.000Z", url: "https://example.com/p", final_url: "https://example.com/p", content_hash: "sha256:two" });
+    ingestCrawlJsonl(store, "s1", older, null);
+    ingestCrawlJsonl(store, "s1", newer, null);
+
+    const r = cli(["diff", "--origin", ORIGIN]);
+
+    expect(r.status).toBe(0);
+    expect(r.stdout).toContain("- Older run: older (1 URL(s)). Newer run: newer (1 URL(s)).");
+    expect(r.stdout).toContain("- Status changed: 0. Content changed: 1.");
+  });
+
+  it("diff needs two crawl runs and says so", () => {
+    ingestCrawlJsonl(store, "s1", CRAWL_FIXTURE, null);
+
+    const r = cli(["diff", "--origin", ORIGIN]);
+
+    expect(r.status).toBe(1);
+    expect(r.stderr).toContain("Need two crawl runs to compare");
+  });
+
+  it("diff --sitemap-old and --sitemap-new compares two sitemap snapshots", () => {
+    const row = (url: string) => JSON.stringify({ run_id: "s", collected_at: "2026-11-01T00:00:00Z", url, lastmod: null, sitemap_url: "https://example.com/sitemap.xml" });
+    const oldFile = join(dir, "old.jsonl");
+    const newFile = join(dir, "new.jsonl");
+    writeFileSync(oldFile, [row("https://example.com/a"), row("https://example.com/b")].join("\n"));
+    writeFileSync(newFile, [row("https://example.com/a"), row("https://example.com/c")].join("\n"));
+
+    const r = cli(["diff", "--origin", ORIGIN, "--sitemap-old", oldFile, "--sitemap-new", newFile]);
+
+    expect(r.status).toBe(0);
+    expect(r.stdout).toContain("- Added: 1. Removed: 1. lastmod changed: 0.");
+    expect(r.stdout).toContain("https://example.com/c — in the newer snapshot only");
+    expect(r.stdout).toContain("https://example.com/b — in the older snapshot only");
   });
 
   it("geo-audit without a crawl run fails with guidance to run the crawl first", () => {

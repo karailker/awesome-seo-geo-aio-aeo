@@ -29,6 +29,7 @@ const CrawlLineSchema = z.object({
   robots_allowed: z.boolean().nullable(),
   raw_html_path: z.string().nullable(),
   jsonld_syntax_errors: z.number().int().nonnegative().nullable().optional(),
+  rendered: z.boolean().optional(), // absent in runs from before the field existed
   errors: z.array(z.object({ code: z.string(), message: z.string(), retryable: z.boolean() })),
 });
 type CrawlLine = z.infer<typeof CrawlLineSchema>;
@@ -116,6 +117,7 @@ function toResult(row: CrawlLine, runId: string, pageId: string) {
     structuredDataJson: json(row.structured_data),
     rawHtmlPath: row.raw_html_path,
     jsonldSyntaxErrors: row.jsonld_syntax_errors ?? null,
+    rendered: row.rendered === undefined ? null : row.rendered ? 1 : 0,
     errorsJson: json(row.errors),
   };
 }

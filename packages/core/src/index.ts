@@ -21,7 +21,9 @@ export * from "./analysis/evidence.js";
 export * from "./analysis/reconcile.js";
 export * from "./report/seo-audit.js";
 export * from "./report/technical-audit.js";
+export * from "./report/diff.js";
 export * from "./env.js";
+export * from "./gsc-urls.js";
 export * from "./paths.js";
 export * from "./mcp.js";
 

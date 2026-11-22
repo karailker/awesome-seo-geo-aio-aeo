@@ -83,6 +83,7 @@ type Row = {
   robots_allowed: number | null;
   canonical: string | null;
   errors_json: string | null;
+  rendered: number | null;
   jsonld_syntax_errors: number | null;
   fetched_at: string;
 };
@@ -91,7 +92,7 @@ export function deriveCrawlObservations(store: Store, siteId: string, runId: str
   const rows = store.sqlite
     .prepare(
       `SELECT r.id, p.url, r.status, r.word_count, r.headings_json, r.structured_data_json,
-              r.robots_allowed, r.canonical, r.jsonld_syntax_errors, r.fetched_at, r.errors_json
+              r.robots_allowed, r.canonical, r.jsonld_syntax_errors, r.fetched_at, r.errors_json, r.rendered
        FROM crawl_results r JOIN pages p ON p.id = r.page_id WHERE r.run_id = ?`,
     )
     .all(runId) as Row[];
@@ -108,7 +109,8 @@ export function deriveCrawlObservations(store: Store, siteId: string, runId: str
       const notHtml = (JSON.parse(row.errors_json ?? "[]") as { code: string }[]).some((e) => e.code === "NOT_HTML");
       const html = row.status === 200 && !notHtml;
       // A page whose static HTML has no text is usually rendered by JavaScript. Its text and heading checks would be wrong.
-      const textEmpty = html && !row.word_count;
+      // After rendering, an empty page really is empty and counts as thin content.
+      const textEmpty = html && !row.word_count && row.rendered !== 1;
       const values: Record<string, number | null> = {
         robots_blocked: row.robots_allowed === null ? null : row.robots_allowed === 0 ? 1 : 0, // null: unknown
         http_error: row.status !== null && row.status >= 400 ? 1 : 0,

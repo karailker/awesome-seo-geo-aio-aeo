@@ -2,6 +2,7 @@
 // redirects, canonical, titles, hreflang alternates, and headings. Each listed URL cites its crawl_results row id.
 // A URL that robots blocked is "not fetched", never "missing". Nothing is inferred from URLs that were not fetched.
 import type { Store } from "../db/store.js";
+import { normalizeUrl } from "../domain.js";
 
 export const LIST_CAP = 20;
 
@@ -16,23 +17,30 @@ type Row = {
   hreflang: string | null;
   headings: string | null;
   words: number | null;
+  rendered: number | null;
   errors: string | null;
 };
 
 // searchPages: page URLs from Search Console. Those missing from the crawl run were never checked.
-export type TechnicalInput = { siteId: string; origin: string; runId: string; searchPages?: string[] };
+// extraRunIds: more crawl runs to report together (for example a crawl of Search Console URLs). A URL fetched in
+// several runs is reported once, from the latest fetch.
+export type TechnicalInput = { siteId: string; origin: string; runId: string; extraRunIds?: string[]; searchPages?: string[] };
 
 type Problem = { url: string; rowId: string; detail: string };
 
-function rowsFor(store: Store, runId: string): Row[] {
-  return store.sqlite
+function rowsFor(store: Store, runIds: string[]): Row[] {
+  const marks = runIds.map(() => "?").join(",");
+  const rows = store.sqlite
     .prepare(
       `SELECT r.id AS id, p.url AS url, r.status AS status, r.final_url AS finalUrl, r.redirect_chain_json AS redirect,
               r.title AS title, r.canonical AS canonical, r.hreflang_json AS hreflang, r.headings_json AS headings, r.word_count AS words,
-              r.errors_json AS errors
-       FROM crawl_results r JOIN pages p ON p.id = r.page_id WHERE r.run_id = ? ORDER BY p.url`,
+              r.errors_json AS errors, r.rendered AS rendered, r.fetched_at AS fetchedAt
+       FROM crawl_results r JOIN pages p ON p.id = r.page_id WHERE r.run_id IN (${marks}) ORDER BY p.url, r.fetched_at DESC`,
     )
-    .all(runId) as Row[];
+    .all(...runIds) as (Row & { fetchedAt: string })[];
+  // one row per URL: the latest fetch
+  const seen = new Set<string>();
+  return rows.filter((r) => (seen.has(r.url) ? false : (seen.add(r.url), true)));
 }
 
 const parseArray = <T>(raw: string | null): T[] => {
@@ -63,7 +71,8 @@ function listLines(items: Problem[]): string[] {
 }
 
 export function buildTechnicalReport(store: Store, input: TechnicalInput): string {
-  const rows = rowsFor(store, input.runId);
+  const runIds = [input.runId, ...(input.extraRunIds ?? [])];
+  const rows = rowsFor(store, runIds);
   const fetched = rows.filter(isFetched);
   const blocked = rows.filter(isRobotBlocked);
   const errored = rows.filter(isErrored);
@@ -94,11 +103,27 @@ export function buildTechnicalReport(store: Store, input: TechnicalInput): strin
 
   // Headings: no h1 on a fetched 200 page
   // A page with no text in the static HTML is usually rendered by JavaScript; its headings are unknown, not missing.
-  const noText = ok.filter((r) => !r.words);
-  const noH1 = ok.filter((r) => r.words && !parseArray<{ level: number }>(r.headings).some((h) => h.level === 1));
+  const noText = ok.filter((r) => !r.words && r.rendered !== 1);
+  const noH1 = ok.filter((r) => (r.words || r.rendered === 1) && !parseArray<{ level: number }>(r.headings).some((h) => h.level === 1));
 
+  // Search Console URLs are compared after the same normalisation the store applies (fragment removed).
   const crawled = new Set(rows.map((r) => r.url));
-  const notCrawled = [...new Set(input.searchPages ?? [])].filter((u) => !crawled.has(u)).sort();
+  const searchSet = new Set<string>();
+  for (const u of input.searchPages ?? []) {
+    try {
+      searchSet.add(normalizeUrl(u));
+    } catch {
+      /* not an http(s) URL: ignored */
+    }
+  }
+  const notCrawled = [...searchSet].filter((u) => !crawled.has(u)).sort();
+
+  // Status problems: URLs that were requested but returned an error status or failed
+  const statusProblems: Problem[] = errored.map((r) => {
+    const hops = parseArray<unknown>(r.redirect).length;
+    const where = hops > 0 ? `, after ${hops} redirect hop(s) to ${r.finalUrl ?? "unknown"}` : "";
+    return { url: r.url, rowId: r.id, detail: `${r.status ?? "no response"} ${failureCodes(r).join(", ")}${where}` };
+  });
 
   const robotsUnknown = rows.filter((r) => codesOf(r).includes("ROBOTS_UNAVAILABLE"));
   const notHtml = rows.filter((r) => codesOf(r).includes("NOT_HTML"));
@@ -108,7 +133,8 @@ export function buildTechnicalReport(store: Store, input: TechnicalInput): strin
     `# Technical audit: ${input.origin}`,
     "",
     "## Scope",
-    `- Crawl run: ${input.runId}`,
+    `- Crawl run${runIds.length > 1 ? "s" : ""}: ${runIds.join(", ")}`,
+    `- Pages rendered in a browser: ${rows.filter((r) => r.rendered === 1).length} of ${rows.length}.`,
     `- URLs in the run: ${rows.length}. Run status: ${errored.length > 0 ? "partial (some URLs failed)" : "completed"}.`,
     "- Measured from the crawl. Project-defined checks; not Google ranking factors.",
     "",
@@ -117,6 +143,10 @@ export function buildTechnicalReport(store: Store, input: TechnicalInput): strin
     `- Robots-blocked (not fetched): ${blocked.length}.`,
     `- Errors (not fetched): ${errored.length}.${errorCounts.size > 0 ? ` By code: ${[...errorCounts.entries()].map(([c, n]) => `${c} ${n}`).join(", ")}.` : ""}`,
     `- Check: fetched + robots-blocked + errors = ${fetched.length} + ${blocked.length} + ${errored.length} = ${rows.length} URLs in the run: ${sumOk ? "matches" : "DOES NOT MATCH"}.`,
+    "",
+    "## Status problems",
+    `- URLs with an error status: ${statusProblems.length}.`,
+    ...listLines(statusProblems),
     "",
     "## Redirects",
     `- URLs with one or more redirect hops: ${redirected.length}.`,

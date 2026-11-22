@@ -124,6 +124,7 @@ export const crawlResults = sqliteTable(
     rawHtmlPath: text("raw_html_path"),
     errorsJson: text("errors_json"),
     jsonldSyntaxErrors: integer("jsonld_syntax_errors"), // P6: invalid JSON-LD blocks; null when not extracted
+    rendered: integer("rendered"), // 1: DOM read after JavaScript ran, 0: static HTML, null: not recorded (older runs)
   },
   (t) => [index("idx_crawl_results_run").on(t.runId)],
 );
