@@ -18,6 +18,7 @@
     "geo:audit": "node packages/core/dist/cli.js geo-audit",
     "approval": "node packages/core/dist/cli.js approval",
     "verify": "corepack pnpm -r build && corepack pnpm -r typecheck && corepack pnpm -r test && cd mcp-servers/crawl && uv run pytest -q",
-    "release:check": "node scripts/release-check.mjs"
+    "release:check": "node scripts/release-check.mjs",
+    "evaluate": "corepack pnpm -C packages/core exec vitest run src/evaluation.test.ts"
   }
 }

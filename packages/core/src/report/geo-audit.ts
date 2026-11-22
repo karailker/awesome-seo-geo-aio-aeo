@@ -60,7 +60,14 @@ function finding(
   };
 }
 
+// The report text and the findings it kept (and the reasons for the ones the evidence gate dropped).
+export type AuditResult = { report: string; findings: Finding[]; dropped: string[] };
+
 export function buildGeoReport(store: Store, input: GeoReportInput): string {
+  return buildGeoAudit(store, input).report;
+}
+
+export function buildGeoAudit(store: Store, input: GeoReportInput): AuditResult {
   const pages = pageObs(store, input.siteId, input.runId);
   const sites = siteObs(store, input.siteId);
   const pageCount = new Set(pages.map((p) => p.entityId)).size;
@@ -199,5 +206,5 @@ export function buildGeoReport(store: Store, input: GeoReportInput): string {
     "- Prompt-based AI visibility is out of scope for v1.",
     "",
   );
-  return sections.join("\n");
+  return { report: sections.join("\n"), findings: valid, dropped: problems };
 }

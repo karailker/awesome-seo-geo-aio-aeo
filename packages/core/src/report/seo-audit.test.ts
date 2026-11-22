@@ -9,7 +9,7 @@ import { ingestBingJsonl } from "../ingest/bing.js";
 import { ingestGa4Jsonl } from "../ingest/ga4.js";
 import { ingestMetricaJsonl } from "../ingest/metrica.js";
 import { openStore, upsertPage, upsertSite, type Store } from "../db/store.js";
-import { buildSeoAuditReport } from "./seo-audit.js";
+import { buildSeoAudit, buildSeoAuditReport } from "./seo-audit.js";
 
 const GSC = readFileSync(new URL("../../tests/fixtures/gsc/period-run.jsonl", import.meta.url), "utf8");
 const METRICA = readFileSync(new URL("../../tests/fixtures/metrica/traffic-2026-10.jsonl", import.meta.url), "utf8");
@@ -194,5 +194,17 @@ describe("validateFindings (evidence gate)", () => {
 
     expect(valid.map((f) => f.id)).toEqual(["good"]);
     expect(problems).toEqual(["none: no evidence", "ghost: 1 evidence id(s) not found for this site"]);
+  });
+});
+
+
+describe("buildSeoAudit", () => {
+  it("returns the kept findings with the report", () => {
+    ingestGscJsonl(store, SITE_ID, GSC);
+    const audit = buildSeoAudit(store, INPUT);
+
+    expect(audit.report).toBe(buildSeoAuditReport(store, INPUT));
+    expect(audit.findings.map((f) => f.id)).toContain("gsc-zero-click-pages");
+    expect(audit.dropped).toEqual([]);
   });
 });

@@ -1,6 +1,7 @@
 // SEO audit report for one period, Search Console only (ROADMAP P3). English output.
 // Every finding cites observation ids; findings that fail the evidence gate are dropped and listed.
 import { validateFindings, type Finding } from "../analysis/evidence.js";
+import type { AuditResult } from "./geo-audit.js";
 import { reconcileSitemapWith, SOURCE_LABEL, type Reconciliation, type SearchSource } from "../analysis/reconcile.js";
 import { isAiReferrer } from "../analysis/ai-referrers.js";
 import type { Store } from "../db/store.js";
@@ -128,6 +129,10 @@ function scopeSources(store: Store, input: ReportInput, gscAvailable: boolean, s
 }
 
 export function buildSeoAuditReport(store: Store, input: ReportInput): string {
+  return buildSeoAudit(store, input).report;
+}
+
+export function buildSeoAudit(store: Store, input: ReportInput): AuditResult {
   const { pages, queries, rowCount, lastCollected } = loadEntities(store, input);
   const gscAvailable = rowCount > 0;
   const sitemap = store.sqlite
@@ -219,7 +224,7 @@ export function buildSeoAuditReport(store: Store, input: ReportInput): string {
     "- Only one period is analyzed. No trend claims.",
     "",
   );
-  return sections.join("\n");
+  return { report: sections.join("\n"), findings: valid, dropped: problems };
 }
 
 // GA4 traffic for the period: total sessions by source and AI referral sessions. Measured.

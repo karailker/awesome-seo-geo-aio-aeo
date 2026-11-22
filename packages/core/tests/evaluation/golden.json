@@ -1,0 +1,69 @@
+{
+  "_note": "Golden dataset: a made-up site with known issues. The 'expected' sets were written by hand from the rules in docs/EVALUATION.md, not produced by the code under test. Every page is either one the rules must flag or a true negative the rules must leave alone.",
+  "origin": "https://golden.example",
+  "pages": [
+    { "path": "/", "note": "clean home page; Organization and WebSite inside @graph", "words": 600, "headings": [1, 2], "structured": [{ "type": null, "item": { "@context": "https://schema.org", "@graph": [{ "@type": "Organization", "name": "G" }, { "@type": "WebSite", "name": "G" }] } }] },
+    { "path": "/blog/complete", "note": "article with every recommended property", "words": 800, "headings": [1, 2, 2], "structured": [{ "type": "Article", "item": { "@type": "Article", "headline": "H", "datePublished": "2026-01-01", "author": { "@type": "Person", "name": "A" }, "image": "https://golden.example/i.png" } }] },
+    { "path": "/blog/graph-author", "note": "true negative: author and date sit inside @graph", "words": 700, "headings": [1, 2], "structured": [{ "type": null, "item": { "@context": "https://schema.org", "@graph": [{ "@type": "Article", "headline": "H", "datePublished": "2026-01-01", "author": { "@id": "https://golden.example/#org" }, "image": "https://golden.example/i.png" }] } }] },
+    { "path": "/blog/no-author", "note": "article without author", "words": 700, "headings": [1, 2], "structured": [{ "type": "Article", "item": { "@type": "Article", "headline": "H", "datePublished": "2026-01-01", "image": "https://golden.example/i.png" } }] },
+    { "path": "/blog/no-date", "note": "article without a date", "words": 700, "headings": [1, 2], "structured": [{ "type": "Article", "item": { "@type": "Article", "headline": "H", "author": { "@type": "Person", "name": "A" }, "image": "https://golden.example/i.png" } }] },
+    { "path": "/products/complete", "note": "true negative: a product has no byline", "words": 400, "headings": [1, 2], "structured": [{ "type": "Product", "item": { "@type": "Product", "name": "P", "image": "https://golden.example/p.png", "offers": { "@type": "Offer", "price": "1" } } }] },
+    { "path": "/products/no-image", "note": "product missing a recommended property", "words": 400, "headings": [1, 2], "structured": [{ "type": "Product", "item": { "@type": "Product", "name": "P", "offers": { "@type": "Offer", "price": "1" } } }] },
+    { "path": "/thin-a", "note": "120 words", "words": 120, "headings": [1] },
+    { "path": "/thin-b", "note": "250 words", "words": 250, "headings": [1] },
+    { "path": "/boundary-300", "note": "true negative: exactly 300 words is not thin", "words": 300, "headings": [1] },
+    { "path": "/app-static", "note": "true negative: JavaScript shell, no text in the static HTML", "words": 0, "headings": [], "rendered": false },
+    { "path": "/app-rendered-empty", "note": "empty even after rendering: thin and no h1", "words": 0, "headings": [], "rendered": true },
+    { "path": "/two-h1", "note": "two h1", "words": 500, "headings": [1, 1, 2] },
+    { "path": "/skip", "note": "h1 then h3", "words": 500, "headings": [1, 3] },
+    { "path": "/bad-jsonld", "note": "a JSON-LD block that does not parse", "words": 500, "headings": [1], "jsonldErrors": 1 },
+    { "path": "/faq", "note": "true negative: FAQPage with mainEntity", "words": 500, "headings": [1, 2], "structured": [{ "type": "FAQPage", "item": { "@type": "FAQPage", "mainEntity": [{ "@type": "Question", "name": "Q" }] } }] },
+    { "path": "/faq-empty", "note": "FAQPage without mainEntity", "words": 500, "headings": [1, 2], "structured": [{ "type": "FAQPage", "item": { "@type": "FAQPage" } }] },
+    { "path": "/notes.txt", "note": "true negative: text file, not HTML", "contentType": "text/plain", "words": null, "headings": [], "errors": [{ "code": "NOT_HTML", "message": "not HTML", "retryable": false }] },
+    { "path": "/missing", "note": "true negative: 404 page", "status": 404, "words": null, "headings": [], "errors": [{ "code": "NOT_FOUND", "message": "HTTP 404", "retryable": false }] },
+    { "path": "/blocked", "note": "true negative: blocked by robots, never fetched", "status": null, "words": null, "headings": [], "robots": false, "errors": [{ "code": "ROBOTS_DISALLOWED", "message": "blocked", "retryable": false }] }
+  ],
+  "access": {
+    "agents": [
+      { "user_agent": "GPTBot", "allowed": 1, "blocked": 2, "blocked_urls": ["https://golden.example/a", "https://golden.example/b"] },
+      { "user_agent": "ClaudeBot", "allowed": 3, "blocked": 0, "blocked_urls": [] }
+    ],
+    "sampleSize": 3,
+    "llmsTxt": { "present": true, "valid": false }
+  },
+  "gsc": {
+    "period": ["2026-10-01", "2026-10-31"],
+    "pages": [
+      { "key": "https://golden.example/a", "clicks": 0, "impressions": 200, "ctr": 0, "position": 4 },
+      { "key": "https://golden.example/b", "note": "50 impressions: the boundary is included", "clicks": 0, "impressions": 50, "ctr": 0, "position": 4 },
+      { "key": "https://golden.example/c", "note": "49 impressions: below the threshold", "clicks": 0, "impressions": 49, "ctr": 0, "position": 4 },
+      { "key": "https://golden.example/d", "clicks": 12, "impressions": 500, "ctr": 0.024, "position": 4 },
+      { "key": "https://golden.example/e", "clicks": 0, "impressions": 80, "ctr": 0, "position": 4 }
+    ],
+    "queries": [
+      { "key": "q one", "clicks": 1, "impressions": 300, "ctr": 0.003, "position": 12 },
+      { "key": "q two", "note": "position 8 and 100 impressions: both boundaries included", "clicks": 1, "impressions": 100, "ctr": 0.01, "position": 8 },
+      { "key": "q three", "note": "99 impressions", "clicks": 1, "impressions": 99, "ctr": 0.01, "position": 10 },
+      { "key": "q four", "note": "position 7.9", "clicks": 1, "impressions": 500, "ctr": 0.002, "position": 7.9 },
+      { "key": "q five", "note": "position 20: included", "clicks": 1, "impressions": 500, "ctr": 0.002, "position": 20 },
+      { "key": "q six", "note": "position 20.1", "clicks": 1, "impressions": 500, "ctr": 0.002, "position": 20.1 }
+    ]
+  },
+  "expected": {
+    "geo": {
+      "geo-thin-content": ["/thin-a", "/thin-b", "/app-rendered-empty"],
+      "geo-no-author-signal": ["/blog/no-author"],
+      "geo-no-date-signal": ["/blog/no-date"],
+      "aio-h1-count": ["/two-h1", "/app-rendered-empty"],
+      "aio-heading-skip": ["/skip"],
+      "aeo-jsonld-syntax": ["/bad-jsonld"],
+      "aeo-missing-recommended": ["/blog/no-author", "/blog/no-date", "/products/no-image", "/faq-empty"],
+      "aio-ai-blocked-GPTBot": ["SITE"],
+      "aio-llms-txt": ["SITE"]
+    },
+    "seo": {
+      "gsc-zero-click-pages": ["https://golden.example/a", "https://golden.example/b", "https://golden.example/e"],
+      "gsc-striking-distance-queries": ["q one", "q two", "q five"]
+    }
+  }
+}

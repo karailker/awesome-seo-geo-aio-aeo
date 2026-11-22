@@ -7,7 +7,7 @@ import { openStore, upsertSite, type Store } from "../db/store.js";
 import { ingestCrawlJsonl } from "../ingest/crawl.js";
 import { ingestSitemapJsonl } from "../ingest/sitemap.js";
 import { deriveCrawlObservations, ingestAccessReport } from "../ingest/geo.js";
-import { buildGeoReport } from "./geo-audit.js";
+import { buildGeoAudit, buildGeoReport } from "./geo-audit.js";
 
 const RUN = readFileSync(new URL("../../tests/fixtures/geo/site-run.jsonl", import.meta.url), "utf8");
 const ACCESS = readFileSync(new URL("../../tests/fixtures/geo/access.json", import.meta.url), "utf8");
@@ -273,6 +273,17 @@ describe("pages with no extractable text in the static HTML", () => {
     expect(missing).toContain("render=true");
   });
 
+  it("treats a page with no text after rendering as thin content, not as a JavaScript shell", () => {
+    const rendered = shell("https://example.com/empty-after-render", { rendered: true });
+    ingestCrawlJsonl(store, SITE_ID, rendered, null);
+    deriveCrawlObservations(store, SITE_ID, "shell-run");
+
+    const report = buildGeoReport(store, { siteId: SITE_ID, origin: ORIGIN, runId: "shell-run" });
+
+    expect(report).toContain("1 page(s) under 300 words");
+    expect(report).not.toContain("returned no text in the static HTML");
+  });
+
   it("leaves a non-HTML file out of every HTML-derived measurement", () => {
     ingestCrawlJsonl(store, SITE_ID, run, null);
     deriveCrawlObservations(store, SITE_ID, "shell-run");
@@ -281,5 +292,19 @@ describe("pages with no extractable text in the static HTML", () => {
       "SELECT COUNT(*) AS n FROM observations WHERE source = 'crawl' AND entity_id = ? AND metric IN ('h1_count','word_count','heading_skip','has_faqpage','canonical_missing')",
     ).get("https://example.com/agents.md") as { n: number };
     expect(rows.n).toBe(0);
+  });
+});
+
+
+describe("buildGeoAudit", () => {
+  it("returns the kept findings with the report, and the report is the same text buildGeoReport returns", () => {
+    deriveCrawlObservations(store, SITE_ID, runId);
+
+    const audit = buildGeoAudit(store, { siteId: SITE_ID, origin: ORIGIN, runId });
+
+    expect(audit.report).toBe(buildGeoReport(store, { siteId: SITE_ID, origin: ORIGIN, runId }));
+    expect(audit.findings.length).toBeGreaterThan(0);
+    expect(audit.findings.every((f) => f.evidenceIds.length > 0)).toBe(true);
+    expect(audit.dropped).toEqual([]);
   });
 });
