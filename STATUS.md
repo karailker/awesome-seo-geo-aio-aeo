@@ -10,14 +10,14 @@ Date: 2026-11-06. Phase: P10 complete. Next: P11 (evaluation). P9 deferred. Plug
 | P1 Core and SQLite | done | Drizzle schema, migrations 0000–0003, store (WAL, foreign keys), Zod schemas, `awesome-seo migrate`, `seed` |
 | P2 Sitemap discovery | done | `crawl_discover_sitemap`, `awesome-seo sitemap-ingest`, `/sitemap-sync` |
 | P3 Search Console | done | `google_gsc_*`, GSC ingest, `awesome-seo seo-audit`, `/seo-audit` (search part) |
-| P4 Full crawler | done | `crawl_fetch_pages` (opt-in `render`), `crawl_extract_structured_data`, `crawl_check_access`, `crawl-ingest`, `access-ingest`, `technical-audit`, `/crawl-run`, `/technical-audit` |
+| P4 Full crawler | done | `crawl_fetch_pages` (opt-in `render`), `crawl_extract_structured_data`, `crawl_check_access`, `crawl-ingest`, `technical-audit`, `/crawl-run`, `/technical-audit` |
 | P5 Performance | done | `performance_psi_run` (local fallback), `performance_crux_query`, `performance_lighthouse_local_run`, `/perf-audit` |
 | P6 GEO, AIO, AEO | done, two skills deferred | `awesome-seo geo-audit [--access]`, `/geo-audit`, `/aio-audit`, `/aeo-audit`, `visibility-analyst`; `entity-consistency` and `faq-quality` not built |
 | P7 Analytics | done | GA4 tools and ingest, Metrica tool and ingest, AI referral traffic, traffic section in `seo-audit` |
 | P8 Bing and Yandex Webmaster | done | Bing tools and ingest; Yandex Webmaster tools (incl. in-search samples); three-source reconciliation |
 | P9 Merchant Center | done (read-only) | `google_merchant_list_products`, `google_merchant_list_product_issues`, `/ecommerce-audit`. Verified live on the erolav Merchant account (234 products). The bulmacalig site sells no products, so its service account has no Merchant access |
 | P10 Approval and write tools | done | Approval engine (migration 0003), PreToolUse gate, `approval` CLI, `/approve-action`, three write tools |
-| P11 Evaluation | next | Golden dataset, evaluator (precision and recall), evidence coverage check |
+| P11 Evaluation | done | `corepack pnpm evaluate`: golden dataset (`packages/core/tests/evaluation/golden.json`), precision and recall per finding category, evidence coverage and reproducibility checks. See `docs/EVALUATION.md` |
 | P12 Reporting and polish | not started | Scoring doc, `/connections-check`, README setup per credential |
 
 ## Packages and distribution
@@ -66,7 +66,6 @@ Live writes (each approved by the user for the test):
 - **JS-rendered content**: the crawler reads static HTML by default. `render=true` (`crawl_fetch_pages`, `crawl_extract_structured_data`) loads the page in the system Chrome and extracts the DOM after scripts ran (`b8e0f42`). Checked live: `/sss` has `FAQPage` only with render. Active in the installed plugin after an update and a Claude Code restart. Chrome also requests the page's assets; the per-host limit does not cover those. Off by default.
 - **Sitemap size**: discovery stops at `url_cap` (500). BulmacaLig's sitemap indexes list far more URLs, so a 500-URL audit is a sample. Raising the cap raises crawl time (about 1 request per second per host).
 - **Long crawl calls**: a 500-URL `crawl_fetch_pages` call exceeds the MCP call timeout and is moved to the background. The result arrives as a task notification.
-- **`access-ingest` duplicates `geo-audit --access`**: both store the same access report. The commands use `geo-audit --access`. `access-ingest` remains as a standalone helper; remove it if no caller needs it.
 - Search Console: one request per call (25 000 rows max, no paging).
 - GA4 page report is one request (100 000 rows max, no paging).
 - The first GSC execution log row (`5c772bcc`) keeps record-time values; its real submit time was 09:37:03.790Z (Search Console `lastSubmitted`).
@@ -78,8 +77,6 @@ Live writes (each approved by the user for the test):
 ## Open decisions
 
 1. Rotate the secrets pasted in chat during this project: Yandex client secret and tokens, Bing API key, PageSpeed and CrUX keys.
-2. Whether to keep `access-ingest` (see gaps).
-3. Whether to add a rendered-DOM check for JS-only schema (headless Chrome), which changes the crawl path.
 
 ## Credentials and local files (not in the repo)
 

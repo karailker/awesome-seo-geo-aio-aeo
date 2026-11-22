@@ -18,8 +18,10 @@ Key files can be given as a path relative to the project (for example `./keys/sa
 | performance | `PAGESPEED_API_KEY` | PageSpeed Insights key | Google Cloud console, API key for PageSpeed Insights API |
 | performance | `CRUX_API_KEY` | Chrome UX Report key (optional) | Google Cloud console, API key |
 | yandex | `YANDEX_WEBMASTER_TOKEN`, `YANDEX_METRICA_TOKEN`, `YANDEX_METRICA_COUNTER_ID` | Yandex OAuth token and Metrica counter (optional) | Yandex OAuth app; Metrica counter settings |
+| crawl | `AWESOME_SEO_CONTACT_URL` | A page that describes your crawler; it goes into the User-Agent (optional, but set it before a large crawl) | Your own site or contact page |
+| crawl | `CHROME_PATH` | Chrome binary used for `render=true` (optional) | `which google-chrome` |
 
-`GOOGLE_MERCHANT_OAUTH_TOKEN_FILE` is listed by the Google health check, but the Merchant tools use the service account. You do not need it.
+The Merchant tools use the same service account as Search Console and GA4; no OAuth token file is needed. The Google health check reports only the key file.
 
 ## Google: service account (Search Console, GA4, Merchant)
 

@@ -86,9 +86,9 @@ The CLI is published as `@karailker/awesome-seo-core` and runs with `npx`:
 |---|---|
 | `migrate`, `seed` | Database schema and the single site |
 | `sitemap-ingest`, `crawl-ingest` | Store sitemap and crawl JSONL |
-| `access-ingest` | Store a saved `crawl_check_access` result (`--origin`, then the JSON file). `geo-audit --access` stores the same result and is the path the commands use |
 | `seo-audit`, `geo-audit` | Markdown reports (inputs: `--gsc`, `--ga4`, `--metrica`, `--bing`, `--yandex`, `--access`) |
-| `technical-audit` | Markdown technical report for a crawl run (`--origin`, optional `--run`) |
+| `technical-audit` | Markdown technical report for one or more crawl runs (`--origin`, optional repeated `--run`, optional `--gsc`) |
+| `gsc-urls` | Search Console pages no crawl run fetched, written as crawl input |
 | `approval list\|propose\|approve\|reject\|record` | Write approval flow |
 
 ## Development
@@ -101,7 +101,7 @@ corepack pnpm -r test         # Vitest
 cd mcp-servers/crawl && uv sync && uv run pytest
 ```
 
-One command checks everything: `corepack pnpm verify` (build, typecheck, all tests including the plugin structure checks, and the crawler tests). Before a release run `corepack pnpm release:check`: it checks versions, npm state, packed dependencies, the tag and the git state, and prints the publish commands without an OTP.
+One command checks everything: `corepack pnpm verify` (build, typecheck, all tests including the plugin structure checks, and the crawler tests). `corepack pnpm evaluate` prints precision and recall of the report rules on the golden dataset (`docs/EVALUATION.md`). Before a release run `corepack pnpm release:check`: it checks versions, npm state, packed dependencies, the tag and the git state, and prints the publish commands without an OTP.
 
 Repo scripts: `pnpm db:migrate`, `pnpm db:seed`, `pnpm sitemap:ingest`, `pnpm crawl:ingest`, `pnpm seo:audit`, `pnpm geo:audit`, `pnpm approval` (they run `packages/core/dist/cli.js`).
 

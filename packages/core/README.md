@@ -10,13 +10,13 @@ Run with `npx -y -p @karailker/awesome-seo-core@0.2 awesome-seo <command>` from 
 
 | Command | Purpose |
 |---|---|
-| `migrate` | Create or upgrade the schema (current version 3) |
+| `migrate` | Create or upgrade the schema (current version 4) |
 | `seed --origin <url>` | Register the site (canonical origin, sitemap URL, URL cap) |
 | `sitemap-ingest --origin <url> <file.jsonl>` | Store sitemap URLs (idempotent). `ingested` counts rows written; `created` counts URLs new to the site |
 | `crawl-ingest --origin <url> <file.jsonl>` | Store one crawl run |
-| `access-ingest --origin <url> <access.json>` | Store a saved `crawl_check_access` result (idempotent) |
 | `seo-audit`, `geo-audit` | Markdown reports. `geo-audit --access <file>` also stores the access result |
-| `technical-audit --origin <url> [--run <id>] [--gsc <file.jsonl>]` | Markdown technical report for a crawl run: counts, redirects, canonical, titles, hreflang, headings. `--gsc` adds the Search Console pages the crawl did not check |
+| `technical-audit --origin <url> [--run <id> ...] [--gsc <file.jsonl> ...]` | Markdown technical report: counts, status problems, redirects, canonical, titles, hreflang, headings. Repeat `--run` to report several crawl runs together. `--gsc` adds the Search Console pages the crawl did not check |
+| `gsc-urls --origin <url> --gsc <pages.jsonl> [--out <file>]` | Write the Search Console pages that no crawl run fetched as crawl input (`{"url": ...}` lines), for `crawl_fetch_pages` |
 | `approval ...` | Write approval flow used by the hook and `/approve-action` |
 
 Errors go to stderr with exit code 1. `geo-audit` needs a crawl run for the site first.

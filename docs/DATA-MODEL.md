@@ -130,6 +130,7 @@ Indexes:
 | structured_data_json | TEXT | |
 | raw_html_path | TEXT | added in P4: gzipped raw HTML, off by default |
 | jsonld_syntax_errors | INTEGER | added in P6: JSON-LD blocks that fail strict JSON parsing; null when not extracted |
+| rendered | INTEGER | migration 0004: 1 when the DOM was read after JavaScript ran (`render=true`), 0 for static HTML, null for runs ingested before the column existed |
 | errors_json | TEXT | |
 
 ### `audit_runs` (planned: reports are generated, not stored yet)

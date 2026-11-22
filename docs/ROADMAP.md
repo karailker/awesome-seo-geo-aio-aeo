@@ -99,7 +99,7 @@ Done when:
 
 ## P6: GEO, AIO, AEO ✅ (two deliverable skills deferred)
 
-Verification notes (2026-11-06): `geo-audit` run end to end on the live crawl of `www.bulmacalig.com` (500 of 500 URLs, status completed) with a live `crawl_check_access` result (10 AI user agents, all allowed on the 2-URL sample; llms.txt valid). The report warns that the sitemap equals the URL cap (500). Core tests cover measured derivation, idempotency, robots-unknown handling, access ingest, the report sections, and the CLI (`src/cli.test.ts`: migrate, `access-ingest`, `geo-audit --access`, usage and unseeded-site errors). Known limits, all open: JS-only FAQ schema is not visible to the static crawl; discovery stops at `url_cap`. Deferred: `geo/entity-consistency` and `aeo/faq-quality` skills and their checks (not implemented in this version; the report says so).
+Verification notes (2026-11-06): `geo-audit` run end to end on the live crawl of `www.bulmacalig.com` (500 of 500 URLs, status completed) with a live `crawl_check_access` result (10 AI user agents, all allowed on the 2-URL sample; llms.txt valid). The report warns that the sitemap equals the URL cap (500). Core tests cover measured derivation, idempotency, robots-unknown handling, access ingest (through `geo-audit --access`), the report sections, and the CLI (`src/cli.test.ts`: migrate, `geo-audit --access`, usage and unseeded-site errors). Known limits, all open: JS-only FAQ schema is not visible to the static crawl; discovery stops at `url_cap`. Deferred: `geo/entity-consistency` and `aeo/faq-quality` skills and their checks (not implemented in this version; the report says so).
 
 Deliverables:
 - `visibility-analyst` agent
