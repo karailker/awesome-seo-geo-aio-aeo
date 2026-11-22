@@ -1,5 +1,5 @@
-// Merchant fixtures are hand-written from the documented product shape. No live response yet: the project is not
-// linked to a Merchant Center account. Replace with a recorded response once the account is connected.
+// Most fixtures below are hand-written from the documented product shape. The LIVE_SHAPE fixture follows a response
+// recorded from a live Merchant Center account (link and title nested under productAttributes).
 import { generateKeyPairSync } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { TokenProvider, type ServiceAccount } from "../gsc/auth.js";
@@ -32,6 +32,58 @@ function client(handler: (url: string) => Response) {
   return new MerchantClient(new TokenProvider(SA, MERCHANT_SCOPE, impl), impl);
 }
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
+
+// Shape recorded from the live Merchant API (products/v1): link and title sit under productAttributes, and the same
+// issue code repeats once per destination or country.
+const LIVE_SHAPE = {
+  products: [
+    {
+      name: "accounts/1/products/tr~TRY_1~A", offerId: "A",
+      productAttributes: { title: "Product A", link: "https://shop.example/a" },
+      productStatus: { itemLevelIssues: [
+        { code: "weapons_policy", severity: "DISAPPROVED", description: "Weapons" },
+        { code: "weapons_policy", severity: "DISAPPROVED", description: "Weapons" },
+        { code: "weapons_policy", severity: "DISAPPROVED", description: "Weapons" },
+      ] },
+    },
+    {
+      name: "accounts/1/products/tr~TRY_1~B", offerId: "B",
+      productAttributes: { title: "Product B", link: "https://shop.example/b" },
+      productStatus: { itemLevelIssues: [{ code: "weapons_policy", severity: "DISAPPROVED", description: "Weapons" }] },
+    },
+  ],
+};
+
+describe("Merchant live response shape", () => {
+  it("reads the product link and title from productAttributes", async () => {
+    const c = client(() => json(LIVE_SHAPE));
+
+    const page = await c.listProducts(ACCOUNT, 10);
+
+    expect(page.products[0]).toMatchObject({ offerId: "A", link: "https://shop.example/a", title: "Product A" });
+  });
+
+  it("lists each affected product once per issue code, however many times the code repeats", async () => {
+    const c = client(() => json(LIVE_SHAPE));
+
+    const result = await listProductIssues(async () => c, { account: ACCOUNT, page_size: 10 }, env);
+
+    const group = (result as { data: { issueGroups: { code: string; products: { offerId: string }[] }[] } }).data.issueGroups[0];
+    expect(group?.code).toBe("weapons_policy");
+    expect(group?.products.map((p) => p.offerId)).toEqual(["A", "B"]);
+  });
+});
+
+describe("Merchant HTTP errors", () => {
+  it("names the Merchant API, not Search Console, when it returns an error status", async () => {
+    const c = client(() => json({}, 401));
+
+    await expect(c.listProducts(ACCOUNT, 10)).rejects.toMatchObject({
+      code: "AUTH_EXPIRED",
+      message: "Merchant API returned HTTP 401",
+    });
+  });
+});
 
 describe("Merchant products and issues", () => {
   it("groups issues by code with the affected products and URLs", () => {

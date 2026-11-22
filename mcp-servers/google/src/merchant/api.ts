@@ -14,6 +14,7 @@ export type MerchantIssue = { code: string; severity: string; description: strin
 export type MerchantProduct = {
   name: string;
   offerId: string;
+  title: string | null;
   link: string | null;
   issues: MerchantIssue[];
 };
@@ -38,12 +39,13 @@ export class MerchantClient {
       }
       throw new GscError("UPSTREAM_ERROR", "Merchant API request failed", true);
     }
-    if (!res.ok) throw fromHttpStatus(res.status);
+    if (!res.ok) throw fromHttpStatus(res.status, "Merchant API");
     const body = (await res.json()) as {
       products?: {
         name: string;
         offerId?: string;
         link?: string;
+        productAttributes?: { title?: string; link?: string }; // the live API nests title and link here
         productStatus?: { itemLevelIssues?: { code: string; severity?: string; description?: string; attribute?: string }[] };
       }[];
       nextPageToken?: string;
@@ -52,7 +54,8 @@ export class MerchantClient {
       products: (body.products ?? []).map((p) => ({
         name: p.name,
         offerId: p.offerId ?? "",
-        link: p.link ?? null,
+        title: p.productAttributes?.title ?? null,
+        link: p.productAttributes?.link ?? p.link ?? null,
         issues: (p.productStatus?.itemLevelIssues ?? []).map((i) => ({
           code: i.code,
           severity: i.severity ?? "unknown",

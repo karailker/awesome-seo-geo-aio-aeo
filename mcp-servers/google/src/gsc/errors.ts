@@ -20,8 +20,9 @@ export class GscError extends Error {
   }
 }
 
-export function fromHttpStatus(status: number): GscError {
-  const message = `Search Console API returned HTTP ${status}`;
+// api names the service in the message. The default is Search Console, the original caller.
+export function fromHttpStatus(status: number, api = "Search Console API"): GscError {
+  const message = `${api} returned HTTP ${status}`;
   if (status === 400) return new GscError("INVALID_INPUT", message, false);
   if (status === 401) return new GscError("AUTH_EXPIRED", message, false);
   if (status === 403) return new GscError("PERMISSION_DENIED", message, false);

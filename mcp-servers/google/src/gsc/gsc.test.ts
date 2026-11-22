@@ -134,6 +134,11 @@ describe("GscClient", () => {
     expect(rows).toEqual([{ keys: ["/a"], clicks: 3, impressions: 40, ctr: 0.075, position: 2.5 }]);
   });
 
+  it("names the API in the error message and defaults to Search Console", () => {
+    expect(fromHttpStatus(403).message).toBe("Search Console API returned HTTP 403");
+    expect(fromHttpStatus(403, "GA4 Data API").message).toBe("GA4 Data API returned HTTP 403");
+  });
+
   it("maps HTTP status to stable error codes", () => {
     expect(fromHttpStatus(403).code).toBe("PERMISSION_DENIED");
     expect(fromHttpStatus(401).code).toBe("AUTH_EXPIRED");

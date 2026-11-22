@@ -40,7 +40,7 @@ export class Ga4Client {
       }
       throw new GscError("UPSTREAM_ERROR", "GA4 Data API request failed", true);
     }
-    if (!res.ok) throw fromHttpStatus(res.status);
+    if (!res.ok) throw fromHttpStatus(res.status, "GA4 Data API");
     return (await res.json()) as T;
   }
 

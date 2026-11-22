@@ -25,7 +25,7 @@ export async function listProducts(getClient: MerchantClientProvider, input: { a
     if (input.page_size < 1 || input.page_size > MERCHANT_MAX_PAGE) throw new GscError("INVALID_INPUT", `page_size must be 1 to ${MERCHANT_MAX_PAGE}`, false);
     const acct = account(input, env);
     const page = await (await getClient()).listProducts(acct, input.page_size);
-    return ok({ account: acct, count: page.products.length, products: page.products.map((p) => ({ name: p.name, offerId: p.offerId, link: p.link, issueCount: p.issues.length })), nextPageToken: page.nextPageToken ?? null });
+    return ok({ account: acct, count: page.products.length, products: page.products.map((p) => ({ name: p.name, offerId: p.offerId, title: p.title, link: p.link, issueCount: p.issues.length })), nextPageToken: page.nextPageToken ?? null });
   } catch (err) {
     return fail(err);
   }
@@ -33,11 +33,12 @@ export async function listProducts(getClient: MerchantClientProvider, input: { a
 
 // Issues grouped by code. Each group lists the products (ID, offer ID, URL) it affects, so the report can cite them.
 export function groupIssues(products: MerchantProduct[]) {
-  const groups = new Map<string, { code: string; severity: string; description: string | null; products: { name: string; offerId: string; link: string | null }[] }>();
+  const groups = new Map<string, { code: string; severity: string; description: string | null; products: { name: string; offerId: string; title: string | null; link: string | null }[] }>();
   for (const p of products) {
     for (const issue of p.issues) {
       const g = groups.get(issue.code) ?? { code: issue.code, severity: issue.severity, description: issue.description, products: [] };
-      g.products.push({ name: p.name, offerId: p.offerId, link: p.link });
+      // The API repeats an issue code once per destination or country. A product is listed once per code.
+      if (!g.products.some((x) => x.name === p.name)) g.products.push({ name: p.name, offerId: p.offerId, title: p.title, link: p.link });
       groups.set(issue.code, g);
     }
   }
