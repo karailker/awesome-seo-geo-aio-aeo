@@ -4,7 +4,7 @@ A Claude Code plugin that audits one website across SEO (Search Engine Optimizat
 
 Local-first: data stays in a SQLite file in your project folder. Write actions to search engines (sitemap submit, URL submit) need an approved proposal, and a hook blocks them until one exists.
 
-**Status (2026-11-06):** plugin version 0.2.1, core 0.2.3. Phases P0–P8 and P10 are done. P9 (Merchant Center) is deferred because the site sells no products. P11 (evaluation) is next. See `STATUS.md` for live checks, known gaps, and open decisions.
+**Status (2026-11-06):** plugin version 0.2.1, core 0.2.3. Phases P0–P8 and P10 are done. P9 (Merchant Center) is done for read-only product issue audits. P11 (evaluation) is next. See `STATUS.md` for live checks, known gaps, and open decisions.
 
 **Terms:** SEO = Search Engine Optimization. GEO = Generative Engine Optimization. AIO = AI Optimization (AI discoverability). AEO = Answer Engine Optimization. GSC = Google Search Console. GA4 = Google Analytics 4. PSI = PageSpeed Insights. CrUX = Chrome User Experience Report. MCP = Model Context Protocol.
 

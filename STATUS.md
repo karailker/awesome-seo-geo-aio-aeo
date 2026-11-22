@@ -15,7 +15,7 @@ Date: 2026-11-06. Phase: P10 complete. Next: P11 (evaluation). P9 deferred. Plug
 | P6 GEO, AIO, AEO | done, two skills deferred | `awesome-seo geo-audit [--access]`, `/geo-audit`, `/aio-audit`, `/aeo-audit`, `visibility-analyst`; `entity-consistency` and `faq-quality` not built |
 | P7 Analytics | done | GA4 tools and ingest, Metrica tool and ingest, AI referral traffic, traffic section in `seo-audit` |
 | P8 Bing and Yandex Webmaster | done | Bing tools and ingest; Yandex Webmaster tools (incl. in-search samples); three-source reconciliation |
-| P9 Merchant Center | deferred | Code and tests exist. The site sells no products, so no live check is planned |
+| P9 Merchant Center | done (read-only) | `google_merchant_list_products`, `google_merchant_list_product_issues`, `/ecommerce-audit`. Verified live on the erolav Merchant account (234 products). The bulmacalig site sells no products, so its service account has no Merchant access |
 | P10 Approval and write tools | done | Approval engine (migration 0003), PreToolUse gate, `approval` CLI, `/approve-action`, three write tools |
 | P11 Evaluation | next | Golden dataset, evaluator (precision and recall), evidence coverage check |
 | P12 Reporting and polish | not started | Scoring doc, `/connections-check`, README setup per credential |

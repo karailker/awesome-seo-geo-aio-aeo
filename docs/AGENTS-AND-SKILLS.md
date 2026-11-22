@@ -38,7 +38,7 @@ Each skill is `skills/<domain>/<name>/SKILL.md` with frontmatter (`name`, `descr
 | `analytics/organic-attribution` | built | GA4 sessions and pages for the period. |
 | `analytics/ai-referral-traffic` | built | AI host list in `knowledge/ai-referrers.md`. |
 | `performance/cwv-diagnosis` | built | Field first, then lab; local fallback is lab only. |
-| `ecommerce/merchant-feed-health` | written (deferred) | Depends on P9. |
+| `ecommerce/merchant-feed-health` | built | Verified live on the erolav Merchant account. |
 | `intelligence/evidence-validation` | built (in code) | `validateFindings`. |
 | `intelligence/report-generation` | built (in code) | `buildSeoAuditReport` and `buildGeoReport`. |
 
@@ -54,6 +54,6 @@ Each skill is `skills/<domain>/<name>/SKILL.md` with frontmatter (`name`, `descr
 | `/aio-audit` | same report; AIO sections | built |
 | `/aeo-audit` | same report; AEO sections | built |
 | `/perf-audit` | PSI, CrUX, local fallback | built |
-| `/ecommerce-audit` | Merchant issues | deferred (P9) |
+| `/ecommerce-audit` | Merchant issues | built |
 | `/approve-action` | list, approve, reject, execute, verify, record | built |
 | `/connections-check` | status check for every connection | not built (P12) |

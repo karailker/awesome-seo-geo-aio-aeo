@@ -18,7 +18,7 @@ Show which product issues block or limit listings, grouped by issue code, with t
 - `google_merchant_list_products` (products with issue counts, for paging).
 
 ## Method
-1. Read issue groups. Each group has a code, severity, and the products it affects.
+1. Read issue groups. Each group has a code, severity, and the products it affects. A product appears once per code, with its title and link.
 2. Order groups by number of affected products. Show the top groups with their products and URLs.
 3. Do not infer issues from product data. Only report what the API returned.
 
@@ -34,6 +34,6 @@ Section "Merchant feed health" in the ecommerce report: groups in order, each wi
 - The Merchant API version used is VERIFY-marked in code and in the report.
 
 ## Missing and failed data
-- `AUTH_EXPIRED` with "not registered": the Google Cloud project is not linked to the Merchant Center account. Say so and give the setup step; do not guess issues.
-- `PERMISSION_DENIED`: the service account is not a user of the Merchant Center account.
+- `AUTH_EXPIRED` ("Merchant API returned HTTP 401"): the service account is not registered for the Merchant Center account. Say so and give the setup step (add its email as a user in Merchant Center); do not guess issues.
+- `PERMISSION_DENIED`: the service account is a user without enough access.
 - Account ID missing: say the variable is not set.

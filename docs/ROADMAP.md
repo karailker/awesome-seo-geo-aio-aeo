@@ -135,7 +135,7 @@ Done when:
 - Reconciliation works across all three search sources
 - Each source's quota and endpoint version is marked `VERIFY:`
 
-## P9: Merchant Center (deferred: the site sells no products; code exists, live check not planned)
+## P9: Merchant Center (read-only part done: verified live on the erolav Merchant account, 2026-11-22)
 
 Deliverables:
 - `google_merchant_list_products`, `google_merchant_list_product_issues`
