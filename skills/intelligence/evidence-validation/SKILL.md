@@ -21,7 +21,7 @@ Enforce "no evidence, no finding" (CLAUDE.md rule 6) and the evaluation gates in
 1. A finding with no evidence id is dropped, with reason "no evidence".
 2. A finding with an evidence id that is not an observation of the same site is dropped, with reason "evidence id(s) not found".
 3. Kept findings are shown, and the counts are stated in `## Evidence check`.
-4. Confidence: `high` only for direct Search Console observations with a stated date range. Inferred results are `low`.
+4. Confidence: `high` only for measured findings from direct observations (Search Console, GA4, Bing, Yandex, or the crawl) with a stated period or crawl run. Inferred results are `low`.
 
 ## Evidence rules
 - The gate itself is the evidence rule. It needs no extra data.

@@ -82,6 +82,6 @@ Risk levels: `gsc_submit_sitemap`, `yandex_webmaster_add_sitemap`, `bing_submit_
 
 Before a report is written:
 - Every finding has at least one evidence row (enforced in code by `validateFindings`).
-- Confidence labels match the evidence (planned).
+- Confidence labels match the evidence: `high` for measured findings from direct observations with a stated period or run, `low` for anything inferred. Enforced in the report builders and checked by the `evidence-auditor` agent.
 - Missing sources are listed in the report (implemented).
 - Lab and field performance data are not mixed (implemented; separate names).

@@ -147,8 +147,11 @@ export function buildSeoAuditReport(store: Store, input: ReportInput): string {
   if (sitemap.n > 0 && cap && sitemap.n >= cap.cap) {
     missing.push(`Sitemap: ${sitemap.n} URLs equals the URL cap (${cap.cap}). The sitemap may be truncated, so reconciliation is partial.`);
   }
-  if (!sourceHasRows(store, input.siteId, "bing")) missing.push("Bing Webmaster: no data for this site. Bing is not part of the reconciliation.");
-  if (!sourceHasRows(store, input.siteId, "yandex_webmaster")) missing.push("Yandex Webmaster: no data for this site. Yandex is not part of the reconciliation.");
+  // Bing and Yandex: no rows at all, or rows without page-level data (the reconciliation needs pages).
+  for (const [src, table, label] of [["bing", "bing", "Bing Webmaster"], ["yandex", "yandex_webmaster", "Yandex Webmaster"]] as const) {
+    if (!sourceHasRows(store, input.siteId, table)) missing.push(`${label}: no data for this site. ${label.split(" ")[0]} is not part of the reconciliation.`);
+    else if (recons.find((r) => r.source === src)?.sourcePageCount === 0) missing.push(`${label}: no page-level data for this period. Reconciliation with the sitemap is not possible.`);
+  }
   if (gscAvailable && recon.sourcePageCount === 0) missing.push("Search Console: no page-level rows. Reconciliation is not possible.");
 
   const sections: string[] = [
@@ -249,7 +252,7 @@ export function ga4TrafficSection(store: Store, input: ReportInput): { lines: st
           title: `${aiTotal} AI referral session(s) in the period`,
           severity: "info",
           confidence: "high",
-          description: "Sessions whose source is an AI assistant host (knowledge/ai-referrers.md). Direct GA4 data; the host list is project-defined.",
+          description: `Sessions whose source is an AI assistant host (knowledge/ai-referrers.md). Direct GA4 data for ${input.periodStart} to ${input.periodEnd}; the host list is project-defined.`,
           affectedCount: ai.length,
           evidenceIds: ai.map((r) => r.id),
           basis: "measured",
